@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # 사주문(SajuMoon) — Claude 작업 지침
 
 전체 기획 및 결정 사항은 `plan.md` 참조.
@@ -72,6 +76,92 @@
 - `user_saju`, `user_saju_ohang`, `user_saju_sipsung` — `ON DELETE CASCADE`
 - `full_saju_data` JSON — 대운/세운 핵심 결과 보존. **신살은 런타임 계산이므로 미저장**
 - `posts.target_year` — nullable. null이면 열람 시점 날짜 기준으로 세운/대운 계산
+
+---
+
+## 디자인 레퍼런스 (contra.com/blog)
+
+### 전체 톤
+- 배경: 순백 (`#ffffff`), 텍스트: 블랙
+- 테두리·그림자 없는 완전 플랫 디자인
+- 여백 매우 넉넉 (섹션 간 padding 여유롭게)
+- 카드 썸네일은 다크/블랙 계열 이미지 (밝은 흰 카드 박스 아님)
+
+### 헤더 / 네비게이션
+- 로고 좌측, 메뉴 중앙, Sign up + Log in 우측
+- 모바일: 로고 좌측, Sign up 버튼 우측, 햄버거 메뉴
+
+### 블로그 목록 페이지
+- 페이지 상단 중앙에 블로그 타이틀 ("사주문 블로그" 등) — 세리프 또는 정제된 산세리프
+- 타이틀 우측에 Topics 드롭다운 + 검색창
+- **피처드 카드**: 좌우 분할 — 이미지 40% 좌측, 텍스트(카테고리 태그·날짜·읽는시간·제목·요약) 60% 우측
+  - 모바일: 이미지 상단, 텍스트 하단으로 전환
+- **그리드 카드**: 데스크탑 **3열**, 모바일 1열
+  - ※ plan.md에 2열로 기재되어 있으나 실제 레퍼런스는 3열 — 구현 시 3열 기준으로
+
+### 블로그 상세 페이지
+- 본문: 좌측 ~60% 너비
+- 우측 사이드바: CTA 카드 + 관련 글 목록
+- 모바일: 사이드바 본문 하단으로 이동
+- 카테고리 태그: 소형 배지, 제목 위 또는 아래
+- 저자 정보: 아바타 + 이름 + 날짜 + 읽는 시간 (한 줄)
+
+### 사주문 전용 추가 UI 요소
+- 글 목록 카드: 해당됨/해당 안됨 뱃지 (로그인 회원만 표시)
+- target_year 있는 글: "2026년 기준" 연도 뱃지
+- 글 상세: 판정 결과 블록 (본문 하단 또는 사이드바)
+
+---
+
+## 개발 커맨드 (Next.js 스캐폴딩 후)
+
+```bash
+npm run dev        # 개발 서버 (localhost:3000)
+npm run build      # 프로덕션 빌드
+npm run lint       # ESLint
+npm run type-check # tsc --noEmit (tsconfig 설정 후)
+```
+
+Supabase 로컬 개발:
+```bash
+npx supabase start   # 로컬 Supabase 인스턴스
+npx supabase db push # 마이그레이션 적용
+npx supabase gen types typescript --local > src/types/supabase.ts
+```
+
+---
+
+## 예상 디렉토리 구조
+
+```
+src/
+├── app/
+│   ├── (auth)/           # 로그인·회원가입 라우트 그룹
+│   ├── (blog)/
+│   │   ├── page.tsx      # 블로그 목록 (피처드 + 3열 그리드)
+│   │   └── [slug]/       # 글 상세
+│   ├── admin/            # 관리자 페이지 (RLS 보호)
+│   ├── mypage/           # 사주 입력·수정
+│   └── manseryeok/       # 만세력 조회
+├── components/
+│   ├── ui/               # shadcn/ui 컴포넌트
+│   ├── blog/             # 블로그 목록·카드·뱃지
+│   ├── judgment/         # 판정 결과 블록·CTA
+│   └── editor/           # Tiptap 에디터
+├── lib/
+│   ├── supabase/
+│   │   ├── server.ts     # createServerClient
+│   │   └── client.ts     # createBrowserClient
+│   ├── saju/
+│   │   ├── calculate.ts  # lunar-javascript 래퍼 (서버 전용)
+│   │   ├── judgment.ts   # 판정 로직 (17조건)
+│   │   └── shinsal.ts    # 신살 계산 Map (런타임만)
+│   └── utils.ts
+├── types/
+│   ├── supabase.ts       # Supabase 자동 생성 타입
+│   └── saju.ts           # 사주 도메인 타입
+└── actions/              # Server Actions
+```
 
 ---
 
