@@ -269,6 +269,7 @@ export interface Database {
           target_year: number | null
           judgment_rules: Json | null
           judgment_detail: Json | null
+          tags: string[]
           created_by: string | null
           created_at: string
           updated_at: string
@@ -287,6 +288,7 @@ export interface Database {
           target_year?: number | null
           judgment_rules?: Json | null
           judgment_detail?: Json | null
+          tags?: string[]
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -304,6 +306,7 @@ export interface Database {
           target_year?: number | null
           judgment_rules?: Json | null
           judgment_detail?: Json | null
+          tags?: string[]
           updated_at?: string
         }
         Relationships: []

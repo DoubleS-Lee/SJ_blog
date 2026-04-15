@@ -3,8 +3,6 @@ import FeaturedCard from '@/components/blog/FeaturedCard'
 import PostCard from '@/components/blog/PostCard'
 import CategoryFilter from '@/components/blog/CategoryFilter'
 import Pagination from '@/components/blog/Pagination'
-import { judgePost, type JudgmentUserData } from '@/lib/saju/judgment'
-import type { JudgmentRules } from '@/types/judgment'
 
 const PAGE_SIZE = 10
 
@@ -16,9 +14,6 @@ export default async function BlogListPage({ searchParams }: Props) {
   const { category, page } = await searchParams
   const currentPage = Math.max(1, parseInt(page ?? '1'))
   const supabase = await createClient()
-
-  // 로그인 사용자 확인
-  const { data: { user } } = await supabase.auth.getUser()
 
   // 피처드 글 (발행됨 + is_featured)
   const { data: featured } = await supabase
@@ -34,7 +29,7 @@ export default async function BlogListPage({ searchParams }: Props) {
   // 일반 글 목록 (페이지네이션)
   let query = supabase
     .from('posts')
-    .select('slug, title, summary, thumbnail_url, category, published_at, target_year, judgment_rules', { count: 'exact' })
+    .select('slug, title, summary, thumbnail_url, category, published_at, target_year', { count: 'exact' })
     .eq('is_published', true)
     .lte('published_at', new Date().toISOString())
 
@@ -50,37 +45,6 @@ export default async function BlogListPage({ searchParams }: Props) {
 
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
-  // 로그인 회원 사주 데이터 (판정 뱃지용)
-  let userData: JudgmentUserData | null = null
-  if (user) {
-    const [sajuRes, ohangRes, sipsungRes] = await Promise.all([
-      supabase.from('user_saju')
-        .select('year_cheongan,year_jiji,month_cheongan,month_jiji,day_cheongan,day_jiji,hour_cheongan,hour_jiji,year_ganji,month_ganji,day_ganji,hour_ganji,ilgan,full_saju_data')
-        .eq('user_id', user.id).single(),
-      supabase.from('user_saju_ohang')
-        .select('mok_score,hwa_score,to_score,geum_score,su_score,has_mok,has_hwa,has_to,has_geum,has_su')
-        .eq('user_id', user.id).single(),
-      supabase.from('user_saju_sipsung')
-        .select('bigyeon_score,gyeopjae_score,sikshin_score,sanggwan_score,pyeonjae_score,jeongjae_score,pyeongwan_score,jeonggwan_score,pyeonin_score,jeongin_score,has_bigyeon,has_gyeopjae,has_sikshin,has_sanggwan,has_pyeonjae,has_jeongjae,has_pyeongwan,has_jeonggwan,has_pyeonin,has_jeongin')
-        .eq('user_id', user.id).single(),
-    ])
-    if (sajuRes.data && ohangRes.data && sipsungRes.data) {
-      userData = {
-        ...sajuRes.data,
-        ...ohangRes.data,
-        ...sipsungRes.data,
-        full_saju_data: sajuRes.data.full_saju_data as Record<string, unknown>,
-      } as unknown as JudgmentUserData
-    }
-  }
-
-  // 각 포스트 판정 계산
-  function getJudgment(post: { judgment_rules?: unknown; target_year?: number | null }): 'match' | 'no_match' | undefined {
-    if (!userData || !post.judgment_rules) return undefined
-    const result = judgePost(post.judgment_rules as JudgmentRules, userData, post.target_year)
-    if (result === null) return undefined
-    return result ? 'match' : 'no_match'
-  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
@@ -102,7 +66,7 @@ export default async function BlogListPage({ searchParams }: Props) {
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post) => (
-              <PostCard key={post.slug} post={{ ...post, judgment: getJudgment(post) }} />
+              <PostCard key={post.slug} post={post} />
             ))}
           </div>
         </section>

@@ -17,7 +17,7 @@ export default async function EditPostPage({ params }: Props) {
 
   const { data: post } = await supabase
     .from('posts')
-    .select('id, title, summary, thumbnail_url, category, content, judgment_rules, judgment_detail, target_year, is_featured, is_published, published_at')
+    .select('id, title, summary, thumbnail_url, category, content, judgment_rules, target_year, is_featured, is_published, published_at, tags')
     .eq('id', id)
     .single()
 
@@ -35,11 +35,11 @@ export default async function EditPostPage({ params }: Props) {
           category: post.category as PostFormData['category'],
           content: post.content as JSONContent,
           judgment_rules: post.judgment_rules as JudgmentRules | null,
-          judgment_detail: post.judgment_detail as JSONContent | null,
           target_year: post.target_year,
           is_featured: post.is_featured,
           is_published: post.is_published,
           published_at: post.published_at,
+          tags: post.tags,
         }}
       />
     </div>

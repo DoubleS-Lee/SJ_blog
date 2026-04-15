@@ -18,6 +18,7 @@ export interface PostFormData {
   judgment_rules: JudgmentRules | null
   judgment_detail: string | null
   target_year: number | null
+  tags?: string[]
   is_featured: boolean
   is_published: boolean
   published_at: string | null
@@ -71,6 +72,7 @@ export async function savePost(data: PostFormData): Promise<{ error?: string }> 
         judgment_rules: data.judgment_rules as unknown as Json | null,
         judgment_detail: judgmentDetailJson,
         target_year: data.target_year,
+        tags: data.tags ?? [],
         is_featured: data.is_featured,
         is_published: data.is_published,
         published_at: data.is_published ? (data.published_at ?? now) : null,
@@ -106,6 +108,7 @@ export async function savePost(data: PostFormData): Promise<{ error?: string }> 
         judgment_rules: data.judgment_rules as unknown as Json | null,
         judgment_detail: judgmentDetailJson,
         target_year: data.target_year,
+        tags: data.tags ?? [],
         is_featured: data.is_featured,
         is_published: data.is_published,
         published_at: data.is_published ? (data.published_at ?? now) : null,

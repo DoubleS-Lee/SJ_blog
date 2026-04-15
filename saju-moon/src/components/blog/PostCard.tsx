@@ -9,8 +9,6 @@ interface Post {
   category: string
   published_at: string | null
   target_year: number | null
-  // 판정 뱃지 (로그인 회원에게만 표시)
-  judgment?: 'match' | 'no_match'
 }
 
 function formatDate(iso: string | null) {
@@ -46,18 +44,7 @@ export default function PostCard({ post }: { post: Post }) {
             {post.target_year}년 기준
           </span>
         )}
-        {/* 판정 뱃지 */}
-        {post.judgment && (
-          <span
-            className={`absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded ${
-              post.judgment === 'match'
-                ? 'bg-black text-white'
-                : 'bg-gray-200 text-gray-500'
-            }`}
-          >
-            {post.judgment === 'match' ? '해당됨' : '해당 안됨'}
-          </span>
-        )}
+
       </div>
 
       {/* 메타 */}

@@ -1,8 +1,10 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import type { JudgmentRules, ConditionGroup, JudgmentCondition, PillarKey } from '@/types/judgment'
 import type { Ohang, Sipsung, Cheongan, Jiji } from '@/types/saju'
+import type { JSONContent } from '@tiptap/react'
+import RichEditor from './RichEditor'
 
 // ─────────────────────────────────────────────
 // 상수
@@ -258,6 +260,8 @@ function GroupEditor({
   onChange: (g: ConditionGroup) => void
   onDelete: () => void
 }) {
+  const [showDetail, setShowDetail] = useState(!!group.detail)
+
   function addCondition() {
     onChange({ ...group, conditions: [...group.conditions, makeDefaultCondition('pillar_cheongan')] })
   }
@@ -270,6 +274,15 @@ function GroupEditor({
 
   function deleteCondition(i: number) {
     onChange({ ...group, conditions: group.conditions.filter((_, ci) => ci !== i) })
+  }
+
+  function handleDetailChange(detail: JSONContent) {
+    onChange({ ...group, detail })
+  }
+
+  function handleDetailToggle(checked: boolean) {
+    setShowDetail(checked)
+    if (!checked) onChange({ ...group, detail: null })
   }
 
   return (
@@ -297,6 +310,28 @@ function GroupEditor({
       >
         + 조건 추가 (AND)
       </button>
+
+      {/* 그룹별 판정 상세 설명 */}
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <label className="flex items-center gap-1.5 cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={showDetail}
+            onChange={(e) => handleDetailToggle(e.target.checked)}
+            className="accent-black"
+          />
+          <span className="text-xs font-medium text-gray-600">이 그룹 판정 상세 설명</span>
+          <span className="text-xs text-gray-400">(해당됨/안됨 결과 아래에 표시)</span>
+        </label>
+        {showDetail && (
+          <RichEditor
+            initialContent={group.detail ?? undefined}
+            onChange={handleDetailChange}
+            placeholder="이 조건에 해당하는 독자에게 보여줄 상세 설명을 작성하세요..."
+            minHeight="150px"
+          />
+        )}
+      </div>
     </div>
   )
 }

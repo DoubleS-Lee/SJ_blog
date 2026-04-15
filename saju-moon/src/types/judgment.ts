@@ -1,3 +1,4 @@
+import type { JSONContent } from '@tiptap/react'
 import type { Ohang, Sipsung, Cheongan, Jiji } from './saju'
 
 export type PillarKey = 'year' | 'month' | 'day' | 'hour'
@@ -104,6 +105,7 @@ export type JudgmentCondition =
 export interface ConditionGroup {
   id: string
   conditions: JudgmentCondition[]
+  detail?: JSONContent | null
 }
 
 // posts.judgment_rules 컬럼에 저장되는 최상위 구조

@@ -24,14 +24,18 @@ export async function generateMetadata({ params }: Props) {
   const supabase = await createClient()
   const { data } = await supabase
     .from('posts')
-    .select('title, summary')
+    .select('title, summary, tags')
     .eq('slug', slug)
     .eq('is_published', true)
     .lte('published_at', new Date().toISOString())
     .single()
 
   if (!data) return {}
-  return { title: data.title, description: data.summary }
+  return {
+    title: data.title,
+    description: data.summary,
+    keywords: data.tags?.length ? data.tags.join(', ') : undefined,
+  }
 }
 
 export default async function PostDetailPage({ params }: Props) {

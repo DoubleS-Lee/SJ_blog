@@ -24,11 +24,11 @@ interface Props {
     category: PostFormData['category']
     content: JSONContent
     judgment_rules: JudgmentRules | null
-    judgment_detail: JSONContent | null
     target_year: number | null
     is_featured: boolean
     is_published: boolean
     published_at: string | null
+    tags?: string[] | null
   }
 }
 
@@ -53,8 +53,6 @@ export default function PostForm({ initialData }: Props) {
   const [content, setContent] = useState<JSONContent>(initialData?.content ?? { type: 'doc', content: [] })
   const [judgmentRules, setJudgmentRules] = useState<JudgmentRules | null>(initialData?.judgment_rules ?? null)
   const [showJudgmentRules, setShowJudgmentRules] = useState(!!initialData?.judgment_rules)
-  const [judgmentDetail, setJudgmentDetail] = useState<JSONContent | null>(initialData?.judgment_detail ?? null)
-  const [showJudgmentDetail, setShowJudgmentDetail] = useState(!!initialData?.judgment_detail)
   const [targetYear, setTargetYear] = useState(String(initialData?.target_year ?? ''))
   const [isFeatured, setIsFeatured] = useState(initialData?.is_featured ?? false)
   const [isPublished] = useState(initialData?.is_published ?? false)
@@ -67,6 +65,29 @@ export default function PostForm({ initialData }: Props) {
   })()
   const [scheduledAt, setScheduledAt] = useState(initScheduled)
   const [showSchedule, setShowSchedule] = useState(!!initScheduled)
+
+  const [tags, setTags] = useState<string[]>(initialData?.tags ?? [])
+  const [tagInput, setTagInput] = useState('')
+
+  function addTag(value: string) {
+    const tag = value.trim().replace(/,/g, '')
+    if (!tag || tags.includes(tag) || tags.length >= 10) return
+    setTags(prev => [...prev, tag])
+    setTagInput('')
+  }
+
+  function removeTag(tag: string) {
+    setTags(prev => prev.filter(t => t !== tag))
+  }
+
+  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addTag(tagInput)
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+      setTags(prev => prev.slice(0, -1))
+    }
+  }
 
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -95,8 +116,9 @@ export default function PostForm({ initialData }: Props) {
       category,
       content: toJsonString(content),
       judgment_rules: showJudgmentRules ? (judgmentRules ?? { groups: [] }) : null,
-      judgment_detail: showJudgmentDetail ? toJsonString(judgmentDetail ?? { type: 'doc', content: [] }) : null,
+      judgment_detail: null,
       target_year: targetYear ? parseInt(targetYear) : null,
+      tags,
       is_featured: isFeatured,
       is_published: publish,
       published_at: overridePublishedAt !== undefined
@@ -170,6 +192,33 @@ export default function PostForm({ initialData }: Props) {
           rows={2}
           className={`${inputCls} resize-none`}
         />
+      </div>
+
+      {/* 태그 */}
+      <div>
+        <label className={labelCls}>
+          태그 <span className="text-gray-400 font-normal text-xs">(SEO · 내부 검색용, Enter 또는 콤마로 추가, 최대 10개)</span>
+        </label>
+        <div className="flex flex-wrap gap-1.5 p-2 min-h-10 border border-gray-200 rounded-md bg-white cursor-text"
+          onClick={() => document.getElementById('tag-input')?.focus()}
+        >
+          {tags.map(tag => (
+            <span key={tag} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+              {tag}
+              <button type="button" onClick={() => removeTag(tag)} className="text-gray-400 hover:text-gray-700 leading-none">×</button>
+            </span>
+          ))}
+          <input
+            id="tag-input"
+            type="text"
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            onBlur={() => { if (tagInput) addTag(tagInput) }}
+            placeholder={tags.length === 0 ? '태그 입력...' : ''}
+            className="flex-1 min-w-24 text-sm focus:outline-none bg-transparent"
+          />
+        </div>
       </div>
 
       {/* 썸네일 */}
@@ -251,30 +300,6 @@ export default function PostForm({ initialData }: Props) {
         </div>
         {showJudgmentRules && (
           <JudgmentEditor value={judgmentRules} onChange={setJudgmentRules} />
-        )}
-      </div>
-
-      {/* 판정 상세 설명 */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <label className={labelCls + ' mb-0'}>판정 상세 설명</label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showJudgmentDetail}
-              onChange={(e) => setShowJudgmentDetail(e.target.checked)}
-              className="accent-black"
-            />
-            <span className="text-xs text-gray-500">사용</span>
-          </label>
-        </div>
-        {showJudgmentDetail && (
-          <RichEditor
-            initialContent={initialData?.judgment_detail ?? undefined}
-            onChange={setJudgmentDetail}
-            placeholder="판정 결과 해설을 작성하세요..."
-            minHeight="200px"
-          />
         )}
       </div>
 

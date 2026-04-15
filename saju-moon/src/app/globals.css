@@ -128,3 +128,11 @@
     @apply font-sans;
   }
 }
+
+/* 에디터 + 렌더러 hr 스타일 */
+.ProseMirror hr,
+.prose hr {
+  border: none;
+  border-top: 3px solid #000000;
+  margin: 1.5rem 0;
+}

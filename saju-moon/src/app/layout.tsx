@@ -1,5 +1,15 @@
 import type { Metadata } from 'next'
-import { Noto_Sans_KR } from 'next/font/google'
+import {
+  Noto_Sans_KR,
+  Nanum_Gothic,
+  Nanum_Myeongjo,
+  Do_Hyeon,
+  Jua,
+  Black_Han_Sans,
+  Gaegu,
+  Sunflower,
+  Gothic_A1,
+} from 'next/font/google'
 import './globals.css'
 import Header from '@/components/layout/Header'
 import { createClient } from '@/lib/supabase/server'
@@ -8,6 +18,48 @@ const notoSansKR = Noto_Sans_KR({
   subsets: ['latin'],
   weight: ['400', '500', '700'],
   variable: '--font-noto-sans-kr',
+})
+// 나눔스퀘어 대체 → Do Hyeon (둥글고 현대적인 고딕)
+const doHyeon = Do_Hyeon({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-do-hyeon',
+})
+// 나눔바른고딕 대체 → Nanum Gothic
+const nanumGothic = Nanum_Gothic({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-nanum-gothic',
+})
+// 제주명조 대체 → Nanum Myeongjo
+const nanumMyeongjo = Nanum_Myeongjo({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-nanum-myeongjo',
+})
+const jua = Jua({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-jua',
+})
+const blackHanSans = Black_Han_Sans({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-black-han-sans',
+})
+const gaegu = Gaegu({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-gaegu',
+})
+const sunflower = Sunflower({
+  weight: ['300', '500', '700'],
+  variable: '--font-sunflower',
+})
+const gothicA1 = Gothic_A1({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-gothic-a1',
 })
 
 export const metadata: Metadata = {
@@ -33,7 +85,7 @@ export default async function RootLayout({
   } = await supabase.auth.getUser()
 
   return (
-    <html lang="ko" className={`${notoSansKR.variable} h-full antialiased`}>
+    <html lang="ko" className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-(--font-noto-sans-kr)">
         <Header user={user} />
         <main className="flex-1">{children}</main>
