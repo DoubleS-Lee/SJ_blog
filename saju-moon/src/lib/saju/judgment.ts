@@ -14,6 +14,7 @@ import type {
   JudgmentRules,
   JudgmentCondition,
   PillarKey,
+  ConditionGroup,
 } from '@/types/judgment'
 
 // ─────────────────────────────────────────────
@@ -164,6 +165,11 @@ export interface JudgmentUserData {
   has_pyeonin: boolean; has_jeongin: boolean
   // 대운/세운 계산용
   full_saju_data: Record<string, unknown>
+}
+
+export interface JudgmentEvaluationResult {
+  result: boolean | null
+  matchedGroup: ConditionGroup | null
 }
 
 // ─────────────────────────────────────────────
@@ -332,4 +338,36 @@ export function judgePost(
     if (result) return true   // OR: 하나라도 통과
   }
   return hasActiveGroup ? false : null
+}
+
+export function evaluateJudgment(
+  rules: JudgmentRules,
+  user: JudgmentUserData,
+  targetYear?: number | null,
+): JudgmentEvaluationResult {
+  if (!rules.groups.length) {
+    return { result: null, matchedGroup: null }
+  }
+
+  const year = targetYear ?? new Date().getFullYear()
+  const seWoon = getSeWoonGanzi(user.full_saju_data, year)
+  const daeWoon = getDaeWoonGanzi(user.full_saju_data, year)
+
+  let hasActiveGroup = false
+  for (const group of rules.groups) {
+    const result = judgeGroup(group, user, seWoon, daeWoon)
+    if (result === null) continue
+    hasActiveGroup = true
+    if (result) {
+      return {
+        result: true,
+        matchedGroup: group,
+      }
+    }
+  }
+
+  return {
+    result: hasActiveGroup ? false : null,
+    matchedGroup: null,
+  }
 }

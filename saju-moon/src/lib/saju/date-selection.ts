@@ -86,7 +86,7 @@ export interface DateSelectionRecommendation {
   lunarDay: number
   purpose: SelectionPurpose
   score: number
-  level: 'best' | 'good' | 'caution' | 'avoid'
+  level: 'best' | 'good' | 'normal' | 'caution' | 'avoid'
   summary: string
   reasons: string[]
   cautions: string[]
@@ -432,7 +432,8 @@ function applySeoulTimeOffset(hm: string, offsetMinutes = 32) {
 function getLevel(score: number, filteredOutReason: string | null): DateSelectionRecommendation['level'] {
   if (filteredOutReason) return 'avoid'
   if (score >= 55) return 'best'
-  if (score >= 30) return 'good'
+  if (score >= 35) return 'good'
+  if (score >= 20) return 'normal'
   return 'caution'
 }
 
@@ -441,7 +442,7 @@ function normalizeRecommendation(
 ): DateSelectionRecommendation {
   const level = getLevel(base.score, base.filteredOutReason)
   const isRecommended = level === 'best' || level === 'good'
-  const reasons = isRecommended ? base.reasons : []
+  const reasons = isRecommended || level === 'normal' ? base.reasons : []
   const goodHours = isRecommended ? base.goodHours : []
   const cautions = level === 'avoid' ? [] : base.cautions
 

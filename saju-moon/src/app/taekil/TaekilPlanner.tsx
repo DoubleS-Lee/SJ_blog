@@ -33,6 +33,8 @@ function getPublicLevelLabel(level: DateSelectionRecommendation['level']) {
       return '강추천'
     case 'good':
       return '추천'
+    case 'normal':
+      return '보통'
     case 'caution':
       return '비추천'
     case 'avoid':
@@ -46,6 +48,8 @@ function getLevelDotClass(level: DateSelectionRecommendation['level']) {
       return 'bg-emerald-500'
     case 'good':
       return 'bg-sky-500'
+    case 'normal':
+      return 'bg-amber-400'
     case 'caution':
       return 'bg-gray-400'
     case 'avoid':
@@ -59,6 +63,8 @@ function getLevelChipClass(level: DateSelectionRecommendation['level']) {
       return 'bg-emerald-50 text-emerald-700'
     case 'good':
       return 'bg-sky-50 text-sky-700'
+    case 'normal':
+      return 'bg-amber-50 text-amber-700'
     case 'caution':
       return 'bg-gray-100 text-gray-600'
     case 'avoid':
@@ -76,6 +82,8 @@ function getCellClass(level: DateSelectionRecommendation['level'], isSelected: b
       return 'border-emerald-200 bg-white text-gray-900 hover:border-emerald-400'
     case 'good':
       return 'border-sky-200 bg-white text-gray-900 hover:border-sky-400'
+    case 'normal':
+      return 'border-amber-200 bg-white text-gray-900 hover:border-amber-400'
     case 'caution':
       return 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
     case 'avoid':
@@ -224,7 +232,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-gray-500 sm:text-xs">
-            {(['best', 'good', 'caution', 'avoid'] as const).map((level) => (
+            {(['best', 'good', 'normal', 'caution', 'avoid'] as const).map((level) => (
               <div key={level} className="flex items-center gap-1.5 rounded-full bg-gray-50 px-2.5 py-1.5">
                 <span className={`size-2 rounded-full ${getLevelDotClass(level)}`} />
                 <span>{getPublicLevelLabel(level)}</span>
@@ -282,6 +290,38 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                     </p>
                   )}
                 </div>
+              </div>
+            ) : selected.level === 'normal' ? (
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-gray-50 p-4">
+                  <p className="text-sm font-semibold text-gray-900">보통 포인트</p>
+                  <div className="mt-3 space-y-2">
+                    {selected.reasons.length > 0 ? (
+                      selected.reasons.map((reason) => (
+                        <p key={reason} className="text-sm leading-6 text-gray-600">
+                          {reason}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-sm leading-6 text-gray-600">
+                        크게 강한 추천 포인트는 아니지만 무난하게 검토할 수 있는 날입니다.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {selected.cautions.length > 0 ? (
+                  <div className="rounded-2xl bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-gray-900">참고할 점</p>
+                    <div className="mt-3 space-y-2">
+                      {selected.cautions.map((reason) => (
+                        <p key={reason} className="text-sm leading-6 text-gray-600">
+                          {reason}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="space-y-4">

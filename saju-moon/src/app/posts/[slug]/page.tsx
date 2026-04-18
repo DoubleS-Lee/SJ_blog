@@ -4,19 +4,19 @@ import GuestCTA from '@/components/blog/GuestCTA'
 import GradeCTA from '@/components/blog/GradeCTA'
 import CommentsSection from '@/components/blog/CommentsSection'
 import TiptapRenderer from '@/components/editor/TiptapRenderer'
-import JudgmentResult from '@/components/judgment/JudgmentResult'
-import { judgePost, type JudgmentUserData } from '@/lib/saju/judgment'
-import {
-  sanitizeIlganAvatarMap,
-} from '@/lib/saju/ilgan-avatar'
+import { evaluateJudgment, type JudgmentUserData } from '@/lib/saju/judgment'
+import { sanitizeIlganAvatarMap } from '@/lib/saju/ilgan-avatar'
 import type { JSONContent } from '@tiptap/react'
 import type { CommentNode } from '@/types/comment'
 import type { JudgmentRules } from '@/types/judgment'
 
 function formatDate(iso: string | null) {
   if (!iso) return ''
+
   return new Date(iso).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   })
 }
 
@@ -59,6 +59,7 @@ function buildCommentTree(
         continue
       }
     }
+
     roots.push(node)
   }
 
@@ -82,6 +83,7 @@ export async function generateMetadata({ params }: Props) {
     .single()
 
   if (!data) return {}
+
   return {
     title: data.title,
     description: data.summary,
@@ -103,10 +105,11 @@ export default async function PostDetailPage({ params }: Props) {
 
   if (!post) notFound()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   const isLoggedIn = !!user
 
-  // 등급 분리 설정 + 사용자 등급 조회 (병렬)
   const [settingsRes, profileRes] = await Promise.all([
     supabase
       .from('site_settings')
@@ -114,49 +117,50 @@ export default async function PostDetailPage({ params }: Props) {
       .eq('id', 1)
       .maybeSingle(),
     isLoggedIn
-      ? supabase.from('users').select('role').eq('id', user!.id).maybeSingle()
+      ? supabase.from('users').select('role, nickname').eq('id', user!.id).maybeSingle()
       : Promise.resolve({ data: null }),
   ])
 
   const gradeSeparationEnabled = settingsRes.data?.grade_separation_enabled ?? false
   const ilganAvatarMap = sanitizeIlganAvatarMap(settingsRes.data?.ilgan_avatar_urls)
   const role = profileRes.data?.role ?? 'free'
+  const displayName = profileRes.data?.nickname?.trim() || '회원님'
 
-  // 판정 열람 권한 결정
   let canSeeJudgment = false
-  let canSeeDetail = false
-
   if (isLoggedIn) {
     if (!gradeSeparationEnabled) {
-      // 등급 분리 꺼짐: 모든 로그인 회원 전체 열람
       canSeeJudgment = true
-      canSeeDetail = true
     } else {
-      // 등급 분리 켜짐
       canSeeJudgment = role === 'plus' || role === 'premium'
-      canSeeDetail = role === 'premium'
     }
   }
 
-  // 판정 계산 (권한 있을 때만)
   let judgmentResult: boolean | null = null
   let hasSaju = false
+  let matchedDetailContent: JSONContent | null = null
 
   if (canSeeJudgment && post.judgment_rules) {
     const [sajuRes, ohangRes, sipsungRes] = await Promise.all([
-      supabase.from('user_saju')
+      supabase
+        .from('user_saju')
         .select('year_cheongan,year_jiji,month_cheongan,month_jiji,day_cheongan,day_jiji,hour_cheongan,hour_jiji,year_ganji,month_ganji,day_ganji,hour_ganji,ilgan,full_saju_data')
-        .eq('user_id', user!.id).single(),
-      supabase.from('user_saju_ohang')
+        .eq('user_id', user!.id)
+        .single(),
+      supabase
+        .from('user_saju_ohang')
         .select('mok_score,hwa_score,to_score,geum_score,su_score,has_mok,has_hwa,has_to,has_geum,has_su')
-        .eq('user_id', user!.id).single(),
-      supabase.from('user_saju_sipsung')
+        .eq('user_id', user!.id)
+        .single(),
+      supabase
+        .from('user_saju_sipsung')
         .select('bigyeon_score,gyeopjae_score,sikshin_score,sanggwan_score,pyeonjae_score,jeongjae_score,pyeongwan_score,jeonggwan_score,pyeonin_score,jeongin_score,has_bigyeon,has_gyeopjae,has_sikshin,has_sanggwan,has_pyeonjae,has_jeongjae,has_pyeongwan,has_jeonggwan,has_pyeonin,has_jeongin')
-        .eq('user_id', user!.id).single(),
+        .eq('user_id', user!.id)
+        .single(),
     ])
 
     if (sajuRes.data && ohangRes.data && sipsungRes.data) {
       hasSaju = true
+
       const userData: JudgmentUserData = {
         ...sajuRes.data,
         ...ohangRes.data,
@@ -164,16 +168,20 @@ export default async function PostDetailPage({ params }: Props) {
         full_saju_data: sajuRes.data.full_saju_data as Record<string, unknown>,
       } as unknown as JudgmentUserData
 
-      judgmentResult = judgePost(
+      const evaluation = evaluateJudgment(
         post.judgment_rules as unknown as JudgmentRules,
         userData,
         post.target_year,
       )
+
+      judgmentResult = evaluation.result
+      matchedDetailContent =
+        (evaluation.matchedGroup?.detail as JSONContent | null | undefined) ??
+        (post.judgment_detail as JSONContent | null)
     }
   }
-
-  // 사이드바에 보여줄 판정 detail (등급에 따라 null 처리)
-  const detailContent = canSeeDetail ? (post.judgment_detail as JSONContent | null) : null
+  const showTopJudgmentNotice = hasSaju && judgmentResult === true
+  const showBottomJudgmentDetail = showTopJudgmentNotice && !!matchedDetailContent
 
   const { data: commentRows } = await supabase
     .from('post_comments')
@@ -202,30 +210,27 @@ export default async function PostDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      <div className="flex flex-col lg:flex-row gap-12">
-        {/* 본문 (60%) */}
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="flex flex-col gap-12 lg:flex-row">
         <article className="w-full lg:w-[60%]">
-          {/* 메타 */}
-          <div className="mb-6 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
               {post.category}
             </span>
             {post.target_year && (
-              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+              <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
                 {post.target_year}년 기준
               </span>
             )}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold leading-tight tracking-tight mb-4">
+          <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
             {post.title}
           </h1>
 
-          {/* 저자 정보 */}
-          <div className="flex items-center gap-3 mb-10 pb-6 border-b border-gray-100">
-            <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              사
+          <div className="mb-10 flex items-center gap-3 border-b border-gray-100 pb-6">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
+              문
             </div>
             <span className="text-sm text-gray-500">
               사주 Moon
@@ -233,25 +238,43 @@ export default async function PostDetailPage({ params }: Props) {
             </span>
           </div>
 
-          {/* 본문 */}
+          {showTopJudgmentNotice && (
+            <div className="mb-8 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4">
+              <p className="text-sm font-semibold leading-6 text-sky-900">
+                {displayName}은 이 글에 해당하는 사주를 갖고 계십니다.
+                <br />
+                자세히 읽어보세요!
+              </p>
+            </div>
+          )}
+
           <div className="prose prose-gray max-w-none">
             <TiptapRenderer content={post.content as JSONContent} />
           </div>
+
+          {showBottomJudgmentDetail && (
+            <section className="mt-10 rounded-3xl border border-sky-100 bg-sky-50/80 px-6 py-6">
+              <div className="mb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-500">
+                  Matching Note
+                </p>
+                <h2 className="mt-2 text-xl font-bold tracking-tight text-sky-950">
+                  회원님께 더 와닿는 해설
+                </h2>
+              </div>
+              <div className="prose prose-gray max-w-none prose-headings:text-sky-950">
+                <TiptapRenderer content={matchedDetailContent} />
+              </div>
+            </section>
+          )}
         </article>
 
-        {/* 사이드바 (40%) */}
-        <aside className="w-full lg:w-[40%] lg:max-w-sm shrink-0">
+        <aside className="w-full shrink-0 lg:w-[40%] lg:max-w-sm">
           <div className="sticky top-20 flex flex-col gap-6">
             {!isLoggedIn ? (
               <GuestCTA />
             ) : gradeSeparationEnabled && role === 'free' ? (
               post.judgment_rules ? <GradeCTA /> : null
-            ) : post.judgment_rules ? (
-              <JudgmentResult
-                result={hasSaju ? judgmentResult : null}
-                detail={detailContent}
-                showDetail={canSeeDetail}
-              />
             ) : null}
           </div>
         </aside>
