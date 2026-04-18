@@ -93,6 +93,10 @@ function GanjiBadge({ cn, kr, ohang, isJiji = false, small = false }: {
 // ─────────────────────────────────────────────
 function HelpTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
   return (
     <span className="relative inline-block align-middle">
       <button
@@ -105,8 +109,12 @@ function HelpTooltip({ text }: { text: string }) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-5 z-20 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs text-gray-600 leading-relaxed">
-            {text}
+          <div className="absolute left-0 top-5 z-20 w-64 rounded-xl border border-gray-200 bg-white p-3 text-[11px] leading-4 text-gray-600 shadow-lg">
+            <div className="space-y-1">
+              {lines.map((line, index) => (
+                <p key={`${line}-${index}`}>{line}</p>
+              ))}
+            </div>
           </div>
         </>
       )}
@@ -163,7 +171,7 @@ function TabSajuWonguk({ data }: { data: ManseryeokData }) {
   return (
     <div>
       <h2 className="text-base font-bold mb-4">
-        사주원국 <HelpTooltip text="태어난 연·월·일·시를 천간과 지지로 표현한 8글자입니다. 천간 10가지(甲~癸)와 지지 12가지(子~亥)로 구성되며, 지장간은 지지 속에 숨겨진 천간, 12운성은 일간 기준 각 지지의 생애 주기 단계입니다." />
+        사주원국 <HelpTooltip text={'태어난 연·월·일·시를 8글자로 나타낸 표입니다.\n천간은 겉으로 드러난 기운입니다.\n지지는 그 기운이 머무는 자리입니다.\n지장간은 지지 안에 숨은 기운입니다.\n12운성은 일간 기준 기운의 성장 단계를 뜻합니다.'} />
       </h2>
 
       {/* 5열 그리드: [레이블] [시주] [일주] [월주] [년주] */}
@@ -408,7 +416,7 @@ function TabOhang({ data }: { data: ManseryeokData }) {
   return (
     <div>
       <h2 className="text-base font-bold mb-3">
-        오행과 십성 <HelpTooltip text="오행(목·화·토·금·수)은 사주에 흐르는 다섯 기운의 강약을 점수로 나타냅니다. 십성은 일간(나)과의 오행 관계에 따라 비겁·식상·재성·관성·인성으로 분류됩니다. 오각형 면적이 넓을수록 해당 오행이 발달한 사주입니다." />
+        오행과 십성 <HelpTooltip text={'오행은 목·화·토·금·수 다섯 기운의 분포입니다.\n점수가 높을수록 그 오행이 강하게 작용합니다.\n십성은 일간과 다른 기운의 관계를 나눈 해석표입니다.\n오각형이 넓게 나온 오행일수록 발달한 편입니다.'} />
       </h2>
 
       <OhangPentagon scores={data.ohangScores} total={data.totalScore} ilganOhang={data.ilganOhang} />
@@ -512,7 +520,7 @@ function TabSingang({ data }: { data: ManseryeokData }) {
   return (
     <div>
       <h2 className="text-base font-bold mb-2">
-        신강신약 <HelpTooltip text="일간(나의 기운)이 사주 안에서 얼마나 강한지 나타내는 지표입니다. 비겁(같은 오행)과 인성(나를 생하는 오행)의 점수 합으로 계산합니다. 신강하면 추진력·자기주장이 강하고, 신약하면 섬세하고 협조적인 성향이 있습니다." />
+        신강신약 <HelpTooltip text={'일간의 힘이 사주 안에서 얼마나 강한지 보는 지표입니다.\n비겁과 인성의 힘을 중심으로 계산합니다.\n신강은 자기 힘이 비교적 강한 상태입니다.\n신약은 외부 도움의 영향이 큰 상태입니다.'} />
       </h2>
       <StrengthGauge value={data.strength} />
     </div>
@@ -559,19 +567,19 @@ function RunSection({ title, children, topLabel = '나이', help }: { title: str
 function TabDaYunSu({ data }: { data: ManseryeokData }) {
   return (
     <div className="flex flex-col gap-6">
-      <RunSection title="대운" topLabel="나이" help="약 10년 단위로 바뀌는 큰 흐름의 운입니다. 표시된 나이부터 해당 천간·지지의 기운이 작용하며, 인생의 큰 방향성과 환경 변화를 나타냅니다.">
+      <RunSection title="대운" topLabel="나이" help={'약 10년 단위로 바뀌는 큰 흐름입니다.\n표시된 나이부터 해당 운이 시작됩니다.\n인생의 방향과 환경 변화를 볼 때 참고합니다.'}>
         {([...data.daYun] as DaYunCard[]).reverse().map(c => (
           <RunCard key={c.ageLabel} label={c.ageLabel} card={c} />
         ))}
       </RunSection>
 
-      <RunSection title="세운" topLabel="연도" help="해마다 바뀌는 그해의 운입니다. 매년 새로운 천간·지지의 기운이 원국과 어우러져 그해의 흐름을 만들어 냅니다.">
+      <RunSection title="세운" topLabel="연도" help={'해마다 바뀌는 1년 단위 운입니다.\n원국과 만나 그해의 분위기를 만듭니다.\n연도별 흐름을 볼 때 참고합니다.'}>
         {([...data.seWun] as SeWunCard[]).reverse().map(c => (
           <RunCard key={c.year} label={String(c.year)} card={c} />
         ))}
       </RunSection>
 
-      <RunSection title="월운" topLabel="월" help="매달 바뀌는 그달의 운입니다. 세운 안에서 월별로 세밀한 기운의 흐름을 파악할 수 있으며, 현재 연도를 기준으로 표시됩니다.">
+      <RunSection title="월운" topLabel="월" help={'매달 바뀌는 한 달 단위 운입니다.\n세운 안에서 월별 흐름을 더 세밀하게 봅니다.\n현재 연도를 기준으로 표시됩니다.'}>
         {([...data.moonCards] as MoonCard[]).reverse().map(c => (
           <RunCard key={c.month} label={`${c.month}월`} card={c} />
         ))}

@@ -72,6 +72,17 @@ function getLevelChipClass(level: DateSelectionRecommendation['level']) {
   }
 }
 
+function getReasonPanelClass(level: DateSelectionRecommendation['level']) {
+  switch (level) {
+    case 'best':
+      return 'bg-emerald-50'
+    case 'good':
+      return 'bg-sky-50'
+    default:
+      return 'bg-gray-50'
+  }
+}
+
 function getCellClass(level: DateSelectionRecommendation['level'], isSelected: boolean) {
   if (isSelected) {
     return 'border-black bg-black text-white shadow-sm'
@@ -293,7 +304,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
               </div>
             ) : selected.level === 'normal' ? (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-gray-50 p-4">
+                <div className={`rounded-2xl p-4 ${getReasonPanelClass(selected.level)}`}>
                   <p className="text-sm font-semibold text-gray-900">보통 포인트</p>
                   <div className="mt-3 space-y-2">
                     {selected.reasons.length > 0 ? (
@@ -325,7 +336,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-gray-50 p-4">
+                <div className={`rounded-2xl p-4 ${getReasonPanelClass(selected.level)}`}>
                   <p className="text-sm font-semibold text-gray-900">추천 이유</p>
                   <div className="mt-3 space-y-2">
                     {selected.reasons.map((reason) => (
@@ -353,7 +364,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                       ))
                     ) : (
                       <p className="rounded-2xl bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-500">
-                        추천 시간대가 충분하지 않아 시간 추천은 비워두었습니다.
+                        날짜 자체는 검토할 만하지만 추천 시간대가 뚜렷하지 않아 시간 선택에 제약이 있습니다.
                       </p>
                     )}
                   </div>

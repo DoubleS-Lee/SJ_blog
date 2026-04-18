@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { Solar } = require('lunar-javascript')
 
-import type { Jiji } from '@/types/saju'
+import type { Cheongan, Jiji } from '@/types/saju'
 
 interface LunarTimeData {
   getGanZhi(): string
@@ -65,7 +65,10 @@ type TianShenName =
 export interface DateSelectionUserData {
   year_jiji: Jiji
   month_jiji: Jiji
+  day_cheongan: Cheongan
   day_jiji: Jiji
+  hour_jiji: Jiji | null
+  day_xun_kong?: string | null
 }
 
 export interface TimeRecommendation {
@@ -251,7 +254,7 @@ const PURPOSE_GOD_WEIGHTS: Record<SelectionPurpose, Record<TianShenName, number>
   },
   treatment: {
     青龙: 4, 明堂: 6, 金匮: 6, 天德: 14, 玉堂: 8, 司命: 10,
-    天刑: -6, 朱雀: -6, 白虎: -8, 天牢: -10, 玄武: -8, 勾陈: -8,
+    天刑: -18, 朱雀: -6, 白虎: -20, 天牢: -10, 玄武: -8, 勾陈: -8,
   },
   travel: {
     青龙: 18, 明堂: 4, 金匮: 4, 天德: 8, 玉堂: 4, 司命: 6,
@@ -289,6 +292,19 @@ const CN_BRANCH_TO_LABEL: Record<string, string> = {
   亥: '해',
 }
 
+const KR_TO_CN_CHEONGAN: Record<Cheongan, string> = {
+  갑: '甲',
+  을: '乙',
+  병: '丙',
+  정: '丁',
+  무: '戊',
+  기: '己',
+  경: '庚',
+  신: '辛',
+  임: '壬',
+  계: '癸',
+}
+
 const BRANCH_CLASH: Record<string, string> = {
   子: '午',
   丑: '未',
@@ -319,6 +335,41 @@ const BRANCH_HARMONY: Record<string, string> = {
   亥: '寅',
 }
 
+const BRANCH_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const
+const DI_SHI_STAGES = ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'] as const
+const DI_SHI_CONFIG: Record<string, { startBranch: typeof BRANCH_ORDER[number]; direction: 1 | -1 }> = {
+  甲: { startBranch: '亥', direction: 1 },
+  乙: { startBranch: '午', direction: -1 },
+  丙: { startBranch: '寅', direction: 1 },
+  丁: { startBranch: '酉', direction: -1 },
+  戊: { startBranch: '寅', direction: 1 },
+  己: { startBranch: '酉', direction: -1 },
+  庚: { startBranch: '巳', direction: 1 },
+  辛: { startBranch: '子', direction: -1 },
+  壬: { startBranch: '申', direction: 1 },
+  癸: { startBranch: '卯', direction: -1 },
+}
+
+const FAVORABLE_DI_SHI = new Set(['长生', '冠带', '临官', '帝旺'])
+const UNFAVORABLE_DI_SHI = new Set(['衰', '病', '死', '墓', '绝'])
+const HYEONG_GROUPS = [
+  ['寅', '巳', '申'],
+  ['丑', '戌', '未'],
+  ['子', '卯'],
+] as const
+const SELF_HYEONG = new Set(['辰', '午', '酉', '亥'])
+const HARD_CLASH_PURPOSES = new Set<SelectionPurpose>(['marriage', 'contract'])
+const DAY_CLASH_PENALTIES: Record<SelectionPurpose, number> = {
+  romance: 28,
+  marriage: 0,
+  moving: 20,
+  opening: 24,
+  contract: 0,
+  interview: 24,
+  treatment: 18,
+  travel: 20,
+}
+
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
 function isValidPurpose(value: string | undefined): value is SelectionPurpose {
@@ -336,6 +387,57 @@ export function getDefaultSelectionPurpose(): SelectionPurpose {
 
 function includesAnyKeyword(values: string[], keywords: string[]) {
   return values.some((value) => keywords.some((keyword) => value.includes(keyword)))
+}
+
+function getDiShi(dayStem: Cheongan, branch: string) {
+  const stem = KR_TO_CN_CHEONGAN[dayStem]
+  const config = DI_SHI_CONFIG[stem]
+  const branchIndex = BRANCH_ORDER.indexOf(branch as (typeof BRANCH_ORDER)[number])
+  const startIndex = BRANCH_ORDER.indexOf(config.startBranch)
+
+  if (branchIndex < 0 || startIndex < 0) {
+    return null
+  }
+
+  const offset = config.direction === 1
+    ? (branchIndex - startIndex + 12) % 12
+    : (startIndex - branchIndex + 12) % 12
+
+  return DI_SHI_STAGES[offset] ?? null
+}
+
+function getDiShiScore(stage: string | null) {
+  if (!stage) return 0
+  if (FAVORABLE_DI_SHI.has(stage)) return 8
+  if (UNFAVORABLE_DI_SHI.has(stage)) return -8
+  return 0
+}
+
+function buildDiShiReason(stage: string) {
+  return `일간 기준 12운성(십이운성)이 ${stage}(으)로 들어와 개인 흐름과 비교적 잘 맞습니다.`
+}
+
+function buildDiShiCaution(stage: string) {
+  return `일간 기준 12운성(십이운성)이 ${stage}(으)로 들어와 개인 흐름상 기운이 다소 약합니다.`
+}
+
+function parseXunKongBranches(value: string | null | undefined) {
+  if (!value) return []
+  return value
+    .split('')
+    .filter((char) => BRANCH_ORDER.includes(char as (typeof BRANCH_ORDER)[number]))
+}
+
+function isHyeong(userBranch: string, targetBranch: string) {
+  if (userBranch === targetBranch && SELF_HYEONG.has(userBranch)) {
+    return true
+  }
+
+  return HYEONG_GROUPS.some((group) => {
+    const hasUserBranch = group.some((value) => value === userBranch)
+    const hasTargetBranch = group.some((value) => value === targetBranch)
+    return hasUserBranch && hasTargetBranch
+  })
 }
 
 function getPurposeReason(config: PurposeConfig) {
@@ -431,9 +533,9 @@ function applySeoulTimeOffset(hm: string, offsetMinutes = 32) {
 
 function getLevel(score: number, filteredOutReason: string | null): DateSelectionRecommendation['level'] {
   if (filteredOutReason) return 'avoid'
-  if (score >= 55) return 'best'
+  if (score >= 60) return 'best'
   if (score >= 35) return 'good'
-  if (score >= 20) return 'normal'
+  if (score >= 15) return 'normal'
   return 'caution'
 }
 
@@ -503,12 +605,20 @@ function scoreTimeRecommendation(
     reasons.push('본인 일지와 합이 들어와 무리감이 적은 시간대입니다.')
   }
 
+  if (user.hour_jiji && BRANCH_HARMONY[KR_TO_CN_JIJI[user.hour_jiji]] === timeBranch) {
+    score += 5
+  }
+
   if (includesAnyKeyword(ji, config.hourAvoidKeywords)) {
     score -= 12
   }
 
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.year_jiji]] === timeBranch) {
     score -= 8
+  }
+
+  if (user.hour_jiji && BRANCH_CLASH[KR_TO_CN_JIJI[user.hour_jiji]] === timeBranch) {
+    score -= 6
   }
 
   if (score <= 0) {
@@ -548,6 +658,8 @@ function buildDayRecommendation(
   const dayGanji = lunar.getDayInGanZhiExact()
   const dayTianShen = lunar.getDayTianShen() as TianShenName
   const isHwangdo = YELLOW_GODS.has(dayTianShen)
+  const dayDiShi = getDiShi(user.day_cheongan, dayBranch)
+  const dayXunKongBranches = parseXunKongBranches(user.day_xun_kong)
 
   const reasons: string[] = []
   const cautions: string[] = []
@@ -555,7 +667,12 @@ function buildDayRecommendation(
   let score = 0
 
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.day_jiji]] === dayBranch) {
-    filteredOutReason = '본인 일지와 정면 충이 들어오는 날이라 이번 목적에는 제외했습니다.'
+    if (HARD_CLASH_PURPOSES.has(purpose)) {
+      filteredOutReason = '본인 일지와 정면 충이 들어오는 날이라 이번 목적에는 제외했습니다.'
+    } else {
+      score -= DAY_CLASH_PENALTIES[purpose]
+      cautions.push('본인 일지와 충이 들어와 개인 흐름상 마찰이 생기기 쉬운 날입니다.')
+    }
   }
 
   if (
@@ -569,6 +686,12 @@ function buildDayRecommendation(
   if (includesAnyKeyword(dayYi, config.dayIncludeKeywords)) {
     score += 30
     reasons.push(getPurposeReason(config))
+  }
+
+  if (dayXunKongBranches.includes(dayBranch)) {
+    const kongWangPenalty = purpose === 'marriage' || purpose === 'contract' ? 25 : 20
+    score -= kongWangPenalty
+    cautions.push(`개인 공망(空亡)에 닿는 날이라 ${config.shortLabel} 일정은 보수적으로 보는 편이 좋습니다.`)
   }
 
   const dayGodWeight = getGodWeight(purpose, dayTianShen)
@@ -585,6 +708,16 @@ function buildDayRecommendation(
     reasons.push(getHarmonyReason('연지'))
   }
 
+  if (user.hour_jiji && BRANCH_HARMONY[KR_TO_CN_JIJI[user.hour_jiji]] === dayBranch) {
+    score += 6
+    reasons.push(getHarmonyReason('시지'))
+  }
+
+  if (BRANCH_HARMONY[KR_TO_CN_JIJI[user.day_jiji]] === dayBranch) {
+    score += 15
+    reasons.push(getHarmonyReason('일지'))
+  }
+
   if (BRANCH_HARMONY[KR_TO_CN_JIJI[user.month_jiji]] === dayBranch) {
     score += 8
     reasons.push(getHarmonyReason('월지'))
@@ -593,6 +726,30 @@ function buildDayRecommendation(
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.year_jiji]] === dayBranch) {
     score -= 15
     cautions.push('연지와 충이 있어 큰 결정은 한 번 더 체크하는 편이 좋습니다.')
+  }
+
+  if (user.hour_jiji && BRANCH_CLASH[KR_TO_CN_JIJI[user.hour_jiji]] === dayBranch) {
+    score -= 8
+    cautions.push('시지와 충이 있어 실제 실행 타이밍에서 피로감이나 엇박자가 생길 수 있습니다.')
+  }
+
+  if (BRANCH_CLASH[KR_TO_CN_JIJI[user.month_jiji]] === dayBranch) {
+    score -= 12
+    cautions.push('월지와 충이 있어 기반이나 환경이 흔들리기 쉬운 날입니다.')
+  }
+
+  if (isHyeong(KR_TO_CN_JIJI[user.day_jiji], dayBranch)) {
+    score -= 10
+    cautions.push('일지와 형(刑)이 걸려 긴장감이나 삐걱거림이 생기기 쉬운 날입니다.')
+  }
+
+  const diShiScore = getDiShiScore(dayDiShi)
+  if (diShiScore > 0 && dayDiShi) {
+    score += diShiScore
+    reasons.push(buildDiShiReason(dayDiShi))
+  } else if (diShiScore < 0 && dayDiShi) {
+    score += diShiScore
+    cautions.push(buildDiShiCaution(dayDiShi))
   }
 
   if (includesAnyKeyword(dayJi, config.dayAvoidKeywords)) {
@@ -613,7 +770,7 @@ function buildDayRecommendation(
     .slice(0, 4)
 
   if (!filteredOutReason && goodHours.length === 0) {
-    filteredOutReason = '날짜 자체는 검토 가능하지만 추천할 만한 시간대가 없어 이번 달 후보에서 뺐습니다.'
+    cautions.push('날짜 흐름은 검토할 만하지만 추천 시간대가 뚜렷하지 않아 시간 선택에 제약이 있습니다.')
   }
 
   if (goodHours.length >= 3) {

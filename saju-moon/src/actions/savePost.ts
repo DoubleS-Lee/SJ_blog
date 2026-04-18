@@ -61,6 +61,21 @@ export async function savePost(data: PostFormData): Promise<{ error?: string }> 
 
   if (data.id) {
     // 수정
+    const { data: existingPost, error: existingError } = await supabase
+      .from('posts')
+      .select('published_at, is_published')
+      .eq('id', data.id)
+      .single()
+
+    if (existingError || !existingPost) {
+      console.error('[savePost] fetch existing post error:', existingError)
+      return { error: '글 정보를 불러오는 중 오류가 발생했습니다.' }
+    }
+
+    const nextPublishedAt = !data.is_published
+      ? null
+      : (data.published_at ?? (existingPost.is_published ? existingPost.published_at : now))
+
     const { data: updated, error } = await supabase
       .from('posts')
       .update({
@@ -75,7 +90,7 @@ export async function savePost(data: PostFormData): Promise<{ error?: string }> 
         tags: data.tags ?? [],
         is_featured: data.is_featured,
         is_published: data.is_published,
-        published_at: data.is_published ? (data.published_at ?? now) : null,
+        published_at: nextPublishedAt,
         updated_at: now,
       })
       .eq('id', data.id)

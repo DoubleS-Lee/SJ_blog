@@ -93,9 +93,13 @@ export default function ProfileAvatarSettings({
       <div className="mb-4">
         <h2 className="text-base font-bold text-gray-900">프로필 이미지</h2>
         <p className="mt-1 text-sm text-gray-500">
-          댓글과 상담 대화에서 보이는 프로필 이미지입니다. 업로드한 이미지가 없으면 일간별 기본 아이콘이
-          자동으로 적용됩니다. 2MB 이하의 JPG, PNG, WEBP, GIF 파일을 올릴 수 있고, 권장 크기는 512x512
-          정사각형입니다.
+          댓글과 상담 대화에서 보이는 프로필 이미지입니다.
+          <br />
+          업로드한 이미지가 없으면 일간별 기본 아이콘이 자동으로 적용됩니다.
+          <br />
+          2MB 이하의 JPG, PNG, WEBP, GIF 파일을 올릴 수 있습니다.
+          <br />
+          권장 크기는 512x512 정사각형입니다.
         </p>
       </div>
 

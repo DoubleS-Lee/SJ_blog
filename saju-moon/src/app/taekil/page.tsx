@@ -63,7 +63,7 @@ export default async function TaekilPage({ searchParams }: Props) {
 
   const { data: saju } = await supabase
     .from('user_saju')
-    .select('year_jiji, month_jiji, day_jiji')
+    .select('year_jiji, month_jiji, day_cheongan, day_jiji, hour_jiji, full_saju_data')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -90,7 +90,15 @@ export default async function TaekilPage({ searchParams }: Props) {
   const userData: DateSelectionUserData = {
     year_jiji: saju.year_jiji as DateSelectionUserData['year_jiji'],
     month_jiji: saju.month_jiji as DateSelectionUserData['month_jiji'],
+    day_cheongan: saju.day_cheongan as DateSelectionUserData['day_cheongan'],
     day_jiji: saju.day_jiji as DateSelectionUserData['day_jiji'],
+    hour_jiji: saju.hour_jiji as DateSelectionUserData['hour_jiji'],
+    day_xun_kong:
+      typeof saju.full_saju_data === 'object'
+      && saju.full_saju_data
+      && 'day_xun_kong' in saju.full_saju_data
+        ? String(saju.full_saju_data.day_xun_kong ?? '')
+        : null,
   }
 
   const data = getDateSelectionMonthResult(userData, year, month, purpose)
