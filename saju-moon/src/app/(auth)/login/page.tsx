@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { buttonVariants } from '@/components/ui/button'
 import Link from 'next/link'
 
 export default function LoginPage() {

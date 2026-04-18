@@ -2,14 +2,16 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
+import type { User } from '@supabase/supabase-js'
 import { buttonVariants } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import type { User } from '@supabase/supabase-js'
 
 const NAV_LINKS = [
   { href: '/', label: '블로그' },
+  { href: '/counsel', label: '익명 상담' },
+  { href: '/taekil', label: '택일' },
 ]
 
 interface HeaderProps {
@@ -27,37 +29,35 @@ export default function Header({ user }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        {/* 로고 */}
+    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="text-lg font-bold tracking-tight">
           사주 Moon
         </Link>
 
-        {/* 데스크탑 네비 (중앙) */}
-        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-gray-600 hover:text-black transition-colors"
+              className="text-sm text-gray-600 transition-colors hover:text-black"
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        {/* 데스크탑 우측 */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
               <Link
                 href="/mypage"
-                className="text-sm text-gray-600 hover:text-black transition-colors px-3 py-1"
+                className="px-3 py-1 text-sm text-gray-600 transition-colors hover:text-black"
               >
                 마이페이지
               </Link>
               <button
+                type="button"
                 onClick={handleLogout}
                 className={buttonVariants({ variant: 'ghost', size: 'sm' })}
               >
@@ -76,10 +76,10 @@ export default function Header({ user }: HeaderProps) {
           )}
         </div>
 
-        {/* 모바일 우측 */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex items-center gap-2 md:hidden">
           {user ? (
             <button
+              type="button"
               onClick={handleLogout}
               className={buttonVariants({ size: 'sm', variant: 'ghost' })}
             >
@@ -91,7 +91,8 @@ export default function Header({ user }: HeaderProps) {
             </Link>
           )}
           <button
-            onClick={() => setMenuOpen((v) => !v)}
+            type="button"
+            onClick={() => setMenuOpen((value) => !value)}
             className="p-1 text-gray-600"
             aria-label="메뉴"
           >
@@ -100,9 +101,8 @@ export default function Header({ user }: HeaderProps) {
         </div>
       </div>
 
-      {/* 모바일 드롭다운 */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 border-t border-gray-100 bg-white px-4 py-4 md:hidden">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}

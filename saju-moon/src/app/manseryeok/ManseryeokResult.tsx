@@ -136,23 +136,29 @@ function RunCard({ label, card, showDiShi = true }: {
   )
 }
 
+function PillarGridRow({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <>
+      <div className="text-[10px] text-gray-400 text-right pr-1.5 flex items-center justify-end leading-none">
+        {label}
+      </div>
+      {children}
+    </>
+  )
+}
+
 // ─────────────────────────────────────────────
 // 사주원국 탭 — 5열 그리드 (행 레이블 + 4주)
 // ─────────────────────────────────────────────
 function TabSajuWonguk({ data }: { data: ManseryeokData }) {
   const [year, month, day, hour] = data.pillars
   const cols: PillarDisplay[] = [hour, day, month, year] // 시→년 순
-
-  function Row({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-      <>
-        <div className="text-[10px] text-gray-400 text-right pr-1.5 flex items-center justify-end leading-none">
-          {label}
-        </div>
-        {children}
-      </>
-    )
-  }
 
   return (
     <div>
@@ -174,16 +180,16 @@ function TabSajuWonguk({ data }: { data: ManseryeokData }) {
         ))}
 
         {/* ── 십성 (상단 천간) ── */}
-        <Row label="십성">
+        <PillarGridRow label="십성">
           {cols.map((p) => (
             <div key={p.label} className="text-center text-xs text-gray-500 leading-none">
               {p.cheonganCN ? (p.sipsung_top ?? '일원') : ''}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 천간 음양 ── */}
-        <Row label="">
+        <PillarGridRow label="">
           {cols.map((p) => (
             <div key={p.label} className="text-center text-xs leading-none">
               {p.cheonganCN
@@ -193,10 +199,10 @@ function TabSajuWonguk({ data }: { data: ManseryeokData }) {
                 : ''}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 천간 뱃지 ── */}
-        <Row label="천간">
+        <PillarGridRow label="천간">
           {cols.map((p) => (
             <div key={p.label} className="flex justify-center">
               {p.cheonganCN
@@ -204,10 +210,10 @@ function TabSajuWonguk({ data }: { data: ManseryeokData }) {
                 : <div className="w-11 h-11" />}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 지지 뱃지 ── */}
-        <Row label="지지">
+        <PillarGridRow label="지지">
           {cols.map((p) => (
             <div key={p.label} className="flex justify-center">
               {p.jijiCN
@@ -215,10 +221,10 @@ function TabSajuWonguk({ data }: { data: ManseryeokData }) {
                 : <div className="w-11 h-11" />}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 지지 음양 ── */}
-        <Row label="">
+        <PillarGridRow label="">
           {cols.map((p) => (
             <div key={p.label} className="text-center text-xs leading-none">
               {p.jijiCN
@@ -228,34 +234,34 @@ function TabSajuWonguk({ data }: { data: ManseryeokData }) {
                 : ''}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 십성 (하단 지장간) ── */}
-        <Row label="십성">
+        <PillarGridRow label="십성">
           {cols.map((p) => (
             <div key={p.label} className="text-center text-xs text-gray-500 leading-none">
               {p.cheonganCN ? (p.sipsung_bot ?? '-') : ''}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 지장간 ── */}
-        <Row label="지장간">
+        <PillarGridRow label="지장간">
           {cols.map((p) => (
             <div key={p.label} className="text-center text-[10px] text-gray-500 leading-none">
               {p.hideGanKR.join('')}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
         {/* ── 12운성 ── */}
-        <Row label="12운성">
+        <PillarGridRow label="12운성">
           {cols.map((p) => (
             <div key={p.label} className="text-center text-xs text-gray-600 leading-none">
               {p.cheonganCN ? (p.diShi || '-') : ''}
             </div>
           ))}
-        </Row>
+        </PillarGridRow>
 
       </div>
     </div>

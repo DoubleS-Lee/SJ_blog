@@ -2,10 +2,15 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import GuestCTA from '@/components/blog/GuestCTA'
 import GradeCTA from '@/components/blog/GradeCTA'
+import CommentsSection from '@/components/blog/CommentsSection'
 import TiptapRenderer from '@/components/editor/TiptapRenderer'
 import JudgmentResult from '@/components/judgment/JudgmentResult'
 import { judgePost, type JudgmentUserData } from '@/lib/saju/judgment'
+import {
+  sanitizeIlganAvatarMap,
+} from '@/lib/saju/ilgan-avatar'
 import type { JSONContent } from '@tiptap/react'
+import type { CommentNode } from '@/types/comment'
 import type { JudgmentRules } from '@/types/judgment'
 
 function formatDate(iso: string | null) {
@@ -17,6 +22,52 @@ function formatDate(iso: string | null) {
 
 interface Props {
   params: Promise<{ slug: string }>
+}
+
+function buildCommentTree(
+  comments: Array<{
+    id: string
+    post_id: string
+    user_id: string
+    parent_id: string | null
+    author_name: string
+    author_avatar_url: string | null
+    author_ilgan: string | null
+    body: string
+    is_deleted: boolean
+    created_at: string
+    updated_at: string
+  }>,
+  likedCommentIds: Set<string>,
+  likeCountMap: Map<string, number>,
+): CommentNode[] {
+  const nodes = comments.map((comment) => ({
+    ...comment,
+    like_count: likeCountMap.get(comment.id) ?? 0,
+    liked_by_me: likedCommentIds.has(comment.id),
+    replies: [] as CommentNode[],
+  }))
+
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]))
+  const roots: CommentNode[] = []
+
+  for (const node of nodes) {
+    if (node.parent_id) {
+      const parent = nodeMap.get(node.parent_id)
+      if (parent) {
+        parent.replies.push(node)
+        continue
+      }
+    }
+    roots.push(node)
+  }
+
+  roots.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+  for (const root of roots) {
+    root.replies.sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at))
+  }
+
+  return roots
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -44,7 +95,7 @@ export default async function PostDetailPage({ params }: Props) {
 
   const { data: post } = await supabase
     .from('posts')
-    .select('slug, title, summary, content, category, published_at, target_year, judgment_rules, judgment_detail')
+    .select('id, slug, title, summary, content, category, published_at, target_year, judgment_rules, judgment_detail')
     .eq('slug', slug)
     .eq('is_published', true)
     .lte('published_at', new Date().toISOString())
@@ -57,13 +108,18 @@ export default async function PostDetailPage({ params }: Props) {
 
   // 등급 분리 설정 + 사용자 등급 조회 (병렬)
   const [settingsRes, profileRes] = await Promise.all([
-    supabase.from('site_settings').select('grade_separation_enabled').eq('id', 1).maybeSingle(),
+    supabase
+      .from('site_settings')
+      .select('grade_separation_enabled, ilgan_avatar_urls')
+      .eq('id', 1)
+      .maybeSingle(),
     isLoggedIn
       ? supabase.from('users').select('role').eq('id', user!.id).maybeSingle()
       : Promise.resolve({ data: null }),
   ])
 
   const gradeSeparationEnabled = settingsRes.data?.grade_separation_enabled ?? false
+  const ilganAvatarMap = sanitizeIlganAvatarMap(settingsRes.data?.ilgan_avatar_urls)
   const role = profileRes.data?.role ?? 'free'
 
   // 판정 열람 권한 결정
@@ -118,6 +174,32 @@ export default async function PostDetailPage({ params }: Props) {
 
   // 사이드바에 보여줄 판정 detail (등급에 따라 null 처리)
   const detailContent = canSeeDetail ? (post.judgment_detail as JSONContent | null) : null
+
+  const { data: commentRows } = await supabase
+    .from('post_comments')
+    .select('id, post_id, user_id, parent_id, author_name, author_avatar_url, author_ilgan, body, is_deleted, created_at, updated_at')
+    .eq('post_id', post.id)
+    .order('created_at', { ascending: true })
+
+  const commentIds = commentRows?.map((comment) => comment.id) ?? []
+  let comments: CommentNode[] = []
+
+  if (commentRows && commentRows.length > 0) {
+    const { data: likeRows } = await supabase
+      .from('post_comment_likes')
+      .select('comment_id, user_id')
+      .in('comment_id', commentIds)
+
+    const likeCountMap = new Map<string, number>()
+    const likedCommentIds = new Set<string>()
+
+    for (const like of likeRows ?? []) {
+      likeCountMap.set(like.comment_id, (likeCountMap.get(like.comment_id) ?? 0) + 1)
+      if (user && like.user_id === user.id) likedCommentIds.add(like.comment_id)
+    }
+
+    comments = buildCommentTree(commentRows, likedCommentIds, likeCountMap)
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
@@ -174,6 +256,14 @@ export default async function PostDetailPage({ params }: Props) {
           </div>
         </aside>
       </div>
+
+      <CommentsSection
+        postId={post.id}
+        comments={comments}
+        currentUserId={user?.id ?? null}
+        isLoggedIn={isLoggedIn}
+        ilganAvatarMap={ilganAvatarMap}
+      />
     </div>
   )
 }

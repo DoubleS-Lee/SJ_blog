@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-semibold mb-3">1. 개인정보 처리목적 및 수집 항목</h2>
           <p className="text-gray-600 mb-3">
-            사주 Moon(이하 "서비스")은 다음과 같은 목적으로 개인정보를 수집·처리합니다.
+            사주 Moon(이하 &quot;서비스&quot;)은 다음과 같은 목적으로 개인정보를 수집·처리합니다.
           </p>
           <table className="w-full text-xs border-collapse border border-gray-200">
             <thead>

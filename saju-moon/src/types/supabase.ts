@@ -15,6 +15,7 @@ export interface Database {
           email: string | null
           nickname: string | null
           avatar_url: string | null
+          custom_avatar_url: string | null
           role: 'free' | 'plus' | 'premium'
           is_admin: boolean
           terms_agreed_at: string | null
@@ -26,6 +27,7 @@ export interface Database {
           email?: string | null
           nickname?: string | null
           avatar_url?: string | null
+          custom_avatar_url?: string | null
           role?: 'free' | 'plus' | 'premium'
           is_admin?: boolean
           terms_agreed_at?: string | null
@@ -37,6 +39,7 @@ export interface Database {
           email?: string | null
           nickname?: string | null
           avatar_url?: string | null
+          custom_avatar_url?: string | null
           role?: 'free' | 'plus' | 'premium'
           is_admin?: boolean
           terms_agreed_at?: string | null
@@ -311,17 +314,166 @@ export interface Database {
         }
         Relationships: []
       }
+      post_comments: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          parent_id: string | null
+          author_name: string
+          author_avatar_url: string | null
+          author_ilgan: string | null
+          body: string
+          is_deleted: boolean
+          deleted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          parent_id?: string | null
+          author_name: string
+          author_avatar_url?: string | null
+          author_ilgan?: string | null
+          body: string
+          is_deleted?: boolean
+          deleted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          post_id?: string
+          user_id?: string
+          parent_id?: string | null
+          author_name?: string
+          author_avatar_url?: string | null
+          author_ilgan?: string | null
+          body?: string
+          is_deleted?: boolean
+          deleted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      post_comment_likes: {
+        Row: {
+          comment_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          comment_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          comment_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      consultations: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          body: string
+          status: 'submitted' | 'answered' | 'closed'
+          content_usage_agreed: boolean
+          content_usage_agreed_at: string
+          content_usage_version: string
+          admin_note: string | null
+          anonymized_content: string | null
+          is_external_use_ready: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          body: string
+          status?: 'submitted' | 'answered' | 'closed'
+          content_usage_agreed?: boolean
+          content_usage_agreed_at?: string
+          content_usage_version?: string
+          admin_note?: string | null
+          anonymized_content?: string | null
+          is_external_use_ready?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          title?: string
+          body?: string
+          status?: 'submitted' | 'answered' | 'closed'
+          content_usage_agreed?: boolean
+          content_usage_agreed_at?: string
+          content_usage_version?: string
+          admin_note?: string | null
+          anonymized_content?: string | null
+          is_external_use_ready?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      consultation_comments: {
+        Row: {
+          id: string
+          consultation_id: string
+          user_id: string
+          author_avatar_url: string | null
+          author_ilgan: string | null
+          body: string
+          is_deleted: boolean
+          deleted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          consultation_id: string
+          user_id: string
+          author_avatar_url?: string | null
+          author_ilgan?: string | null
+          body: string
+          is_deleted?: boolean
+          deleted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          consultation_id?: string
+          user_id?: string
+          author_avatar_url?: string | null
+          author_ilgan?: string | null
+          body?: string
+          is_deleted?: boolean
+          deleted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           id: number
           grade_separation_enabled: boolean
+          ilgan_avatar_urls: Json
+          user_avatar_overrides: Json
         }
         Insert: {
           id?: number
           grade_separation_enabled?: boolean
+          ilgan_avatar_urls?: Json
+          user_avatar_overrides?: Json
         }
         Update: {
           grade_separation_enabled?: boolean
+          ilgan_avatar_urls?: Json
+          user_avatar_overrides?: Json
         }
         Relationships: []
       }

@@ -32,6 +32,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Link href="/admin/posts" className="text-sm text-gray-500 hover:text-black transition-colors">
                 글 관리
               </Link>
+              <Link href="/admin/counsel" className="text-sm text-gray-500 hover:text-black transition-colors">
+                상담 관리
+              </Link>
               <Link href="/admin/settings" className="text-sm text-gray-500 hover:text-black transition-colors">
                 설정
               </Link>
