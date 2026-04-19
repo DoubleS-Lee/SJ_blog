@@ -54,3 +54,44 @@ export async function setProfileAvatar(avatarUrl: string | null): Promise<{ erro
 
   return {}
 }
+
+export async function updateNickname(nickname: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: '로그인이 필요합니다.' }
+  }
+
+  const normalizedNickname = nickname.trim()
+  if (!normalizedNickname) {
+    return { error: '닉네임을 입력해 주세요.' }
+  }
+  if (normalizedNickname.length > 20) {
+    return { error: '닉네임은 20자 이내로 입력해 주세요.' }
+  }
+
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('users')
+    .update({
+      nickname: normalizedNickname,
+      updated_at: now,
+    })
+    .eq('id', user.id)
+
+  if (error) {
+    console.error('[updateNickname]', error)
+    return { error: '닉네임을 저장하지 못했습니다.' }
+  }
+
+  revalidatePath('/mypage')
+  revalidatePath('/posts', 'layout')
+  revalidatePath('/counsel', 'layout')
+  revalidatePath('/compatibility')
+  revalidatePath('/admin/counsel')
+
+  return {}
+}

@@ -1,0 +1,40 @@
+{
+  "wealth": [
+    { "age_min": 0, "age_max": 14, "multiplier": 0.45, "label": "재물 기반" },
+    { "age_min": 15, "age_max": 24, "multiplier": 0.75, "label": "경제 감각" },
+    { "age_min": 25, "age_max": 59, "multiplier": 1.0, "label": "재물운" },
+    { "age_min": 60, "age_max": 100, "multiplier": 0.85, "label": "자산 안정" }
+  ],
+  "health": [
+    { "age_min": 0, "age_max": 14, "multiplier": 0.95, "label": "기초 체력" },
+    { "age_min": 15, "age_max": 39, "multiplier": 1.0, "label": "건강운" },
+    { "age_min": 40, "age_max": 100, "multiplier": 1.05, "label": "건강 관리" }
+  ],
+  "business": [
+    { "age_min": 0, "age_max": 19, "multiplier": 0.3, "label": "실행 기반" },
+    { "age_min": 20, "age_max": 34, "multiplier": 0.75, "label": "사업 준비" },
+    { "age_min": 35, "age_max": 64, "multiplier": 1.0, "label": "사업운" },
+    { "age_min": 65, "age_max": 100, "multiplier": 0.7, "label": "운영 안정" }
+  ],
+  "career": [
+    { "age_min": 0, "age_max": 17, "multiplier": 0.35, "label": "진로 기반" },
+    { "age_min": 18, "age_max": 29, "multiplier": 0.8, "label": "직장 적응" },
+    { "age_min": 30, "age_max": 59, "multiplier": 1.0, "label": "직장운" },
+    { "age_min": 60, "age_max": 100, "multiplier": 0.75, "label": "직업 안정" }
+  ],
+  "relationship": [
+    { "age_min": 0, "age_max": 14, "multiplier": 0.35, "label": "정서 관계" },
+    { "age_min": 15, "age_max": 39, "multiplier": 1.0, "label": "연애/관계운" },
+    { "age_min": 40, "age_max": 100, "multiplier": 0.9, "label": "관계 안정" }
+  ],
+  "study": [
+    { "age_min": 0, "age_max": 19, "multiplier": 1.0, "label": "학업/성장운" },
+    { "age_min": 20, "age_max": 39, "multiplier": 0.85, "label": "성장 운" },
+    { "age_min": 40, "age_max": 100, "multiplier": 0.7, "label": "자기계발" }
+  ],
+  "social": [
+    { "age_min": 0, "age_max": 14, "multiplier": 0.55, "label": "또래 관계" },
+    { "age_min": 15, "age_max": 39, "multiplier": 0.95, "label": "대인관계운" },
+    { "age_min": 40, "age_max": 100, "multiplier": 1.0, "label": "사회 관계" }
+  ]
+}

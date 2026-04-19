@@ -1,0 +1,86 @@
+{
+  "wealth": {
+    "bigeon": -0.3,
+    "geopjae": -0.8,
+    "siksin": 0.7,
+    "sanggwan": 0.4,
+    "pyeonjae": 0.9,
+    "jeongjae": 1.0,
+    "pyeongwan": -0.1,
+    "jeonggwan": 0.2,
+    "pyeonin": -0.2,
+    "jeongin": 0.1
+  },
+  "health": {
+    "bigeon": -0.1,
+    "geopjae": -0.3,
+    "siksin": 0.2,
+    "sanggwan": -0.4,
+    "pyeonjae": -0.1,
+    "jeongjae": 0.1,
+    "pyeongwan": -0.6,
+    "jeonggwan": -0.2,
+    "pyeonin": -0.3,
+    "jeongin": 0.4
+  },
+  "business": {
+    "bigeon": 0.3,
+    "geopjae": 0.2,
+    "siksin": 0.9,
+    "sanggwan": 0.8,
+    "pyeonjae": 0.9,
+    "jeongjae": 0.7,
+    "pyeongwan": 0.2,
+    "jeonggwan": -0.1,
+    "pyeonin": -0.2,
+    "jeongin": 0.1
+  },
+  "career": {
+    "bigeon": -0.2,
+    "geopjae": -0.5,
+    "siksin": 0.1,
+    "sanggwan": -0.6,
+    "pyeonjae": 0.2,
+    "jeongjae": 0.3,
+    "pyeongwan": 0.6,
+    "jeonggwan": 1.0,
+    "pyeonin": -0.2,
+    "jeongin": 0.7
+  },
+  "relationship": {
+    "bigeon": 0.1,
+    "geopjae": -0.4,
+    "siksin": 0.5,
+    "sanggwan": 0.2,
+    "pyeonjae": 0.6,
+    "jeongjae": 0.6,
+    "pyeongwan": 0.2,
+    "jeonggwan": 0.3,
+    "pyeonin": -0.4,
+    "jeongin": 0.4
+  },
+  "study": {
+    "bigeon": -0.1,
+    "geopjae": -0.3,
+    "siksin": 0.5,
+    "sanggwan": 0.2,
+    "pyeonjae": 0.1,
+    "jeongjae": 0.1,
+    "pyeongwan": 0.4,
+    "jeonggwan": 0.5,
+    "pyeonin": 0.7,
+    "jeongin": 1.0
+  },
+  "social": {
+    "bigeon": 0.7,
+    "geopjae": 0.3,
+    "siksin": 0.6,
+    "sanggwan": 0.2,
+    "pyeonjae": 0.1,
+    "jeongjae": 0.1,
+    "pyeongwan": -0.2,
+    "jeonggwan": 0.3,
+    "pyeonin": -0.3,
+    "jeongin": 0.3
+  }
+}

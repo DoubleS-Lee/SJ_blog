@@ -1,33 +1,41 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSaju, type SajuInput } from '@/lib/saju/calculate'
-import { redirect } from 'next/navigation'
 import type { Json } from '@/types/supabase'
 
-export async function saveSaju(input: SajuInput): Promise<{ error?: string }> {
-  // 1. 인증 확인
+export interface SaveSajuInput extends SajuInput {
+  saju_name: string
+}
+
+export async function saveSaju(input: SaveSajuInput): Promise<{ error?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   if (!user) return { error: '로그인이 필요합니다.' }
 
-  // 2. 만세력 계산
+  const sajuName = input.saju_name.trim()
+  if (!sajuName) return { error: '만세력 이름을 입력해 주세요.' }
+
   let result
   try {
     result = calculateSaju(input)
-  } catch (e) {
-    console.error('[saveSaju] calculate error:', e)
+  } catch (error) {
+    console.error('[saveSaju] calculate error:', error)
     return { error: '사주 계산 중 오류가 발생했습니다. 입력값을 확인해 주세요.' }
   }
 
-  const userId = user.id
+  const now = new Date().toISOString()
 
-  // 3. user_saju upsert
   const { error: sajuErr } = await supabase
     .from('user_saju')
     .upsert(
       {
-        user_id: userId,
+        user_id: user.id,
+        saju_name: sajuName,
         year_cheongan: result.year_cheongan,
         year_jiji: result.year_jiji,
         month_cheongan: result.month_cheongan,
@@ -49,23 +57,22 @@ export async function saveSaju(input: SajuInput): Promise<{ error?: string }> {
         gender: input.gender,
         is_lunar: input.is_lunar,
         full_saju_data: result.full_saju_data as Json,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       },
-      { onConflict: 'user_id' }
+      { onConflict: 'user_id' },
     )
 
   if (sajuErr) {
     console.error('[saveSaju] user_saju upsert error:', sajuErr)
-    return { error: '저장 중 오류가 발생했습니다.' }
+    return { error: '만세력을 저장하지 못했습니다.' }
   }
 
-  // 4. user_saju_ohang upsert
   const oh = result.ohang_data
   const { error: ohangErr } = await supabase
     .from('user_saju_ohang')
     .upsert(
       {
-        user_id: userId,
+        user_id: user.id,
         mok_score: oh.scores['목'],
         hwa_score: oh.scores['화'],
         to_score: oh.scores['토'],
@@ -78,22 +85,20 @@ export async function saveSaju(input: SajuInput): Promise<{ error?: string }> {
         has_su: result.has_su,
         positions: oh.positions as unknown as Json,
       },
-      { onConflict: 'user_id' }
+      { onConflict: 'user_id' },
     )
 
   if (ohangErr) {
     console.error('[saveSaju] user_saju_ohang upsert error:', ohangErr)
-    return { error: '저장 중 오류가 발생했습니다.' }
+    return { error: '오행 정보를 저장하지 못했습니다.' }
   }
 
-  // 5. user_saju_sipsung upsert
-  // ※ DB 컬럼명: gyeopjae(겁재), sanggwan(상관), jeonggwan(정관) — 오탈자 통일
   const ss = result.sipsung_data
   const { error: sipsungErr } = await supabase
     .from('user_saju_sipsung')
     .upsert(
       {
-        user_id: userId,
+        user_id: user.id,
         bigyeon_score: ss.scores['비견'],
         gyeopjae_score: ss.scores['겁재'],
         sikshin_score: ss.scores['식신'],
@@ -116,14 +121,13 @@ export async function saveSaju(input: SajuInput): Promise<{ error?: string }> {
         has_jeongin: result.has_jeongin,
         positions: ss.positions as unknown as Json,
       },
-      { onConflict: 'user_id' }
+      { onConflict: 'user_id' },
     )
 
   if (sipsungErr) {
     console.error('[saveSaju] user_saju_sipsung upsert error:', sipsungErr)
-    return { error: '저장 중 오류가 발생했습니다.' }
+    return { error: '십성 정보를 저장하지 못했습니다.' }
   }
 
-  // 6. 저장 완료 → 마이페이지로 이동
   redirect('/mypage')
 }

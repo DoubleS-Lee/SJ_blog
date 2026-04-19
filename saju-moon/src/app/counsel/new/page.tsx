@@ -18,7 +18,7 @@ export default async function NewConsultationPage() {
         <h1 className="text-2xl font-bold tracking-tight">익명 상담 등록</h1>
         <p className="mt-2 text-sm leading-7 text-gray-500">
           작성한 사연은 비공개로 접수되며, 본인과 관리자만 열람할 수 있습니다.
-          상담 답변은 댓글 형태로 이어지고, 원문은 외부 공개에 직접 사용하지 않습니다.
+          상담 답변은 댓글 형태로 이어집니다.
         </p>
       </div>
 

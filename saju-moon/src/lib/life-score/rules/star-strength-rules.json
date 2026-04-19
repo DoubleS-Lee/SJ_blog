@@ -1,0 +1,44 @@
+{
+  "presence": {
+    "visible_stem": 0.2,
+    "hidden_stem": 0.08
+  },
+  "month_support": {
+    "favorable": 0.2,
+    "neutral": 0.0,
+    "unfavorable": -0.12
+  },
+  "root_support": {
+    "month_main_root": 0.22,
+    "month_mid_root": 0.14,
+    "month_sub_root": 0.08,
+    "day_main_root": 0.18,
+    "time_main_root": 0.14,
+    "year_main_root": 0.1
+  },
+  "stem_exposure": {
+    "month_stem": 0.16,
+    "time_stem": 0.12,
+    "year_stem": 0.1
+  },
+  "hidden_stem_grade": {
+    "main_qi": 0.08,
+    "mid_qi": 0.05,
+    "sub_qi": 0.03
+  },
+  "di_shi": {
+    "strong": 0.08,
+    "neutral": 0.0,
+    "weak": -0.08
+  },
+  "interaction": {
+    "he": 0.05,
+    "chung": -0.1,
+    "hyeong": -0.06,
+    "pa": -0.05,
+    "hae": -0.04,
+    "samhap": 0.06,
+    "cheongan_he": 0.04,
+    "gongmang": -0.1
+  }
+}

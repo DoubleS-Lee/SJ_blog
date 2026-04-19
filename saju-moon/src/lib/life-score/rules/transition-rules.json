@@ -1,0 +1,21 @@
+{
+  "transition_window": 1,
+  "penalties": {
+    "wealth": -2,
+    "health": -1.5,
+    "business": -4,
+    "career": -4,
+    "relationship": -3,
+    "study": -1.5,
+    "social": -3.5
+  },
+  "volatility_bonus": {
+    "wealth": 5,
+    "health": 4,
+    "business": 9,
+    "career": 9,
+    "relationship": 7,
+    "study": 3,
+    "social": 7
+  }
+}

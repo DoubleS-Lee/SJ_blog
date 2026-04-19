@@ -1,0 +1,53 @@
+{
+  "strength_thresholds": {
+    "weak_max": 40,
+    "strong_min": 65
+  },
+  "role_weights": {
+    "weak": {
+      "self": 0.95,
+      "resource": 0.9,
+      "output": 0.15,
+      "wealth": -0.55,
+      "officer": -0.4
+    },
+    "balanced": {
+      "self": 0.15,
+      "resource": 0.25,
+      "output": 0.35,
+      "wealth": 0.35,
+      "officer": 0.3
+    },
+    "strong": {
+      "self": -0.8,
+      "resource": -0.55,
+      "output": 0.75,
+      "wealth": 0.95,
+      "officer": 0.55
+    }
+  },
+  "domain_weights": {
+    "wealth": 0.95,
+    "health": 0.55,
+    "business": 0.9,
+    "career": 0.8,
+    "relationship": 0.75,
+    "study": 0.7,
+    "social": 0.65
+  },
+  "thermal_weights": {
+    "cold": {
+      "favorable_elements": ["화", "목"],
+      "unfavorable_elements": ["수", "금"],
+      "bonus": 0.22
+    },
+    "hot": {
+      "favorable_elements": ["수", "금"],
+      "unfavorable_elements": ["화", "목"],
+      "bonus": 0.22
+    },
+    "balanced": {
+      "bonus": 0.1
+    }
+  }
+}

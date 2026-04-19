@@ -168,6 +168,8 @@ export interface PillarDisplay {
 }
 
 export interface DaYunCard {
+  startAge: number
+  endAge: number
   ageLabel: string
   cheonganCN: string
   cheonganKR: string
@@ -231,6 +233,8 @@ export interface ManseryeokData {
   daYun: DaYunCard[]
   // 세운 (현재 대운 기준)
   seWun: SeWunCard[]
+  // 세운 (생애 전체)
+  allSeWun: SeWunCard[]
   // 월운 (현재 연도 12개월)
   moonCards: MoonCard[]
   // 현재 나이
@@ -422,7 +426,11 @@ export function getManseryeokData(input: SajuInput): ManseryeokData {
 
   const ilganKR = base.day_cheongan  // 일간 한국어 (십성 계산용)
 
-  function ganziToCards(ganziCN: string, isCurrent: boolean, sipsungGan?: string): Omit<DaYunCard, 'ageLabel' | 'isCurrent'> & { isCurrent: boolean } {
+  function ganziToCards(
+    ganziCN: string,
+    isCurrent: boolean,
+    sipsungGan?: string,
+  ): Omit<DaYunCard, 'startAge' | 'endAge' | 'ageLabel' | 'isCurrent'> & { isCurrent: boolean } {
     const cg = ganziCN[0] ?? ''
     const jj = ganziCN[1] ?? ''
     const cgKR = CN_TO_KR_CHEONGAN[cg] || ''
@@ -446,6 +454,8 @@ export function getManseryeokData(input: SajuInput): ManseryeokData {
     .map((d: any) => {
       const isCurrent = d.start_age <= currentAge && currentAge < d.end_age
       return {
+        startAge: Number(d.start_age ?? 0),
+        endAge: Number(d.end_age ?? 0),
         ageLabel: String(d.start_age),
         ...ganziToCards(d.ganzi, isCurrent),
       }
@@ -476,6 +486,31 @@ export function getManseryeokData(input: SajuInput): ManseryeokData {
       isCurrent: year === currentYear,
     }
   })
+
+  const allSeWun: SeWunCard[] = daYunRaw
+    .flatMap((d: any) => d?.liuNian ?? [])
+    .filter((ln: any) => ln?.ganzi && Number.isFinite(ln?.year))
+    .map((ln: any) => {
+      const ganziCN: string = ln.ganzi ?? ''
+      const year: number = ln.year
+      const cg = ganziCN[0] ?? ''
+      const jj = ganziCN[1] ?? ''
+      const cgKR = CN_TO_KR_CHEONGAN[cg] || ''
+      const jjKR = CN_TO_KR_JIJI[jj] || ''
+      return {
+        year,
+        cheonganCN: cg,
+        cheonganKR: cgKR,
+        cheonganOhang: CHEONGAN_OHANG[cgKR] ?? '',
+        jijiCN: jj,
+        jijiKR: jjKR,
+        jijiOhang: JIJI_OHANG[jjKR] ?? '',
+        sipsung_gan: getSipsung(ilganKR, cgKR),
+        sipsung_jiji: getJijiSipsung(ilganKR, jjKR),
+        diShi: getDiShi(ilganKR, jjKR),
+        isCurrent: year === currentYear,
+      }
+    })
 
   // ── 월운 (현재 세운의 12개월) ────────────────────────────────────────
   const genderNum = input.gender === 'male' ? 1 : 0
@@ -525,6 +560,7 @@ export function getManseryeokData(input: SajuInput): ManseryeokData {
     ilganOhang,
     daYun,
     seWun,
+    allSeWun,
     moonCards,
     currentAge,
   }

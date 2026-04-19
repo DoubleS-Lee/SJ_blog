@@ -448,10 +448,6 @@ function getHarmonyReason(targetLabel: string) {
   return `${targetLabel}와 충돌이 적고 흐름이 비교적 안정적입니다.`
 }
 
-function getTimeReason(count: number) {
-  return `추천 시간대가 ${count}개 있어 실제 일정 잡기가 수월합니다.`
-}
-
 function getGodWeight(purpose: SelectionPurpose, god: TianShenName) {
   return PURPOSE_GOD_WEIGHTS[purpose][god] ?? 0
 }
@@ -775,7 +771,6 @@ function buildDayRecommendation(
 
   if (goodHours.length >= 3) {
     score += 15
-    reasons.push(getTimeReason(goodHours.length))
   } else if (goodHours.length > 0) {
     score += 8
   }

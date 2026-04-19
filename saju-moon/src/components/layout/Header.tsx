@@ -12,6 +12,8 @@ const NAV_LINKS = [
   { href: '/', label: '블로그' },
   { href: '/counsel', label: '익명 상담' },
   { href: '/taekil', label: '택일' },
+  { href: '/compatibility', label: '궁합' },
+  { href: '/life-graph', label: '사주 생애 그래프' },
 ]
 
 interface HeaderProps {

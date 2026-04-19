@@ -50,7 +50,7 @@ export default async function BlogListPage({ searchParams }: Props) {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       {/* 페이지 타이틀 + 필터 */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-        <h1 className="text-3xl font-bold tracking-tight">사주 Moon 블로그</h1>
+        <h1 className="text-3xl font-bold tracking-tight">블로그</h1>
         <CategoryFilter />
       </div>
 

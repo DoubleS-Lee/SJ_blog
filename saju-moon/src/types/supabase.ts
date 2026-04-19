@@ -51,6 +51,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          saju_name: string
           year_cheongan: string
           year_jiji: string
           month_cheongan: string
@@ -78,6 +79,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          saju_name?: string
           year_cheongan: string
           year_jiji: string
           month_cheongan: string
@@ -104,6 +106,7 @@ export interface Database {
         }
         Update: {
           user_id?: string
+          saju_name?: string
           year_cheongan?: string
           year_jiji?: string
           month_cheongan?: string
@@ -453,6 +456,53 @@ export interface Database {
           body?: string
           is_deleted?: boolean
           deleted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_compatibility_saju: {
+        Row: {
+          id: string
+          user_id: string
+          nickname: string
+          birth_year: number
+          birth_month: number
+          birth_day: number
+          birth_hour: number | null
+          birth_minute: number | null
+          gender: 'male' | 'female'
+          is_lunar: boolean
+          full_saju_data: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          nickname: string
+          birth_year: number
+          birth_month: number
+          birth_day: number
+          birth_hour?: number | null
+          birth_minute?: number | null
+          gender: 'male' | 'female'
+          is_lunar?: boolean
+          full_saju_data?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          nickname?: string
+          birth_year?: number
+          birth_month?: number
+          birth_day?: number
+          birth_hour?: number | null
+          birth_minute?: number | null
+          gender?: 'male' | 'female'
+          is_lunar?: boolean
+          full_saju_data?: Json
           updated_at?: string
         }
         Relationships: []

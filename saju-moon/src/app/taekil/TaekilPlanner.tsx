@@ -60,15 +60,15 @@ function getLevelDotClass(level: DateSelectionRecommendation['level']) {
 function getLevelChipClass(level: DateSelectionRecommendation['level']) {
   switch (level) {
     case 'best':
-      return 'bg-emerald-50 text-emerald-700'
+      return 'border border-emerald-200 bg-emerald-100 text-emerald-800'
     case 'good':
-      return 'bg-sky-50 text-sky-700'
+      return 'border border-sky-200 bg-sky-100 text-sky-800'
     case 'normal':
-      return 'bg-amber-50 text-amber-700'
+      return 'border border-amber-200 bg-amber-100 text-amber-800'
     case 'caution':
-      return 'bg-gray-100 text-gray-600'
+      return 'border border-gray-200 bg-gray-100 text-gray-700'
     case 'avoid':
-      return 'bg-gray-100 text-gray-500'
+      return 'border border-gray-200 bg-gray-100 text-gray-600'
   }
 }
 
@@ -147,7 +147,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
           <div>
             <p className="text-sm font-semibold text-gray-900">목적 선택</p>
             <p className="mt-1 text-sm leading-6 text-gray-500">
-              목적을 바꾸면 저장된 사주 기준으로 추천일과 추천 시간대가 다시 계산됩니다.
+              목적을 바꾸면 저장된 사주 기준으로 추천일이 다시 계산됩니다.
             </p>
           </div>
 
@@ -229,13 +229,13 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                   </div>
 
                   <div className="mt-auto">
-                    <p
-                      className={`text-center text-[10px] font-medium leading-none sm:text-xs ${
-                        isSelected ? 'text-white/85' : 'text-gray-500'
+                    <span
+                      className={`inline-flex rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none sm:px-2 sm:text-[10px] ${
+                        isSelected ? 'border border-white/30 bg-white/20 text-white' : getLevelChipClass(item.level)
                       }`}
                     >
                       {getPublicLevelLabel(item.level)}
-                    </p>
+                    </span>
                   </div>
                 </button>
               )
@@ -244,9 +244,14 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
 
           <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-gray-500 sm:text-xs">
             {(['best', 'good', 'normal', 'caution', 'avoid'] as const).map((level) => (
-              <div key={level} className="flex items-center gap-1.5 rounded-full bg-gray-50 px-2.5 py-1.5">
+              <div
+                key={level}
+                className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-1.5"
+              >
                 <span className={`size-2 rounded-full ${getLevelDotClass(level)}`} />
-                <span>{getPublicLevelLabel(level)}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getLevelChipClass(level)}`}>
+                  {getPublicLevelLabel(level)}
+                </span>
               </div>
             ))}
           </div>
@@ -344,29 +349,6 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                         {reason}
                       </p>
                     ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-900">추천 시간대</p>
-                    <span className="text-xs text-gray-400">(추천 순서 순)</span>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {selected.goodHours.length > 0 ? (
-                      selected.goodHours.map((time) => (
-                        <div
-                          key={`${selected.date}-${time.start}`}
-                          className="rounded-2xl border border-gray-200 px-4 py-3"
-                        >
-                          <span className="text-sm font-semibold text-gray-900">{time.label}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="rounded-2xl bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-500">
-                        날짜 자체는 검토할 만하지만 추천 시간대가 뚜렷하지 않아 시간 선택에 제약이 있습니다.
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>

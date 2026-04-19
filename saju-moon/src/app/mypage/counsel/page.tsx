@@ -25,6 +25,7 @@ export default async function MyConsultationsPage() {
   const { data: consultations } = await supabase
     .from('consultations')
     .select('id, title, status, created_at, updated_at')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
   return (

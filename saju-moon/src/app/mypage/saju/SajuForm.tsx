@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { saveSaju } from '@/actions/saveSaju'
 import { buttonVariants } from '@/components/ui/button'
+import { saveSaju } from '@/actions/saveSaju'
 import type { Gender } from '@/types/saju'
 
 interface Props {
   defaultValues?: {
+    saju_name: string
     birth_year: number
     birth_month: number
     birth_day: number
@@ -20,12 +21,21 @@ interface Props {
 export default function SajuForm({ defaultValues }: Props) {
   const currentYear = new Date().getFullYear()
 
+  const [sajuName, setSajuName] = useState(defaultValues?.saju_name ?? '')
   const [year, setYear] = useState(String(defaultValues?.birth_year ?? ''))
   const [month, setMonth] = useState(String(defaultValues?.birth_month ?? ''))
   const [day, setDay] = useState(String(defaultValues?.birth_day ?? ''))
-  const [unknownHour, setUnknownHour] = useState(defaultValues?.birth_hour === null && defaultValues !== undefined ? true : defaultValues === undefined ? false : false)
-  const [hour, setHour] = useState(defaultValues?.birth_hour !== null && defaultValues?.birth_hour !== undefined ? String(defaultValues.birth_hour) : '')
-  const [minute, setMinute] = useState(defaultValues?.birth_minute !== null && defaultValues?.birth_minute !== undefined ? String(defaultValues.birth_minute) : '')
+  const [unknownHour, setUnknownHour] = useState(defaultValues?.birth_hour === null ? true : false)
+  const [hour, setHour] = useState(
+    defaultValues?.birth_hour !== null && defaultValues?.birth_hour !== undefined
+      ? String(defaultValues.birth_hour)
+      : '',
+  )
+  const [minute, setMinute] = useState(
+    defaultValues?.birth_minute !== null && defaultValues?.birth_minute !== undefined
+      ? String(defaultValues.birth_minute)
+      : '',
+  )
   const [gender, setGender] = useState<Gender>(defaultValues?.gender ?? 'female')
   const [isLunar, setIsLunar] = useState(defaultValues?.is_lunar ?? false)
   const [error, setError] = useState<string | null>(null)
@@ -35,20 +45,25 @@ export default function SajuForm({ defaultValues }: Props) {
     e.preventDefault()
     setError(null)
 
-    const y = parseInt(year)
-    const m = parseInt(month)
-    const d = parseInt(day)
+    const normalizedName = sajuName.trim()
+    const y = Number(year)
+    const m = Number(month)
+    const d = Number(day)
 
+    if (!normalizedName) {
+      setError('만세력 이름을 입력해 주세요.')
+      return
+    }
     if (!y || y < 1900 || y > currentYear) {
-      setError('올바른 출생 연도를 입력해 주세요.')
+      setError('출생 연도를 정확히 입력해 주세요.')
       return
     }
     if (!m || m < 1 || m > 12) {
-      setError('올바른 월을 입력해 주세요.')
+      setError('출생 월을 정확히 입력해 주세요.')
       return
     }
     if (!d || d < 1 || d > 31) {
-      setError('올바른 일을 입력해 주세요.')
+      setError('출생 일을 정확히 입력해 주세요.')
       return
     }
 
@@ -56,14 +71,14 @@ export default function SajuForm({ defaultValues }: Props) {
     let parsedMinute: number | null = null
 
     if (!unknownHour) {
-      const h = parseInt(hour)
-      const min = parseInt(minute || '0')
-      if (isNaN(h) || h < 0 || h > 23) {
-        setError('시는 0–23 사이로 입력해 주세요.')
+      const h = Number(hour)
+      const min = Number(minute || '0')
+      if (Number.isNaN(h) || h < 0 || h > 23) {
+        setError('시간은 0~23 사이로 입력해 주세요.')
         return
       }
-      if (isNaN(min) || min < 0 || min > 59) {
-        setError('분은 0–59 사이로 입력해 주세요.')
+      if (Number.isNaN(min) || min < 0 || min > 59) {
+        setError('분은 0~59 사이로 입력해 주세요.')
         return
       }
       parsedHour = h
@@ -72,6 +87,7 @@ export default function SajuForm({ defaultValues }: Props) {
 
     startTransition(async () => {
       const result = await saveSaju({
+        saju_name: normalizedName,
         birth_year: y,
         birth_month: m,
         birth_day: d,
@@ -80,21 +96,35 @@ export default function SajuForm({ defaultValues }: Props) {
         gender,
         is_lunar: isLunar,
       })
-      if (result?.error) setError(result.error)
+
+      if (result?.error) {
+        setError(result.error)
+      }
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {/* 양력/음력 */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">만세력 이름</label>
+        <input
+          type="text"
+          value={sajuName}
+          onChange={(e) => setSajuName(e.target.value)}
+          placeholder="예: 민지, 현우"
+          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+        />
+        <p className="text-xs text-gray-400">닉네임과 별개로, 내 만세력에서만 쓰는 이름입니다.</p>
+      </div>
+
       <fieldset>
-        <legend className="text-sm font-medium text-gray-700 mb-2">달력 유형</legend>
+        <legend className="mb-2 text-sm font-medium text-gray-700">달력 종류</legend>
         <div className="flex gap-4">
           {[
             { value: false, label: '양력' },
             { value: true, label: '음력' },
           ].map(({ value, label }) => (
-            <label key={label} className="flex items-center gap-2 cursor-pointer">
+            <label key={label} className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
                 name="calendar"
@@ -108,54 +138,52 @@ export default function SajuForm({ defaultValues }: Props) {
         </div>
       </fieldset>
 
-      {/* 생년월일 */}
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">출생 연도</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">출생 연도</label>
           <input
             type="number"
-            placeholder="예) 1990"
+            placeholder="예: 1990"
             value={year}
             onChange={(e) => setYear(e.target.value)}
             min={1900}
             max={currentYear}
             required
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">월</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">월</label>
           <input
             type="number"
-            placeholder="1–12"
+            placeholder="1~12"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
             min={1}
             max={12}
             required
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">일</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">일</label>
           <input
             type="number"
-            placeholder="1–31"
+            placeholder="1~31"
             value={day}
             onChange={(e) => setDay(e.target.value)}
             min={1}
             max={31}
             required
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
           />
         </div>
       </div>
 
-      {/* 생시 */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">출생 시각</span>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <span className="text-sm font-medium text-gray-700">출생 시간</span>
+          <label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
               checked={unknownHour}
@@ -170,42 +198,39 @@ export default function SajuForm({ defaultValues }: Props) {
           <div className="flex items-center gap-2">
             <input
               type="number"
-              placeholder="시 (0–23)"
+              placeholder="시(0~23)"
               value={hour}
               onChange={(e) => setHour(e.target.value)}
               min={0}
               max={23}
-              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
             />
-            <span className="text-gray-400 shrink-0">:</span>
+            <span className="shrink-0 text-gray-400">:</span>
             <input
               type="number"
-              placeholder="분 (0–59)"
+              placeholder="분(0~59)"
               value={minute}
               onChange={(e) => setMinute(e.target.value)}
               min={0}
               max={59}
-              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
             />
           </div>
         )}
 
         {unknownHour && (
-          <p className="text-xs text-gray-400">
-            생시를 모르시면 대운 판정은 제외됩니다.
-          </p>
+          <p className="text-xs text-gray-400">출생 시간을 모르면 시간 보정은 제외하고 계산됩니다.</p>
         )}
       </div>
 
-      {/* 성별 */}
       <fieldset>
-        <legend className="text-sm font-medium text-gray-700 mb-2">성별</legend>
+        <legend className="mb-2 text-sm font-medium text-gray-700">성별</legend>
         <div className="flex gap-4">
           {[
             { value: 'male' as Gender, label: '남성' },
             { value: 'female' as Gender, label: '여성' },
           ].map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2 cursor-pointer">
+            <label key={value} className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
                 name="gender"
@@ -219,16 +244,14 @@ export default function SajuForm({ defaultValues }: Props) {
         </div>
       </fieldset>
 
-      {/* 에러 */}
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      {/* 제출 */}
       <button
         type="submit"
         disabled={isPending}
         className={buttonVariants({ className: 'w-full disabled:opacity-60' })}
       >
-        {isPending ? '계산 중...' : '사주 저장하기'}
+        {isPending ? '계산 중...' : '내 만세력 저장'}
       </button>
     </form>
   )

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { buttonVariants } from '@/components/ui/button'
 import TaekilPlanner from './TaekilPlanner'
+import MenuHero from '@/components/layout/MenuHero'
 import {
   getDateSelectionMonthResult,
   parseSelectionPurpose,
@@ -15,6 +14,13 @@ export const metadata: Metadata = {
 
 interface Props {
   searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+const HERO_PALETTE = {
+  borderClass: 'border-amber-100',
+  gradientClass:
+    'bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.24),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(163,230,53,0.2),_transparent_24%),linear-gradient(135deg,_#fffdf5_0%,_#ffffff_58%,_#f7fee7_100%)]',
+  eyebrowClass: 'text-amber-500',
 }
 
 function parseNumberParam(value: string | string[] | undefined, fallback: number) {
@@ -40,23 +46,18 @@ export default async function TaekilPage({ searchParams }: Props) {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        <div className="rounded-[2rem] border border-gray-200 bg-white p-8 text-center sm:p-12">
-          <p className="text-sm font-medium text-gray-400">Personalized Date Selection</p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900">택일 추천</h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-gray-500">
-            저장된 사주를 기준으로 목적별 추천일과 추천 시간대를 골라주는 메뉴입니다.
-            로그인 후 사주 정보를 입력하면 바로 개인화 택일 캘린더를 사용할 수 있습니다.
-          </p>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Link href="/login" className={buttonVariants({ size: 'sm' })}>
-              로그인
-            </Link>
-            <Link href="/mypage/saju" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
-              사주 입력 안내
-            </Link>
-          </div>
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <MenuHero
+          eyebrow="Personalized Date Selection"
+          title="택일 추천"
+          description={`저장된 사주를 기준으로 목적별 추천일을 골라주는 메뉴입니다.
+로그인 후 사주 정보를 입력하면 바로 개인화 택일 캘린더를 사용할 수 있습니다.`}
+          palette={HERO_PALETTE}
+          actions={[
+            { href: '/login', label: '로그인' },
+            { href: '/mypage/saju', label: '사주 입력 안내', variant: 'ghost' },
+          ]}
+        />
       </div>
     )
   }
@@ -69,20 +70,18 @@ export default async function TaekilPage({ searchParams }: Props) {
 
   if (!saju) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        <div className="rounded-[2rem] border border-gray-200 bg-white p-8 sm:p-12">
-          <p className="text-sm font-medium text-gray-400">Personalized Date Selection</p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900">택일 추천</h1>
-          <p className="mt-4 text-sm leading-6 text-gray-500">
-            택일 추천은 저장된 사주를 기준으로 개인화 필터가 적용됩니다.
-            먼저 마이페이지에서 사주 정보를 입력해 주세요.
-          </p>
-          <div className="mt-6">
-            <Link href="/mypage/saju" className={buttonVariants({ size: 'sm' })}>
-              사주 정보 입력하기
-            </Link>
-          </div>
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <MenuHero
+          eyebrow="Personalized Date Selection"
+          title="택일 추천"
+          description={`택일 추천은 저장된 사주를 기준으로 개인화 필터가 적용됩니다.
+먼저 마이페이지에서 사주 정보를 입력해 주세요.`}
+          palette={HERO_PALETTE}
+          actions={[
+            { href: '/mypage/saju', label: '사주 정보 입력하기' },
+            { href: '/mypage', label: '마이페이지', variant: 'ghost' },
+          ]}
+        />
       </div>
     )
   }
@@ -105,14 +104,15 @@ export default async function TaekilPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <div className="mb-8 max-w-3xl">
-        <p className="text-sm font-medium text-gray-400">Personalized Date Selection</p>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900">택일 추천</h1>
-        <p className="mt-3 text-sm leading-6 text-gray-500">
-          저장된 사주 기준으로 개인화 필터를 적용해 목적별 추천일을 보여줍니다.
-          결과는 일정 보조용으로 활용하고, 중요한 결정일수록 직접 한 번 더 검토해 주세요.
-        </p>
-      </div>
+      <MenuHero
+        eyebrow="Personalized Date Selection"
+        title="택일 추천"
+        description={`저장된 사주 기준으로 개인화 필터를 적용해 목적별 추천일을 보여줍니다.
+결과는 일정 보조용으로 활용하고, 중요한 결정일수록 직접 한 번 더 검토해 주세요.`}
+        palette={HERO_PALETTE}
+        actions={undefined}
+        className="mb-8"
+      />
 
       <TaekilPlanner data={data} currentDate={selectedDate} />
     </div>

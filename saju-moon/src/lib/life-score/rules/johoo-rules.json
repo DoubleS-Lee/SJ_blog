@@ -1,0 +1,25 @@
+{
+  "season_bias": {
+    "cold_branches": ["해", "자", "축"],
+    "hot_branches": ["사", "오", "미"],
+    "mild_branches": ["인", "묘", "진", "신", "유", "술"]
+  },
+  "element_bias": {
+    "cold_support_elements": ["수", "금"],
+    "hot_support_elements": ["화", "목"]
+  },
+  "base_adjustments": {
+    "balanced": 0.18,
+    "slightly_imbalanced": -0.12,
+    "heavily_imbalanced": -0.3
+  },
+  "domain_weights": {
+    "wealth": 0.45,
+    "health": 1.0,
+    "business": 0.45,
+    "career": 0.4,
+    "relationship": 0.65,
+    "study": 0.35,
+    "social": 0.55
+  }
+}
