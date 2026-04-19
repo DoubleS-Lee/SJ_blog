@@ -42,6 +42,21 @@ function getPublicLevelLabel(level: DateSelectionRecommendation['level']) {
   }
 }
 
+function getCompactLevelLabel(level: DateSelectionRecommendation['level']) {
+  switch (level) {
+    case 'best':
+      return '강추'
+    case 'good':
+      return '추천'
+    case 'normal':
+      return '보통'
+    case 'caution':
+      return '비추'
+    case 'avoid':
+      return '제외'
+  }
+}
+
 function getLevelDotClass(level: DateSelectionRecommendation['level']) {
   switch (level) {
     case 'best':
@@ -230,11 +245,13 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
 
                   <div className="mt-auto">
                     <span
-                      className={`inline-flex rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none sm:px-2 sm:text-[10px] ${
+                      className={`inline-flex max-w-full items-center whitespace-nowrap break-keep rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none tracking-[-0.01em] sm:px-2 sm:text-[10px] ${
                         isSelected ? 'border border-white/30 bg-white/20 text-white' : getLevelChipClass(item.level)
                       }`}
+                      title={getPublicLevelLabel(item.level)}
                     >
-                      {getPublicLevelLabel(item.level)}
+                      <span className="sm:hidden">{getCompactLevelLabel(item.level)}</span>
+                      <span className="hidden sm:inline">{getPublicLevelLabel(item.level)}</span>
                     </span>
                   </div>
                 </button>
@@ -249,7 +266,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                 className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-1.5"
               >
                 <span className={`size-2 rounded-full ${getLevelDotClass(level)}`} />
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getLevelChipClass(level)}`}>
+                <span className={`whitespace-nowrap break-keep rounded-full px-2 py-0.5 text-[10px] font-semibold ${getLevelChipClass(level)}`}>
                   {getPublicLevelLabel(level)}
                 </span>
               </div>

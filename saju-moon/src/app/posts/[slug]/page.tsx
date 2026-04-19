@@ -124,7 +124,8 @@ export default async function PostDetailPage({ params }: Props) {
   const gradeSeparationEnabled = settingsRes.data?.grade_separation_enabled ?? false
   const ilganAvatarMap = sanitizeIlganAvatarMap(settingsRes.data?.ilgan_avatar_urls)
   const role = profileRes.data?.role ?? 'free'
-  const displayName = profileRes.data?.nickname?.trim() || '회원님'
+  const displayName = profileRes.data?.nickname?.trim() || '회원'
+  const displayNameWithHonorific = displayName.endsWith('님') ? displayName : `${displayName}님`
 
   let canSeeJudgment = false
   if (isLoggedIn) {
@@ -241,7 +242,7 @@ export default async function PostDetailPage({ params }: Props) {
           {showTopJudgmentNotice && (
             <div className="mb-8 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-center">
               <p className="text-sm font-semibold leading-6 text-sky-900">
-                {displayName}은 이 글에 해당하는 사주를 갖고 계십니다.
+                {displayNameWithHonorific}은 이 글에 해당하는 사주를 갖고 계십니다.
                 <br />
                 자세히 읽어보세요!
               </p>

@@ -83,8 +83,23 @@ export async function updateNickname(nickname: string): Promise<{ error?: string
     .eq('id', user.id)
 
   if (error) {
+    if (error.code === '23505') {
+      return { error: '이미 사용 중인 닉네임입니다.' }
+    }
     console.error('[updateNickname]', error)
     return { error: '닉네임을 저장하지 못했습니다.' }
+  }
+
+  const { error: postCommentsError } = await supabase
+    .from('post_comments')
+    .update({
+      author_name: normalizedNickname,
+      updated_at: now,
+    })
+    .eq('user_id', user.id)
+
+  if (postCommentsError) {
+    console.error('[updateNickname][post_comments]', postCommentsError)
   }
 
   revalidatePath('/mypage')

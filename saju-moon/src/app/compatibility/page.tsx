@@ -174,13 +174,13 @@ export default async function CompatibilityPage({ searchParams }: Props) {
       <MenuHero
         eyebrow="Compatibility"
         title="궁합"
-        description={`저장해 둔 상대 만세력 중 하나를 골라 내 사주와 비교합니다.
-지금은 선택 화면을 먼저 열어두고, 다음 단계에서 궁합 점수와 해설을 붙입니다.`}
+        description={`저장한 상대 만세력과 내 만세력을 비교해 궁합 결과를 보여줍니다.
+자체 연구로 설계한 로직을 바탕으로, 5가지 주제별 궁합 결과를 근거와 함께 보여드립니다.`}
         palette={HERO_PALETTE}
       />
 
       <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
-        <article className="order-2 rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm sm:order-1 sm:p-6">
+        <article className="rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-xl font-semibold text-gray-900">{myDisplayName}</h2>
           {myManseryeok ? (
             <div className="mt-4 space-y-2 text-sm text-gray-600">
@@ -194,7 +194,7 @@ export default async function CompatibilityPage({ searchParams }: Props) {
           )}
         </article>
 
-        <article className="order-1 rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm sm:order-2 sm:p-6">
+        <article className="rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {selectedEntry ? selectedEntry.nickname : '상대 선택'}
           </h2>
@@ -211,67 +211,80 @@ export default async function CompatibilityPage({ searchParams }: Props) {
         </article>
       </section>
 
-      <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">저장된 상대 선택</h2>
-            <p className="mt-2 text-sm leading-6 text-gray-500">
-              아래 목록에서 궁합을 볼 상대를 선택하세요. 선택된 사람은 화면 상단 Target 카드에 표시됩니다.
-            </p>
-          </div>
-          <span className="rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-600">
-            {compatibilityEntries?.length ?? 0}명 저장됨
-          </span>
-        </div>
+      <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+        <details className="group" open={!selectedEntry}>
+          <summary className="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">저장된 상대</h2>
+                <p className="mt-1 text-sm leading-6 text-gray-500">
+                  {selectedEntry
+                    ? `${selectedEntry.nickname} · ${selectedEntry.gender === 'male' ? '남성' : '여성'} · ${selectedEntry.is_lunar ? '음력' : '양력'}`
+                    : '궁합을 볼 상대를 선택해 주세요.'}
+                </p>
+              </div>
+              <div className="shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors group-hover:border-pink-200 group-hover:text-pink-600">
+                상대 변경
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-600">
+                {compatibilityEntries?.length ?? 0}명 저장됨
+              </span>
+            </div>
+          </summary>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {(compatibilityEntries ?? []).length > 0 ? (
-            compatibilityEntries!.map((entry) => {
-              const selected = entry.id === selectedEntry?.id
-              const href = maleRoleParam
-                ? `/compatibility?target=${entry.id}&maleRole=${maleRoleParam}`
-                : `/compatibility?target=${entry.id}`
-              return (
-                <Link
-                  key={entry.id}
-                  href={href}
-                  className={`rounded-2xl border p-4 transition ${
-                    selected
-                      ? 'border-pink-300 bg-pink-50 shadow-sm'
-                      : 'border-gray-100 bg-white hover:border-pink-200 hover:bg-pink-50/40'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{entry.nickname}</p>
-                      <p className="mt-1 text-xs text-gray-500">
-                        {formatDate(entry.birth_year, entry.birth_month, entry.birth_day)}
-                        {' · '}
-                        {entry.gender === 'male' ? '남성' : '여성'}
-                        {' · '}
-                        {entry.is_lunar ? '음력' : '양력'}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-500">
-                        {entry.birth_hour !== null ? formatTime(entry.birth_hour, entry.birth_minute) : '출생시 모름'}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                        selected ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-500'
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              {(compatibilityEntries ?? []).length > 0 ? (
+                compatibilityEntries!.map((entry) => {
+                  const selected = entry.id === selectedEntry?.id
+                  const href = maleRoleParam
+                    ? `/compatibility?target=${entry.id}&maleRole=${maleRoleParam}`
+                    : `/compatibility?target=${entry.id}`
+                  return (
+                    <Link
+                      key={entry.id}
+                      href={href}
+                      className={`rounded-2xl border p-4 transition ${
+                        selected
+                          ? 'border-pink-300 bg-pink-50 shadow-sm'
+                          : 'border-gray-100 bg-white hover:border-pink-200 hover:bg-pink-50/40'
                       }`}
                     >
-                      {selected ? '선택됨' : '선택'}
-                    </span>
-                  </div>
-                </Link>
-              )
-            })
-          ) : (
-            <div className="rounded-2xl bg-gray-50 px-4 py-5 text-sm text-gray-500">
-              저장된 상대가 없습니다. 마이페이지에서 먼저 추가해 주세요.
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{entry.nickname}</p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {formatDate(entry.birth_year, entry.birth_month, entry.birth_day)}
+                            {' · '}
+                            {entry.gender === 'male' ? '남성' : '여성'}
+                            {' · '}
+                            {entry.is_lunar ? '음력' : '양력'}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {entry.birth_hour !== null ? formatTime(entry.birth_hour, entry.birth_minute) : '출생시 모름'}
+                          </p>
+                        </div>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                            selected ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {selected ? '선택됨' : '선택'}
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })
+              ) : (
+                <div className="rounded-2xl bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                  저장된 상대가 없습니다. 마이페이지에서 먼저 추가해 주세요.
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </details>
       </section>
 
       {sameGenderPair && (
@@ -324,7 +337,7 @@ export default async function CompatibilityPage({ searchParams }: Props) {
         <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">워크북 궁합 결과</h2>
+              <h2 className="text-lg font-semibold text-gray-900">궁합 결과</h2>
               <p className="mt-2 text-sm leading-6 text-gray-500">
                 선택한 두 사람의 사주를 기준으로 항목별 궁합 해설을 보여줍니다.
                 유료 회원에게는 패턴과 남/여 조건이 함께 표시됩니다.

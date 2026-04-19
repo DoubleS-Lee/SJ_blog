@@ -80,15 +80,6 @@ export default async function MyPage() {
 
       <div className="space-y-6">
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <ProfileAvatarSettings
-            initialAvatarUrl={profile?.custom_avatar_url ?? null}
-            ilgan={saju?.ilgan ?? null}
-            nickname={profile?.nickname ?? null}
-            ilganAvatarMap={ilganAvatarMap}
-          />
-        </section>
-
-        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-base font-bold text-gray-900">계정</h2>
 
           <div className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50 p-4">
@@ -154,6 +145,15 @@ export default async function MyPage() {
           <p className="text-sm text-gray-500">
             익명 공개 상담 게시판에 남긴 글과 관리자 답변을 한 번에 확인할 수 있습니다.
           </p>
+        </section>
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <ProfileAvatarSettings
+            initialAvatarUrl={profile?.custom_avatar_url ?? null}
+            ilgan={saju?.ilgan ?? null}
+            nickname={profile?.nickname ?? null}
+            ilganAvatarMap={ilganAvatarMap}
+          />
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

@@ -14,6 +14,7 @@ export default function NicknameSettings({ initialNickname }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [nickname, setNickname] = useState(initialNickname ?? '')
   const [error, setError] = useState<string | null>(null)
+  const [isBackdropPressStart, setIsBackdropPressStart] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function closeModal() {
@@ -52,7 +53,17 @@ export default function NicknameSettings({ initialNickname }: Props) {
       {isOpen ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-          onClick={closeModal}
+          onPointerDown={(e) => {
+            setIsBackdropPressStart(e.target === e.currentTarget)
+          }}
+          onPointerUp={(e) => {
+            const isBackdropEnd = e.target === e.currentTarget
+            if (isBackdropPressStart && isBackdropEnd) {
+              closeModal()
+            }
+            setIsBackdropPressStart(false)
+          }}
+          onPointerCancel={() => setIsBackdropPressStart(false)}
         >
           <div
             className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-xl"
