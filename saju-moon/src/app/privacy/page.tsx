@@ -1,6 +1,6 @@
 export const metadata = {
   title: '개인정보 처리방침',
-  description: '사주 Moon의 개인정보 처리방침입니다.',
+  description: '월덕요정의 사주이야기의 개인정보 처리방침입니다.',
 }
 
 const EFFECTIVE_DATE = '2026년 4월 12일'
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-semibold mb-3">1. 개인정보 처리목적 및 수집 항목</h2>
           <p className="text-gray-600 mb-3">
-            사주 Moon(이하 &quot;서비스&quot;)은 다음과 같은 목적으로 개인정보를 수집·처리합니다.
+            월덕요정의 사주이야기(이하 &quot;서비스&quot;)은 다음과 같은 목적으로 개인정보를 수집·처리합니다.
           </p>
           <table className="w-full text-xs border-collapse border border-gray-200">
             <thead>
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-semibold mb-3">7. 개인정보 보호책임자</h2>
           <div className="text-gray-600 bg-gray-50 rounded-md p-4 text-xs">
-            <p><span className="font-medium">담당자:</span> 사주 Moon 운영자</p>
+            <p><span className="font-medium">담당자:</span> 월덕요정의 사주이야기 운영자</p>
             <p className="mt-1"><span className="font-medium">문의:</span> 서비스 내 문의 기능 또는 인스타그램 @saju_moonfairy</p>
           </div>
         </section>

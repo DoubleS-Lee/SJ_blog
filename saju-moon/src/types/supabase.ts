@@ -260,6 +260,54 @@ export interface Database {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          id: string
+          created_at: string
+          event_name: string
+          user_id: string | null
+          session_id: string
+          page_type: string | null
+          page_path: string
+          content_type: string | null
+          content_id: string | null
+          content_title: string | null
+          category: string | null
+          referrer: string | null
+          properties: Json
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          event_name: string
+          user_id?: string | null
+          session_id: string
+          page_type?: string | null
+          page_path: string
+          content_type?: string | null
+          content_id?: string | null
+          content_title?: string | null
+          category?: string | null
+          referrer?: string | null
+          properties?: Json
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          event_name?: string
+          user_id?: string | null
+          session_id?: string
+          page_type?: string | null
+          page_path?: string
+          content_type?: string | null
+          content_id?: string | null
+          content_title?: string | null
+          category?: string | null
+          referrer?: string | null
+          properties?: Json
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           id: string
@@ -273,6 +321,8 @@ export interface Database {
           is_published: boolean
           published_at: string | null
           target_year: number | null
+          view_count: number
+          like_count: number
           judgment_rules: Json | null
           judgment_detail: Json | null
           tags: string[]
@@ -292,6 +342,8 @@ export interface Database {
           is_published?: boolean
           published_at?: string | null
           target_year?: number | null
+          view_count?: number
+          like_count?: number
           judgment_rules?: Json | null
           judgment_detail?: Json | null
           tags?: string[]
@@ -310,6 +362,8 @@ export interface Database {
           is_published?: boolean
           published_at?: string | null
           target_year?: number | null
+          view_count?: number
+          like_count?: number
           judgment_rules?: Json | null
           judgment_detail?: Json | null
           tags?: string[]
@@ -359,6 +413,37 @@ export interface Database {
           updated_at?: string
         }
         Relationships: []
+      }
+      post_likes: {
+        Row: {
+          post_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          post_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_comment_likes: {
         Row: {
@@ -530,6 +615,20 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_key: string
+          p_window_seconds: number
+          p_max_count: number
+        }
+        Returns: boolean
+      }
+      increment_post_view_count: {
+        Args: {
+          p_post_id: string
+        }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<string, never>
         Returns: boolean

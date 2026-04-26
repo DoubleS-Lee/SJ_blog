@@ -60,7 +60,7 @@ export default function ConsultationForm() {
           maxLength={5000}
           rows={12}
           className={`${inputCls} resize-y leading-relaxed`}
-          placeholder="상황을 편하게 적어 주세요. 다만 실명, 연락처, 학교명, 회사명, 주소 같은 식별 정보는 적지 않는 것을 권장합니다."
+          placeholder="상황을 최대한 자세히 적어 주세요. 언제부터, 어떤 일이 있었는지, 마음이 어떻게 변했는지까지 적어 주시면 상담으로 이어질 확률이 높아집니다. 다만 실명, 연락처, 학교명, 회사명, 주소 같은 식별 정보는 적지 않는 것을 권장합니다."
         />
         <p className="mt-2 text-xs text-gray-400">{body.trim().length}/5000</p>
       </div>

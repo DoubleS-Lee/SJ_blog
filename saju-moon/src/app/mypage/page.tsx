@@ -95,6 +95,20 @@ export default async function MyPage() {
               <span className="inline-block w-16 text-gray-400">권한</span>
               {profile?.role ?? 'free'}
             </p>
+
+            {profile?.is_admin && (
+              <div className="pt-2">
+                <Link
+                  href="/admin"
+                  className={buttonVariants({
+                    size: 'sm',
+                    className: 'bg-black text-white hover:bg-gray-800',
+                  })}
+                >
+                  관리자 페이지로 이동
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 

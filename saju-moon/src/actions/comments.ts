@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
 
 const MAX_COMMENT_LENGTH = 2000
 
@@ -68,6 +69,9 @@ export async function createPostComment(input: {
   }
 
   const nickname = profileRes.data?.nickname?.trim() || '익명'
+
+  const rateLimitResult = await enforceRateLimit(supabase, 'post_comment_create', user.id)
+  if (rateLimitResult.error) return rateLimitResult
 
   const { error } = await supabase
     .from('post_comments')

@@ -9,7 +9,7 @@ import {
 } from '@/lib/saju/date-selection'
 
 export const metadata: Metadata = {
-  title: '택일 | 사주 Moon',
+  title: '택일 | 월덕요정의 사주이야기',
 }
 
 interface Props {
@@ -49,8 +49,8 @@ export default async function TaekilPage({ searchParams }: Props) {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <MenuHero
           eyebrow="Personalized Date Selection"
-          title="택일 추천"
-          description={`저장된 사주를 기준으로 목적별 추천일을 골라주는 메뉴입니다.
+          title="나만의 택일 추천"
+          description={`등록하신 생년월일을 기준으로 목적에 맞는 좋은 날을 추천해 드립니다.
 로그인 후 사주 정보를 입력하면 바로 개인화 택일 캘린더를 사용할 수 있습니다.`}
           palette={HERO_PALETTE}
           actions={[
@@ -73,8 +73,8 @@ export default async function TaekilPage({ searchParams }: Props) {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <MenuHero
           eyebrow="Personalized Date Selection"
-          title="택일 추천"
-          description={`택일 추천은 저장된 사주를 기준으로 개인화 필터가 적용됩니다.
+          title="나만의 택일 추천"
+          description={`등록하신 생년월일을 기준으로 목적에 맞는 좋은 날을 추천해 드립니다.
 먼저 마이페이지에서 사주 정보를 입력해 주세요.`}
           palette={HERO_PALETTE}
           actions={[
@@ -106,9 +106,9 @@ export default async function TaekilPage({ searchParams }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <MenuHero
         eyebrow="Personalized Date Selection"
-        title="택일 추천"
-        description={`저장된 사주 기준으로 개인화 필터를 적용해 목적별 추천일을 보여줍니다.
-결과는 일정 보조용으로 활용하고, 중요한 결정일수록 직접 한 번 더 검토해 주세요.`}
+        title="나만의 택일 추천"
+        description={`등록하신 생년월일을 기준으로 목적에 맞는 좋은 날을 추천해 드립니다.
+결과는 참고용으로 활용하시고, 중요한 결정일수록 전문가와 함께 검토해 보시길 권장합니다.`}
         palette={HERO_PALETTE}
         actions={undefined}
         className="mb-8"

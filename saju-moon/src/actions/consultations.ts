@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
 import type { ConsultationStatus } from '@/types/consultation'
 
 const CONSULTATION_USAGE_VERSION = '2026-04-18-v1'
@@ -59,6 +60,9 @@ export async function createConsultation(input: {
     return { error: '필수 동의에 체크해야 상담 게시판을 이용할 수 있습니다.' }
   }
 
+  const rateLimitResult = await enforceRateLimit(supabase, 'consultation_create', user.id)
+  if (rateLimitResult.error) return rateLimitResult
+
   const { data, error } = await supabase
     .from('consultations')
     .insert({
@@ -95,6 +99,9 @@ export async function createConsultationComment(input: {
   const body = normalizeText(input.body)
   if (!body) return { error: '댓글 내용을 입력해 주세요.' }
   if (body.length > MAX_COMMENT_LENGTH) return { error: `댓글은 ${MAX_COMMENT_LENGTH}자 이하로 입력해 주세요.` }
+
+  const rateLimitResult = await enforceRateLimit(supabase, 'consultation_comment_create', user.id)
+  if (rateLimitResult.error) return rateLimitResult
 
   const consultation = await getConsultationForActor(supabase, input.consultationId)
   if (!consultation) return { error: '상담 글을 찾을 수 없습니다.' }

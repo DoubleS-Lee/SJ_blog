@@ -19,6 +19,7 @@ export default async function NewConsultationPage() {
         <p className="mt-2 text-sm leading-7 text-gray-500">
           작성한 사연은 비공개로 접수되며, 본인과 관리자만 열람할 수 있습니다.
           상담 답변은 댓글 형태로 이어집니다.
+          상황을 최대한 자세히 적어 주실수록 상담으로 이어질 확률이 높아집니다.
         </p>
       </div>
 

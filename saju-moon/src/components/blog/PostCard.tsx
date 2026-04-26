@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import Image from 'next/image'
+import TrackedLink from '@/components/analytics/TrackedLink'
 
 interface Post {
   slug: string
@@ -9,6 +9,8 @@ interface Post {
   category: string
   published_at: string | null
   target_year: number | null
+  view_count: number | null
+  like_count: number | null
 }
 
 function formatDate(iso: string | null) {
@@ -20,9 +22,23 @@ function formatDate(iso: string | null) {
   })
 }
 
+function formatCount(value: number | null) {
+  return (value ?? 0).toLocaleString('ko-KR')
+}
+
 export default function PostCard({ post }: { post: Post }) {
   return (
-    <Link href={`/posts/${post.slug}`} className="group block">
+    <TrackedLink
+      href={`/posts/${post.slug}`}
+      className="group block"
+      eventName="content_click"
+      pageType="blog_list"
+      contentType="blog_post"
+      contentId={post.slug}
+      contentTitle={post.title}
+      category={post.category}
+      properties={{ list_context: 'post_grid' }}
+    >
       {/* 썸네일 */}
       <div className="relative aspect-square bg-zinc-900 mb-4 overflow-hidden">
         {post.thumbnail_url ? (
@@ -57,10 +73,12 @@ export default function PostCard({ post }: { post: Post }) {
         {post.title}
       </h3>
 
-      {/* 날짜 */}
-      <p className="mt-2 text-xs text-gray-400">
-        {formatDate(post.published_at)}
-      </p>
-    </Link>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="text-xs text-gray-400">{formatDate(post.published_at)}</p>
+        <p className="text-[11px] text-gray-400">
+          조회 {formatCount(post.view_count)} · 좋아요 {formatCount(post.like_count)}
+        </p>
+      </div>
+    </TrackedLink>
   )
 }

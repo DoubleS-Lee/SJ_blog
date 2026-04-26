@@ -11,6 +11,44 @@ function escHtml(str: string): string {
     .replace(/"/g, '&quot;')
 }
 
+function sanitizeUrl(raw: unknown, options?: { allowRelative?: boolean }) {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  if (!value) return null
+
+  if (options?.allowRelative && value.startsWith('/')) {
+    return escHtml(value)
+  }
+
+  if (/^(https?:|mailto:|tel:)/i.test(value)) {
+    return escHtml(value)
+  }
+
+  return null
+}
+
+function sanitizeColor(raw: unknown) {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
+  if (/^rgba?\([\d\s.,%]+\)$/.test(value)) return value
+  if (/^hsla?\([\d\s.,%]+\)$/.test(value)) return value
+  if (/^[a-zA-Z]{3,20}$/.test(value)) return value
+  return null
+}
+
+function sanitizeFontSize(raw: unknown) {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  return /^\d+(\.\d+)?(px|rem|em|%)$/.test(value) ? value : null
+}
+
+function sanitizeFontFamily(raw: unknown) {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  return /^[a-zA-Z0-9\s,'"-]{1,80}$/.test(value) ? value : null
+}
+
 function nodeToHtml(node: JSONContent): string {
   const inner = () => node.content?.map(nodeToHtml).join('') ?? ''
 
@@ -29,20 +67,25 @@ function nodeToHtml(node: JSONContent): string {
           case 'strike':    text = `<s>${text}</s>`; break
           case 'code':      text = `<code>${text}</code>`; break
           case 'link': {
-            const href = escHtml(m.attrs?.href ?? '')
-            text = `<a href="${href}" class="underline text-blue-600" target="${m.attrs?.target ?? '_blank'}" rel="noopener noreferrer">${text}</a>`
+            const href = sanitizeUrl(m.attrs?.href, { allowRelative: true })
+            if (!href) break
+            const target = m.attrs?.target === '_self' ? '_self' : '_blank'
+            text = `<a href="${href}" class="underline text-blue-600" target="${target}" rel="noopener noreferrer">${text}</a>`
             break
           }
           case 'textStyle': {
             const styles: string[] = []
-            if (m.attrs?.color) styles.push(`color:${m.attrs.color}`)
-            if (m.attrs?.fontSize) styles.push(`font-size:${m.attrs.fontSize}`)
-            if (m.attrs?.fontFamily) styles.push(`font-family:${m.attrs.fontFamily}`)
+            const color = sanitizeColor(m.attrs?.color)
+            const fontSize = sanitizeFontSize(m.attrs?.fontSize)
+            const fontFamily = sanitizeFontFamily(m.attrs?.fontFamily)
+            if (color) styles.push(`color:${color}`)
+            if (fontSize) styles.push(`font-size:${fontSize}`)
+            if (fontFamily) styles.push(`font-family:${fontFamily}`)
             if (styles.length) text = `<span style="${styles.join(';')}">${text}</span>`
             break
           }
           case 'highlight': {
-            const color = (m.attrs?.color as string) ?? '#FEF08A'
+            const color = sanitizeColor(m.attrs?.color) ?? '#FEF08A'
             text = `<mark style="background-color:${color}">${text}</mark>`
             break
           }
@@ -66,7 +109,7 @@ function nodeToHtml(node: JSONContent): string {
     }
 
     case 'image': {
-      const src   = escHtml(node.attrs?.src ?? '')
+      const src = sanitizeUrl(node.attrs?.src, { allowRelative: true })
       const alt   = escHtml(node.attrs?.alt ?? '')
       const title = node.attrs?.title ? ` title="${escHtml(node.attrs.title)}"` : ''
       const width = node.attrs?.width as number | null

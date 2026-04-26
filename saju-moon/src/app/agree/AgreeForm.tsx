@@ -41,7 +41,7 @@ export default function AgreeForm({ next }: Props) {
               <span className="text-black">[필수]</span> 이용약관 동의
             </span>
             <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
-              사주 Moon 서비스를 이용하기 위해 이용약관에 동의합니다.
+              월덕요정의 사주이야기 서비스를 이용하기 위해 이용약관에 동의합니다.
               서비스는 사주 기반 콘텐츠 제공을 목적으로 하며, 무속·점술 서비스가 아닙니다.
             </p>
           </div>

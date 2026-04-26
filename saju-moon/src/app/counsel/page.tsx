@@ -24,9 +24,9 @@ export default async function CounselPage() {
       <MenuHero
         eyebrow="Private Counsel"
         title="익명 고민 상담"
-        description={`이 공간은 공개 게시판이 아니라 비공개 상담함입니다.
-작성한 사연은 작성자 본인과 관리자만 볼 수 있고, 상담은 댓글 형태로 이어집니다.
-사연은 필수 동의에 따라 식별 정보를 제거한 뒤 외부 콘텐츠 소재로 활용될 수 있습니다.`}
+        description={`사주 전문가 월덕요정이 직접 선정한 사연에 한해 무료로 고민 상담을 진행합니다.
+작성한 사연은 월덕요정과 작성자 본인만 볼 수 있고, 상담은 댓글 형태로 이어집니다.
+선정된 사연은 식별 정보를 제거한 뒤 외부 콘텐츠 소재로 활용될 수 있습니다.`}
         palette={HERO_PALETTE}
         titleActions={
           user
@@ -49,7 +49,8 @@ export default async function CounselPage() {
       >
         <div className="mt-6 rounded-2xl bg-gray-50 p-5 text-sm text-gray-500 leading-7">
           <p>1. 실명, 연락처, 학교명, 회사명, 주소 등 식별 가능한 정보는 적지 않는 것을 권장합니다.</p>
-          <p>2. 필수 동의에 체크해야 상담 글을 등록할 수 있습니다.</p>
+          <p>2. 현재 처한 상황과 배경을 최대한 구체적으로 적어주실수록 상담으로 선정될 확률이 높아집니다.</p>
+          <p>3. 콘텐츠 활용 동의에 체크해야 상담 글을 등록할 수 있습니다.</p>
         </div>
       </MenuHero>
     </div>

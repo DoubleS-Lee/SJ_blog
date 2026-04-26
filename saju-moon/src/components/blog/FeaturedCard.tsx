@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import Image from 'next/image'
+import TrackedLink from '@/components/analytics/TrackedLink'
 
 interface Post {
   slug: string
@@ -9,6 +9,8 @@ interface Post {
   category: string
   published_at: string | null
   target_year: number | null
+  view_count: number | null
+  like_count: number | null
 }
 
 function formatDate(iso: string | null) {
@@ -20,9 +22,23 @@ function formatDate(iso: string | null) {
   })
 }
 
+function formatCount(value: number | null) {
+  return (value ?? 0).toLocaleString('ko-KR')
+}
+
 export default function FeaturedCard({ post }: { post: Post }) {
   return (
-    <Link href={`/posts/${post.slug}`} className="group block">
+    <TrackedLink
+      href={`/posts/${post.slug}`}
+      className="group block"
+      eventName="content_click"
+      pageType="blog_list"
+      contentType="blog_post"
+      contentId={post.slug}
+      contentTitle={post.title}
+      category={post.category}
+      properties={{ list_context: 'featured_card' }}
+    >
       <div className="flex flex-col md:flex-row gap-0 overflow-hidden">
         {/* 이미지 (40%) */}
         <div className="relative w-full md:w-[40%] aspect-square bg-zinc-900 shrink-0 self-start">
@@ -59,11 +75,14 @@ export default function FeaturedCard({ post }: { post: Post }) {
               {post.summary}
             </p>
           )}
-          <p className="text-xs text-gray-400">
-            {formatDate(post.published_at)}
-          </p>
+          <div className="flex items-center justify-between gap-2 text-xs text-gray-400">
+            <p>{formatDate(post.published_at)}</p>
+            <p className="text-[11px]">
+              조회 {formatCount(post.view_count)} · 좋아요 {formatCount(post.like_count)}
+            </p>
+          </div>
         </div>
       </div>
-    </Link>
+    </TrackedLink>
   )
 }

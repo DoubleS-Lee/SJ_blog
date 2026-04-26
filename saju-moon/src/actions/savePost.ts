@@ -24,6 +24,19 @@ export interface PostFormData {
   published_at: string | null
 }
 
+function slugifyTitle(title: string) {
+  const normalized = title
+    .normalize('NFKC')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  return normalized.slice(0, 80).replace(/-$/g, '') || 'post'
+}
+
 export async function savePost(data: PostFormData): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -109,7 +122,7 @@ export async function savePost(data: PostFormData): Promise<{ error?: string }> 
     revalidatePath('/')
   } else {
     // 신규 — slug nanoid 7자리 자동 생성
-    const slug = nanoid(7)
+    const slug = `${slugifyTitle(data.title)}-${nanoid(6)}`
 
     const { error } = await supabase
       .from('posts')

@@ -2,15 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
-const CATEGORIES = [
-  '전체',
-  '연애·궁합',
-  '커리어·이직',
-  '재물·투자',
-  '건강·체질',
-  '육아·자녀교육',
-  '기타',
-]
+const CATEGORIES = ['전체', '연애·궁합', '커리어·이직', '재물·투자', '건강·체질', '육아·자녀교육', '기타']
 
 export default function CategoryFilter() {
   const router = useRouter()
@@ -34,9 +26,9 @@ export default function CategoryFilter() {
         <button
           key={cat}
           onClick={() => handleSelect(cat)}
-          className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+          className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
             current === cat
-              ? 'bg-black text-white border-black'
+              ? 'border-black bg-black text-white'
               : 'border-gray-200 text-gray-500 hover:border-gray-400'
           }`}
         >

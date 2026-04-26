@@ -29,10 +29,10 @@ export default async function AgreePage({ searchParams }: Props) {
   return (
     <div className="max-w-lg mx-auto px-4 py-16">
       <div className="text-center mb-10">
-        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">사주 Moon</p>
+        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">월덕요정의 사주이야기</p>
         <h1 className="text-2xl font-bold tracking-tight mb-3">서비스 이용 동의</h1>
         <p className="text-sm text-gray-500">
-          사주 Moon 서비스를 이용하기 전에 아래 약관에 동의해 주세요.
+          월덕요정의 사주이야기 서비스를 이용하기 전에 아래 약관에 동의해 주세요.
         </p>
       </div>
 

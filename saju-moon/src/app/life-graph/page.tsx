@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth/admin'
 import { getManseryeokData } from '@/lib/saju/manseryeok'
 import type { SajuInput } from '@/lib/saju/calculate'
 import type { Gender } from '@/types/saju'
@@ -10,7 +10,7 @@ import { LifeGraphChart } from './LifeGraphChart'
 import MenuHero from '@/components/layout/MenuHero'
 
 export const metadata: Metadata = {
-  title: '사주 생애 그래프 | 사주 Moon',
+  title: '사주 생애 그래프 | 월덕요정의 사주이야기',
 }
 
 const DOMAIN_META: Record<
@@ -85,10 +85,7 @@ function formatScore(value: number) {
 }
 
 export default async function LifeGraphPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await requireAdmin()
 
   const saju = user
     ? await supabase

@@ -141,7 +141,7 @@ export default function CompatibilitySajuManager({ entries, role, isAdmin }: Pro
           <div>
             <h2 className="text-lg font-semibold text-gray-900">저장된 만세력</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              무료 회원은 나 포함 만세력 2개, 유료 회원은 나 포함 만세력 5개까지 저장할 수 있습니다.
+              만세력은 본인 포함 2개까지 저장할 수 있습니다.
             </p>
           </div>
           <button

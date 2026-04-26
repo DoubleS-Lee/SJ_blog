@@ -6,7 +6,7 @@ import { getManseryeokData } from '@/lib/saju/manseryeok'
 import type { SajuInput } from '@/lib/saju/calculate'
 import type { Gender } from '@/types/saju'
 
-export const metadata: Metadata = { title: '만세력 조회 — 사주 Moon' }
+export const metadata: Metadata = { title: '만세력 조회 — 월덕요정의 사주이야기' }
 
 interface Props {
   searchParams: Promise<Record<string, string>>
