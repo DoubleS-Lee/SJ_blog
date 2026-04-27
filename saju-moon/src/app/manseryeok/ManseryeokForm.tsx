@@ -44,7 +44,7 @@ export default function ManseryeokForm({ defaultValues }: Props) {
       gender,
       is_lunar: String(isLunar),
     })
-    router.push(`/manseryeok?${params.toString()}`)
+    router.push(`/manseryeok?${params.toString()}`, { scroll: false })
   }
 
   const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white'

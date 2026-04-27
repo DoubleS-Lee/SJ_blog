@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
-import TaekilPlanner from './TaekilPlanner'
 import MenuHero from '@/components/layout/MenuHero'
+import { createClient } from '@/lib/supabase/server'
 import {
   getDateSelectionMonthResult,
   parseSelectionPurpose,
   type DateSelectionUserData,
 } from '@/lib/saju/date-selection'
+import { buildTaekilUiCopyWithDb } from '@/lib/taekil/copy-service'
+import TaekilPlanner from './TaekilPlanner'
 
 export const metadata: Metadata = {
-  title: '택일 | 월덕요정의 사주이야기',
+  title: '택일 | 사주로아의 사주이야기',
 }
 
 interface Props {
@@ -40,22 +41,24 @@ export default async function TaekilPage({ searchParams }: Props) {
   const month = parseNumberParam(params.month, now.getMonth() + 1)
   const purpose = parseSelectionPurpose(parseStringParam(params.purpose))
   const selectedDate = parseStringParam(params.date)
+  const copy = await buildTaekilUiCopyWithDb()
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <MenuHero
           eyebrow="Personalized Date Selection"
-          title="나만의 택일 추천"
-          description={`등록하신 생년월일을 기준으로 목적에 맞는 좋은 날을 추천해 드립니다.
-로그인 후 사주 정보를 입력하면 바로 개인화 택일 캘린더를 사용할 수 있습니다.`}
+          title={copy.page.guestTitle}
+          description={copy.page.guestDescription}
           palette={HERO_PALETTE}
           actions={[
-            { href: '/login', label: '로그인' },
-            { href: '/mypage/saju', label: '사주 입력 안내', variant: 'ghost' },
+            { href: '/login', label: copy.page.guestPrimaryCta },
+            { href: '/mypage/saju', label: copy.page.guestSecondaryCta, variant: 'ghost' },
           ]}
         />
       </div>
@@ -73,13 +76,12 @@ export default async function TaekilPage({ searchParams }: Props) {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <MenuHero
           eyebrow="Personalized Date Selection"
-          title="나만의 택일 추천"
-          description={`등록하신 생년월일을 기준으로 목적에 맞는 좋은 날을 추천해 드립니다.
-먼저 마이페이지에서 사주 정보를 입력해 주세요.`}
+          title={copy.page.noSajuTitle}
+          description={copy.page.noSajuDescription}
           palette={HERO_PALETTE}
           actions={[
-            { href: '/mypage/saju', label: '사주 정보 입력하기' },
-            { href: '/mypage', label: '마이페이지', variant: 'ghost' },
+            { href: '/mypage/saju', label: copy.page.noSajuPrimaryCta },
+            { href: '/mypage', label: copy.page.noSajuSecondaryCta, variant: 'ghost' },
           ]}
         />
       </div>
@@ -100,21 +102,20 @@ export default async function TaekilPage({ searchParams }: Props) {
         : null,
   }
 
-  const data = getDateSelectionMonthResult(userData, year, month, purpose)
+  const data = getDateSelectionMonthResult(userData, year, month, purpose, copy)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <MenuHero
         eyebrow="Personalized Date Selection"
-        title="나만의 택일 추천"
-        description={`등록하신 생년월일을 기준으로 목적에 맞는 좋은 날을 추천해 드립니다.
-결과는 참고용으로 활용하시고, 중요한 결정일수록 전문가와 함께 검토해 보시길 권장합니다.`}
+        title={copy.page.mainTitle}
+        description={copy.page.mainDescription}
         palette={HERO_PALETTE}
         actions={undefined}
         className="mb-8"
       />
 
-      <TaekilPlanner data={data} currentDate={selectedDate} />
+      <TaekilPlanner data={data} currentDate={selectedDate} copy={copy} />
     </div>
   )
 }

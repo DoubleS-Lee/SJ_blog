@@ -37,7 +37,7 @@ export default async function MyConsultationsPage() {
             내가 작성한 익명 상담글과 답변 현황을 확인할 수 있습니다.
           </p>
         </div>
-        <Link href="/counsel/new" className={buttonVariants({ size: 'sm' })}>
+        <Link href="/counsel/new" scroll={false} className={buttonVariants({ size: 'sm' })}>
           새 상담 등록
         </Link>
       </div>
@@ -48,6 +48,7 @@ export default async function MyConsultationsPage() {
             <Link
               key={item.id}
               href={`/counsel/${item.id}`}
+              scroll={false}
               className="rounded-2xl border border-gray-100 bg-white p-5 transition-colors hover:border-gray-300"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">

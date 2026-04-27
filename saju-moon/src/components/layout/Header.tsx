@@ -51,7 +51,7 @@ export default function Header({ user }: HeaderProps) {
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="text-lg font-bold tracking-tight">
-          월덕요정의 사주이야기
+          사주로아의 사주이야기
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
@@ -79,10 +79,10 @@ export default function Header({ user }: HeaderProps) {
             </>
           ) : (
             <>
-              <Link href="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+              <Link href="/login" scroll={false} className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
                 로그인
               </Link>
-              <Link href="/login" className={buttonVariants({ size: 'sm' })}>
+              <Link href="/login" scroll={false} className={buttonVariants({ size: 'sm' })}>
                 회원가입
               </Link>
             </>

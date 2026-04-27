@@ -404,7 +404,7 @@ export default async function PostDetailPage({ params }: Props) {
               문
             </div>
             <span className="text-sm text-gray-500">
-              월덕요정의 사주이야기
+              사주로아의 사주이야기
               {post.published_at && ` · ${formatDate(post.published_at)}`}
             </span>
           </div>

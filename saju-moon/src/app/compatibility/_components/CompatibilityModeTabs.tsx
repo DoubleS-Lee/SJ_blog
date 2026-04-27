@@ -41,6 +41,7 @@ export default function CompatibilityModeTabs({
             <Link
               key={mode.key}
               href={buildHref(mode.href, selectedId, maleRoleParam)}
+              scroll={false}
               className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:text-sm ${
                 isActive
                   ? 'border-gray-900 bg-gray-900 text-white'

@@ -1,4 +1,6 @@
 export type CompatibilitySection = 'dayGan' | 'dayJi' | 'ohang' | 'johoo' | 'sipsung'
+export type CompatibilityFortunePeriodType = 'daily' | 'monthly' | 'yearly' | 'daewoon'
+export type CompatibilityFortuneCategory = 'pair_relation' | 'track_match' | 'ohang_support' | 'transition'
 
 export type CompatibilityCopyItem = {
   title: string

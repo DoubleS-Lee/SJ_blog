@@ -308,6 +308,282 @@ export interface Database {
         }
         Relationships: []
       }
+      analytics_daily_overview: {
+        Row: {
+          metric_date: string
+          unique_visitors: number
+          page_views: number
+          total_engagement_ms: number
+          engagement_events: number
+          updated_at: string
+        }
+        Insert: {
+          metric_date: string
+          unique_visitors?: number
+          page_views?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Update: {
+          metric_date?: string
+          unique_visitors?: number
+          page_views?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_daily_page_type: {
+        Row: {
+          metric_date: string
+          page_type: string
+          views: number
+          total_engagement_ms: number
+          engagement_events: number
+          updated_at: string
+        }
+        Insert: {
+          metric_date: string
+          page_type: string
+          views?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Update: {
+          metric_date?: string
+          page_type?: string
+          views?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_daily_category: {
+        Row: {
+          metric_date: string
+          category: string
+          views: number
+          likes: number
+          total_engagement_ms: number
+          engagement_events: number
+          updated_at: string
+        }
+        Insert: {
+          metric_date: string
+          category: string
+          views?: number
+          likes?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Update: {
+          metric_date?: string
+          category?: string
+          views?: number
+          likes?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_daily_menu: {
+        Row: {
+          metric_date: string
+          menu_name: string
+          clicks: number
+          updated_at: string
+        }
+        Insert: {
+          metric_date: string
+          menu_name: string
+          clicks?: number
+          updated_at?: string
+        }
+        Update: {
+          metric_date?: string
+          menu_name?: string
+          clicks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_daily_channel: {
+        Row: {
+          metric_date: string
+          channel: string
+          sessions: number
+          updated_at: string
+        }
+        Insert: {
+          metric_date: string
+          channel: string
+          sessions?: number
+          updated_at?: string
+        }
+        Update: {
+          metric_date?: string
+          channel?: string
+          sessions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_daily_post: {
+        Row: {
+          metric_date: string
+          slug: string
+          title: string
+          category: string | null
+          views: number
+          likes: number
+          total_engagement_ms: number
+          engagement_events: number
+          updated_at: string
+        }
+        Insert: {
+          metric_date: string
+          slug: string
+          title: string
+          category?: string | null
+          views?: number
+          likes?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Update: {
+          metric_date?: string
+          slug?: string
+          title?: string
+          category?: string | null
+          views?: number
+          likes?: number
+          total_engagement_ms?: number
+          engagement_events?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      compatibility_copy: {
+        Row: {
+          id: string
+          section: 'dayGan' | 'dayJi' | 'ohang' | 'johoo' | 'sipsung'
+          copy_key: string
+          title: string
+          summary: string
+          detail: string
+          pattern: string
+          detail_case: string
+          male_condition: string
+          female_condition: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          section: 'dayGan' | 'dayJi' | 'ohang' | 'johoo' | 'sipsung'
+          copy_key: string
+          title: string
+          summary: string
+          detail: string
+          pattern: string
+          detail_case: string
+          male_condition: string
+          female_condition: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          section?: 'dayGan' | 'dayJi' | 'ohang' | 'johoo' | 'sipsung'
+          copy_key?: string
+          title?: string
+          summary?: string
+          detail?: string
+          pattern?: string
+          detail_case?: string
+          male_condition?: string
+          female_condition?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      compatibility_fortune_copy: {
+        Row: {
+          id: string
+          period_type: 'daily' | 'monthly' | 'yearly' | 'daewoon'
+          category: 'pair_relation' | 'track_match' | 'ohang_support' | 'transition'
+          copy_key: string
+          summary: string
+          detail: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          period_type: 'daily' | 'monthly' | 'yearly' | 'daewoon'
+          category: 'pair_relation' | 'track_match' | 'ohang_support' | 'transition'
+          copy_key: string
+          summary: string
+          detail: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          period_type?: 'daily' | 'monthly' | 'yearly' | 'daewoon'
+          category?: 'pair_relation' | 'track_match' | 'ohang_support' | 'transition'
+          copy_key?: string
+          summary?: string
+          detail?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      taekil_copy: {
+        Row: {
+          id: string
+          copy_group: 'page' | 'purpose' | 'level' | 'panel' | 'template'
+          copy_key: string
+          title: string
+          summary: string
+          detail: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          copy_group: 'page' | 'purpose' | 'level' | 'panel' | 'template'
+          copy_key: string
+          title?: string
+          summary?: string
+          detail?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          copy_group?: 'page' | 'purpose' | 'level' | 'panel' | 'template'
+          copy_key?: string
+          title?: string
+          summary?: string
+          detail?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           id: string
@@ -594,18 +870,21 @@ export interface Database {
       }
       site_settings: {
         Row: {
+          counsel_social_proof_boost: number
           id: number
           grade_separation_enabled: boolean
           ilgan_avatar_urls: Json
           user_avatar_overrides: Json
         }
         Insert: {
+          counsel_social_proof_boost?: number
           id?: number
           grade_separation_enabled?: boolean
           ilgan_avatar_urls?: Json
           user_avatar_overrides?: Json
         }
         Update: {
+          counsel_social_proof_boost?: number
           grade_separation_enabled?: boolean
           ilgan_avatar_urls?: Json
           user_avatar_overrides?: Json

@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
+﻿/* eslint-disable @typescript-eslint/no-require-imports */
 const { Solar } = require('lunar-javascript')
 
 import type { Cheongan, Jiji } from '@/types/saju'
+import { TAEKIL_LOCAL_COPY, type TaekilUiCopyBundle } from '@/lib/taekil/copy-data'
 
 interface LunarTimeData {
   getGanZhi(): string
@@ -413,12 +414,17 @@ function getDiShiScore(stage: string | null) {
   return 0
 }
 
-function buildDiShiReason(stage: string) {
-  return `일간 기준 12운성(십이운성)이 ${stage}(으)로 들어와 개인 흐름과 비교적 잘 맞습니다.`
+function renderTaekilTemplate(template: string, variables: Record<string, string>) {
+  return Object.entries(variables).reduce(
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, value),
+    template,
+  )
 }
-
-function buildDiShiCaution(stage: string) {
-  return `일간 기준 12운성(십이운성)이 ${stage}(으)로 들어와 개인 흐름상 기운이 다소 약합니다.`
+function buildDiShiReason(stage: string, copy: TaekilUiCopyBundle) {
+  return renderTaekilTemplate(copy.templates.diShiReason, { stage })
+}
+function buildDiShiCaution(stage: string, copy: TaekilUiCopyBundle) {
+  return renderTaekilTemplate(copy.templates.diShiCaution, { stage })
 }
 
 function parseXunKongBranches(value: string | null | undefined) {
@@ -440,12 +446,13 @@ function isHyeong(userBranch: string, targetBranch: string) {
   })
 }
 
-function getPurposeReason(config: PurposeConfig) {
-  return `${config.shortLabel} 목적과 맞는 宜(의)가 잡혀 기본 흐름이 좋습니다.`
+function getPurposeReason(config: PurposeConfig, copy: TaekilUiCopyBundle) {
+  const purposeLabel = copy.purposes[config.id]?.shortLabel ?? config.shortLabel
+  return renderTaekilTemplate(copy.templates.purposeReason, { purposeLabel })
 }
 
-function getHarmonyReason(targetLabel: string) {
-  return `${targetLabel}와 충돌이 적고 흐름이 비교적 안정적입니다.`
+function getHarmonyReason(targetLabel: string, copy: TaekilUiCopyBundle) {
+  return renderTaekilTemplate(copy.templates.harmonyReason, { targetLabel })
 }
 
 function getGodWeight(purpose: SelectionPurpose, god: TianShenName) {
@@ -458,52 +465,20 @@ function getGodDisplayLabel(god: TianShenName) {
   return `${korean}${suffix}`
 }
 
-function buildGodReason(god: TianShenName, purposeLabel: string) {
+function buildGodReason(god: TianShenName, purposeLabel: string, copy: TaekilUiCopyBundle) {
   const godLabel = getGodDisplayLabel(god)
-
-  switch (god) {
-    case '青龙':
-      return `${godLabel}라 움직임과 만남의 흐름이 살아 ${purposeLabel} 일정과 잘 맞습니다.`
-    case '明堂':
-      return `${godLabel}라 격식과 공식성이 살아 있어 ${purposeLabel} 일정에 힘을 실어줍니다.`
-    case '金匮':
-      return `${godLabel}라 재물·문서·거래 성격이 강해 ${purposeLabel} 목적에 유리합니다.`
-    case '天德':
-      return `${godLabel}라 조화와 보호의 기운이 있어 ${purposeLabel} 일정을 부드럽게 받쳐줍니다.`
-    case '玉堂':
-      return `${godLabel}라 문서·품격·정제된 흐름이 살아 ${purposeLabel} 목적과 잘 맞습니다.`
-    case '司命':
-      return `${godLabel}라 책임감과 정리력이 필요한 ${purposeLabel} 일정에 안정감을 더합니다.`
-    default:
-      return `${godLabel} 기운이 들어 ${purposeLabel} 목적에 보탬이 됩니다.`
-  }
+  return renderTaekilTemplate(copy.templates.godReasonDefault, { godLabel, purposeLabel })
 }
 
-function buildGodCaution(god: TianShenName, purposeLabel: string) {
+function buildGodCaution(god: TianShenName, purposeLabel: string, copy: TaekilUiCopyBundle) {
   const godLabel = getGodDisplayLabel(god)
-
-  switch (god) {
-    case '勾陈':
-      return `${godLabel}라 일정이 얽히거나 지연되기 쉬워 ${purposeLabel} 진행은 답답할 수 있습니다.`
-    case '白虎':
-      return `${godLabel}라 충돌과 손상 기운이 있어 ${purposeLabel} 일정은 강하게 피하는 편이 좋습니다.`
-    case '朱雀':
-      return `${godLabel}라 말실수·구설·언쟁이 붙기 쉬워 ${purposeLabel} 일정에는 불리합니다.`
-    case '天牢':
-      return `${godLabel}라 흐름이 막히고 정체되기 쉬워 ${purposeLabel} 추진력에 제약이 생길 수 있습니다.`
-    case '天刑':
-      return `${godLabel}라 압박과 시비 성격이 있어 ${purposeLabel} 일정은 신중하게 봐야 합니다.`
-    case '玄武':
-      return `${godLabel}라 숨은 문제나 불투명성이 생기기 쉬워 ${purposeLabel} 판단에 불리합니다.`
-    default:
-      return `${godLabel} 기운이 걸려 ${purposeLabel} 목적에는 주의가 필요합니다.`
-  }
+  return renderTaekilTemplate(copy.templates.godCautionDefault, { godLabel, purposeLabel })
 }
 
-function buildSummary(reasons: string[], cautions: string[]) {
+function buildSummary(reasons: string[], cautions: string[], copy: TaekilUiCopyBundle) {
   if (reasons.length > 0) return reasons[0]
   if (cautions.length > 0) return cautions[0]
-  return '크게 강한 추천 포인트는 아니지만 무난하게 검토할 수 있는 날입니다.'
+  return copy.templates.summaryFallback
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -537,13 +512,13 @@ function getLevel(score: number, filteredOutReason: string | null): DateSelectio
 
 function normalizeRecommendation(
   base: Omit<DateSelectionRecommendation, 'level' | 'summary'>,
+  copy: TaekilUiCopyBundle,
 ): DateSelectionRecommendation {
   const level = getLevel(base.score, base.filteredOutReason)
   const isRecommended = level === 'best' || level === 'good'
   const reasons = isRecommended || level === 'normal' ? base.reasons : []
   const goodHours = isRecommended ? base.goodHours : []
   const cautions = level === 'avoid' ? [] : base.cautions
-
   return {
     ...base,
     level,
@@ -552,7 +527,8 @@ function normalizeRecommendation(
     cautions,
     summary: buildSummary(
       reasons,
-      isRecommended ? cautions : [base.filteredOutReason ?? '이번 달 추천 후보로 보지 않는 날짜입니다.'],
+      isRecommended ? cautions : [base.filteredOutReason ?? copy.templates.normalizeAvoidFallback],
+      copy,
     ),
   }
 }
@@ -561,69 +537,61 @@ function scoreTimeRecommendation(
   time: LunarTimeData,
   user: DateSelectionUserData,
   config: PurposeConfig,
+  copy: TaekilUiCopyBundle,
 ): TimeRecommendation | null {
   const yi = time.getYi()
   const ji = time.getJi()
   const timeBranch = time.getGanZhi().slice(1)
   const timeGod = time.getTianShen() as TianShenName
-
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.day_jiji]] === timeBranch) {
     return null
   }
-
   let score = 0
   const reasons: string[] = []
   const matchedIncludeValues = yi.filter((value) =>
     config.hourIncludeKeywords.some((keyword) => value.includes(keyword)),
   )
   const godWeight = getGodWeight(config.id, timeGod)
-
+  const purposeLabel = copy.purposes[config.id]?.shortLabel ?? config.shortLabel
   if (matchedIncludeValues.length > 0) {
     score += 18
     reasons.push(
-      `시각 宜(의)에 '${matchedIncludeValues.slice(0, 2).join("', '")}'가 들어와 ${config.shortLabel} 일정에 잘 맞습니다.`,
+      renderTaekilTemplate(copy.templates.timeIncludeReason, {
+        matchedKeywords: `'${matchedIncludeValues.slice(0, 2).join("', '")}'`,
+        purposeLabel,
+      }),
     )
   }
-
   if (godWeight > 0) {
     score += godWeight
-    reasons.push(buildGodReason(timeGod, config.shortLabel))
+    reasons.push(buildGodReason(timeGod, purposeLabel, copy))
   } else if (godWeight < 0) {
     score += godWeight
   }
-
-  if (time.getTianShenLuck() === '吉') {
+  if (time.getTianShenLuck() === '길') {
     score += 6
   }
-
   if (BRANCH_HARMONY[KR_TO_CN_JIJI[user.day_jiji]] === timeBranch) {
     score += 8
-    reasons.push('본인 일지와 합이 들어와 무리감이 적은 시간대입니다.')
+    reasons.push(copy.templates.timeDayHarmonyReason)
   }
-
   if (user.hour_jiji && BRANCH_HARMONY[KR_TO_CN_JIJI[user.hour_jiji]] === timeBranch) {
     score += 5
   }
-
   if (includesAnyKeyword(ji, config.hourAvoidKeywords)) {
     score -= 12
   }
-
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.year_jiji]] === timeBranch) {
     score -= 8
   }
-
   if (user.hour_jiji && BRANCH_CLASH[KR_TO_CN_JIJI[user.hour_jiji]] === timeBranch) {
     score -= 6
   }
-
   if (score <= 0) {
     return null
   }
-
   const adjustedStart = applySeoulTimeOffset(time.getMinHm())
   const adjustedEnd = applySeoulTimeOffset(time.getMaxHm())
-
   return {
     label: `${adjustedStart}~${adjustedEnd}`,
     start: adjustedStart,
@@ -632,7 +600,7 @@ function scoreTimeRecommendation(
     reason:
       reasons.length > 1
         ? `${reasons[0]} ${reasons.slice(1, 3).join(' ')}`
-        : reasons[0] ?? '시간 흐름이 비교적 무난해 일정 후보로 볼 수 있습니다.',
+        : reasons[0] ?? copy.templates.timeGeneralFallback,
   }
 }
 
@@ -642,8 +610,10 @@ function buildDayRecommendation(
   month: number,
   day: number,
   purpose: SelectionPurpose,
+  copy: TaekilUiCopyBundle,
 ): DateSelectionRecommendation {
   const config = PURPOSE_MAP[purpose]
+  const purposeLabel = copy.purposes[purpose]?.shortLabel ?? config.shortLabel
   const solar = SolarApi.fromYmd(year, month, day)
   const lunar = solar.getLunar()
   const dayYi = lunar.getDayYi()
@@ -656,125 +626,104 @@ function buildDayRecommendation(
   const isHwangdo = YELLOW_GODS.has(dayTianShen)
   const dayDiShi = getDiShi(user.day_cheongan, dayBranch)
   const dayXunKongBranches = parseXunKongBranches(user.day_xun_kong)
-
   const reasons: string[] = []
   const cautions: string[] = []
   let filteredOutReason: string | null = null
   let score = 0
-
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.day_jiji]] === dayBranch) {
     if (HARD_CLASH_PURPOSES.has(purpose)) {
-      filteredOutReason = '본인 일지와 정면 충이 들어오는 날이라 이번 목적에는 제외했습니다.'
+      filteredOutReason = copy.templates.filteredReasonDayClash
     } else {
       score -= DAY_CLASH_PENALTIES[purpose]
-      cautions.push('본인 일지와 충이 들어와 개인 흐름상 마찰이 생기기 쉬운 날입니다.')
+      cautions.push(copy.templates.cautionDayClash)
     }
   }
-
   if (
     !filteredOutReason
     && includesAnyKeyword(dayJi, config.dayAvoidKeywords)
     && !includesAnyKeyword(dayYi, config.dayIncludeKeywords)
   ) {
-    filteredOutReason = `${config.shortLabel} 목적과 상충하는 忌(기)가 강해 이번 달 추천에서 뺐습니다.`
+    filteredOutReason = renderTaekilTemplate(copy.templates.filteredReasonDayAvoid, { purposeLabel })
   }
-
   if (includesAnyKeyword(dayYi, config.dayIncludeKeywords)) {
     score += 30
-    reasons.push(getPurposeReason(config))
+    reasons.push(getPurposeReason(config, copy))
   }
-
   if (dayXunKongBranches.includes(dayBranch)) {
     const kongWangPenalty = purpose === 'marriage' || purpose === 'contract' ? 25 : 20
     score -= kongWangPenalty
-    cautions.push(`개인 공망(空亡)에 닿는 날이라 ${config.shortLabel} 일정은 보수적으로 보는 편이 좋습니다.`)
+    cautions.push(renderTaekilTemplate(copy.templates.cautionXunKong, { purposeLabel }))
   }
-
   const dayGodWeight = getGodWeight(purpose, dayTianShen)
   if (dayGodWeight > 0) {
     score += dayGodWeight
-    reasons.push(buildGodReason(dayTianShen, config.shortLabel))
+    reasons.push(buildGodReason(dayTianShen, purposeLabel, copy))
   } else if (dayGodWeight < 0) {
     score += dayGodWeight
-    cautions.push(buildGodCaution(dayTianShen, config.shortLabel))
+    cautions.push(buildGodCaution(dayTianShen, purposeLabel, copy))
   }
-
   if (BRANCH_HARMONY[KR_TO_CN_JIJI[user.year_jiji]] === dayBranch) {
     score += 10
-    reasons.push(getHarmonyReason('연지'))
+    reasons.push(getHarmonyReason('연지', copy))
   }
-
   if (user.hour_jiji && BRANCH_HARMONY[KR_TO_CN_JIJI[user.hour_jiji]] === dayBranch) {
     score += 6
-    reasons.push(getHarmonyReason('시지'))
+    reasons.push(getHarmonyReason('시지', copy))
   }
-
   if (BRANCH_HARMONY[KR_TO_CN_JIJI[user.day_jiji]] === dayBranch) {
     score += 15
-    reasons.push(getHarmonyReason('일지'))
+    reasons.push(getHarmonyReason('일지', copy))
   }
-
   if (BRANCH_HARMONY[KR_TO_CN_JIJI[user.month_jiji]] === dayBranch) {
     score += 8
-    reasons.push(getHarmonyReason('월지'))
+    reasons.push(getHarmonyReason('월지', copy))
   }
-
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.year_jiji]] === dayBranch) {
     score -= 15
-    cautions.push('연지와 충이 있어 큰 결정은 한 번 더 체크하는 편이 좋습니다.')
+    cautions.push(copy.templates.cautionYearClash)
   }
-
   if (user.hour_jiji && BRANCH_CLASH[KR_TO_CN_JIJI[user.hour_jiji]] === dayBranch) {
     score -= 8
-    cautions.push('시지와 충이 있어 실제 실행 타이밍에서 피로감이나 엇박자가 생길 수 있습니다.')
+    cautions.push(copy.templates.cautionHourClash)
   }
-
   if (BRANCH_CLASH[KR_TO_CN_JIJI[user.month_jiji]] === dayBranch) {
     score -= 12
-    cautions.push('월지와 충이 있어 기반이나 환경이 흔들리기 쉬운 날입니다.')
+    cautions.push(copy.templates.cautionMonthClash)
   }
-
   if (isHyeong(KR_TO_CN_JIJI[user.day_jiji], dayBranch)) {
     score -= 10
-    cautions.push('일지와 형(刑)이 걸려 긴장감이나 삐걱거림이 생기기 쉬운 날입니다.')
+    cautions.push(copy.templates.cautionHyeong)
   }
-
   const diShiScore = getDiShiScore(dayDiShi)
   if (diShiScore > 0 && dayDiShi) {
     score += diShiScore
-    reasons.push(buildDiShiReason(dayDiShi))
+    reasons.push(buildDiShiReason(dayDiShi, copy))
   } else if (diShiScore < 0 && dayDiShi) {
     score += diShiScore
-    cautions.push(buildDiShiCaution(dayDiShi))
+    cautions.push(buildDiShiCaution(dayDiShi, copy))
   }
-
   if (includesAnyKeyword(dayJi, config.dayAvoidKeywords)) {
     score -= 20
-    cautions.push(`${config.shortLabel} 관련 忌(기)가 함께 보여 신중한 판단이 필요합니다.`)
+    cautions.push(renderTaekilTemplate(copy.templates.cautionDayAvoidGeneral, { purposeLabel }))
   }
-
   if (dayXiongSha.length >= 4) {
     score -= 8
-    cautions.push('흉살 표기가 비교적 많은 날입니다.')
+    cautions.push(copy.templates.cautionXiongSha)
   }
-
   const goodHours = lunar
     .getTimes()
-    .map((time) => scoreTimeRecommendation(time, user, config))
+    .map((time) => scoreTimeRecommendation(time, user, config, copy))
     .filter((value): value is TimeRecommendation => value !== null)
     .sort((a, b) => b.score - a.score)
     .slice(0, 4)
-
   if (!filteredOutReason && goodHours.length === 0) {
-    cautions.push('날짜 흐름은 검토할 만하지만 추천 시간대가 뚜렷하지 않아 시간 선택에 제약이 있습니다.')
+    cautions.push(copy.templates.cautionNoGoodHours)
   }
-
   if (goodHours.length >= 3) {
     score += 15
   } else if (goodHours.length > 0) {
     score += 8
   }
-
   return normalizeRecommendation({
     date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
     year,
@@ -796,7 +745,7 @@ function buildDayRecommendation(
     dayXiongSha,
     isHwangdo,
     dayBranch,
-  })
+  }, copy)
 }
 
 export function getDateSelectionMonthResult(
@@ -804,20 +753,18 @@ export function getDateSelectionMonthResult(
   year: number,
   month: number,
   purpose: SelectionPurpose,
+  copy: TaekilUiCopyBundle = TAEKIL_LOCAL_COPY,
 ): DateSelectionMonthResult {
   const safeYear = Number.isFinite(year) ? year : new Date().getFullYear()
   const safeMonth = month >= 1 && month <= 12 ? month : new Date().getMonth() + 1
-
   const recommendations = Array.from(
     { length: getDaysInMonth(safeYear, safeMonth) },
-    (_, index) => buildDayRecommendation(user, safeYear, safeMonth, index + 1, purpose),
+    (_, index) => buildDayRecommendation(user, safeYear, safeMonth, index + 1, purpose, copy),
   )
-
   const bestDates = recommendations
     .filter((item) => item.level === 'best' || item.level === 'good')
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
-
   return {
     year: safeYear,
     month: safeMonth,
@@ -834,3 +781,4 @@ export function parseSelectionPurpose(value: string | undefined): SelectionPurpo
 export function getBranchLabel(branch: string) {
   return CN_BRANCH_TO_LABEL[branch] ?? branch
 }
+

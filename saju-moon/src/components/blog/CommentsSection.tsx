@@ -347,7 +347,7 @@ export default function CommentsSection({
             <p className="text-sm text-gray-500">
               로그인하면 댓글과 대댓글을 작성하고 좋아요를 누를 수 있습니다.
             </p>
-            <Link href="/login" className={buttonVariants({ size: 'sm' })}>
+            <Link href="/login" scroll={false} className={buttonVariants({ size: 'sm' })}>
               로그인
             </Link>
           </div>

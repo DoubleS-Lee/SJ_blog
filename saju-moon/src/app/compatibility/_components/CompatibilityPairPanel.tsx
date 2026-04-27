@@ -96,6 +96,7 @@ export default function CompatibilityPairPanel({
                     <Link
                       key={entry.id}
                       href={href}
+                      scroll={false}
                       className={`rounded-2xl border p-4 transition ${
                         selected
                           ? 'border-pink-300 bg-pink-50 shadow-sm'
@@ -154,6 +155,7 @@ export default function CompatibilityPairPanel({
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Link
               href={selectedEntry ? buildRoleHref(basePath, selectedEntry.id, 'me') : basePath}
+              scroll={false}
               className={`rounded-2xl border px-4 py-4 transition ${
                 maleRoleParam === 'me'
                   ? 'border-amber-400 bg-white shadow-sm'
@@ -168,6 +170,7 @@ export default function CompatibilityPairPanel({
 
             <Link
               href={selectedEntry ? buildRoleHref(basePath, selectedEntry.id, 'target') : basePath}
+              scroll={false}
               className={`rounded-2xl border px-4 py-4 transition ${
                 maleRoleParam === 'target'
                   ? 'border-amber-400 bg-white shadow-sm'

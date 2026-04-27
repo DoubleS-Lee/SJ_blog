@@ -100,6 +100,7 @@ export default async function MyPage() {
               <div className="pt-2">
                 <Link
                   href="/admin"
+                  scroll={false}
                   className={buttonVariants({
                     size: 'sm',
                     className: 'bg-black text-white hover:bg-gray-800',
@@ -120,7 +121,7 @@ export default async function MyPage() {
                 이름: <span className="font-medium text-gray-700">{displaySajuName}</span>
               </p>
             </div>
-            <Link href="/mypage/saju" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+            <Link href="/mypage/saju" scroll={false} className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
               {saju ? '수정' : '입력하기'}
             </Link>
           </div>
@@ -134,7 +135,7 @@ export default async function MyPage() {
               <p className="mb-3 text-sm text-gray-500">
                 내 만세력이 아직 없습니다. 출생 정보를 입력하면 만세력과 기본 해석 리포트를 확인할 수 있습니다.
               </p>
-              <Link href="/mypage/saju" className={buttonVariants({ size: 'sm' })}>
+              <Link href="/mypage/saju" scroll={false} className={buttonVariants({ size: 'sm' })}>
                 만세력 입력하기
               </Link>
             </div>
@@ -152,7 +153,7 @@ export default async function MyPage() {
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-bold text-gray-900">내 상담글</h2>
-            <Link href="/mypage/counsel" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+            <Link href="/mypage/counsel" scroll={false} className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
               보기
             </Link>
           </div>

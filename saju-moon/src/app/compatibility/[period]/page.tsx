@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import TextCopyGuard from '@/components/common/TextCopyGuard'
 import MenuHero from '@/components/layout/MenuHero'
+import { loadCompatibilityPageContext } from '@/lib/compatibility/page-context'
+import { buildDailyCompatibilityFortuneResultWithDb } from '@/lib/compatibility/copy-service'
+import { getCurrentReferenceBranches } from '@/lib/compatibility/fortune'
 import CompatibilityModeTabs from '../_components/CompatibilityModeTabs'
 import CompatibilityPairPanel from '../_components/CompatibilityPairPanel'
-import { loadCompatibilityPageContext } from '@/lib/compatibility/page-context'
-import {
-  buildDailyCompatibilityFortuneResult,
-  getCurrentReferenceBranches,
-} from '@/lib/compatibility/fortune'
 
 interface Props {
   params: Promise<{ period: string }>
@@ -24,15 +23,15 @@ const HERO_PALETTE = {
 const PERIOD_META = {
   today: {
     title: '오늘의 궁합',
-    description: '월덕요정이 직접 설계한 궁합 로직을 바탕으로, 오늘의 궁합을 보여드립니다.',
+    description: '사주로아가 직접 설계한 궁합 로직을 바탕으로, 오늘의 궁합을 보여드립니다.',
   },
   month: {
     title: '이달의 궁합',
-    description: '월덕요정이 직접 설계한 궁합 로직을 바탕으로, 이달의 궁합을 보여드립니다.',
+    description: '사주로아가 직접 설계한 궁합 로직을 바탕으로, 이달의 궁합을 보여드립니다.',
   },
   year: {
     title: '올해의 궁합',
-    description: '월덕요정이 직접 설계한 궁합 로직을 바탕으로, 올해의 궁합을 보여드립니다.',
+    description: '사주로아가 직접 설계한 궁합 로직을 바탕으로, 올해의 궁합을 보여드립니다.',
   },
 } as const
 
@@ -42,11 +41,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { period } = await params
   const key = period as PeriodKey
   const meta = PERIOD_META[key]
+
   if (!meta) {
-    return { title: '궁합 | 월덕요정의 사주이야기' }
+    return { title: '궁합 | 사주로아의 사주이야기' }
   }
+
   return {
-    title: `${meta.title} | 월덕요정의 사주이야기`,
+    title: `${meta.title} | 사주로아의 사주이야기`,
     description: meta.description,
   }
 }
@@ -56,7 +57,7 @@ function splitTextIntoParagraphs(text: string) {
   if (!normalized) return []
 
   const sentences = normalized
-    .split(/(?<=[.!?。])\s+/)
+    .split(/(?<=[.!?])\s+/)
     .map((sentence) => sentence.trim())
     .filter(Boolean)
 
@@ -94,28 +95,23 @@ export default async function CompatibilityPeriodPage({ params, searchParams }: 
   const hasDailyInputs = Boolean(meDayBranch && targetDayBranch)
 
   const dailyFortuneResult = hasDailyInputs
-    ? buildDailyCompatibilityFortuneResult({
-      meName: context.myDisplayName,
-      targetName: context.selectedEntry?.nickname ?? '상대',
-      meDayBranch: meDayBranch!,
-      targetDayBranch: targetDayBranch!,
-      reference,
-    })
+    ? await buildDailyCompatibilityFortuneResultWithDb({
+        meName: context.myDisplayName,
+        targetName: context.selectedEntry?.nickname ?? '상대',
+        meDayBranch: meDayBranch!,
+        targetDayBranch: targetDayBranch!,
+        reference,
+      })
     : null
 
-  const activeTab =
-    key === 'today' || key === 'month' || key === 'year'
-      ? key
-      : 'today'
+  const activeTab = key === 'today' || key === 'month' || key === 'year' ? key : 'today'
 
   const resultCard = dailyFortuneResult
     ? key === 'today'
       ? dailyFortuneResult.today
       : key === 'month'
         ? dailyFortuneResult.month
-        : key === 'year'
-          ? dailyFortuneResult.year
-          : null
+        : dailyFortuneResult.year
     : null
 
   return (
@@ -155,18 +151,18 @@ export default async function CompatibilityPeriodPage({ params, searchParams }: 
           </div>
         ) : !resultCard ? (
           <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">
-            사주 데이터가 충분하지 않아 {meta.title} 계산을 완료하지 못했습니다. 출생 정보(특히 일지)를 확인해 주세요.
+            사주 데이터가 충분하지 않아 {meta.title} 계산을 완료하지 못했습니다. 출생 정보와 출생시 입력 여부를 확인해 주세요.
           </div>
         ) : (
           <article className="mt-5 rounded-[1.25rem] border border-gray-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#fbfdff_100%)] p-5 shadow-sm">
-            <>
-              <p className="mt-3 text-sm font-semibold leading-6 text-gray-800">{resultCard.summary}</p>
+            <TextCopyGuard className="mt-3">
+              <p className="text-sm font-semibold leading-6 text-gray-800">{resultCard.summary}</p>
               <div className="mt-3 space-y-3 text-sm leading-7 text-gray-600">
                 {splitTextIntoParagraphs(resultCard.detail).map((paragraph, index) => (
                   <p key={`period-detail-${index}`}>{paragraph}</p>
                 ))}
               </div>
-            </>
+            </TextCopyGuard>
           </article>
         )}
       </section>

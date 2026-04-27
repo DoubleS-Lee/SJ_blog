@@ -17,7 +17,7 @@ export default function CategoryFilter() {
       params.set('category', category)
     }
     params.delete('page')
-    router.push(`/?${params.toString()}`)
+    router.push(`/?${params.toString()}`, { scroll: false })
   }
 
   return (

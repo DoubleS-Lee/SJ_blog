@@ -1,4 +1,4 @@
-export const SITE_NAME = '월덕요정의 사주이야기'
+export const SITE_NAME = '사주로아의 사주이야기'
 
 const FALLBACK_SITE_URL = 'https://example.com'
 

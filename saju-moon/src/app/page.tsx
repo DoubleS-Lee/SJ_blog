@@ -4,17 +4,26 @@ import FeaturedCard from '@/components/blog/FeaturedCard'
 import PostCard from '@/components/blog/PostCard'
 import CategoryFilter from '@/components/blog/CategoryFilter'
 import Pagination from '@/components/blog/Pagination'
+import BlogSearchForm from '@/components/blog/BlogSearchForm'
 import { buildAbsoluteUrl, SITE_NAME } from '@/lib/seo/site'
 
 const PAGE_SIZE = 10
-const VALID_CATEGORIES = ['연애·궁합', '커리어·이직', '재물·투자', '건강·체질', '육아·자녀교육', '기타'] as const
+const VALID_CATEGORIES = [
+  '연애·궁합',
+  '커리어·이직',
+  '재물·투자',
+  '건강·체질',
+  '육아·자녀교육',
+  '기타',
+] as const
+
 type Category = (typeof VALID_CATEGORIES)[number]
 
 const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   '연애·궁합': '연애 흐름, 궁합, 관계 해석처럼 감정과 인연에 관한 사주 콘텐츠를 모아봅니다.',
-  '커리어·이직': '직장, 이직, 커리어 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
-  '재물·투자': '재물운, 투자 감각, 돈의 흐름과 연결되는 사주 콘텐츠를 모아둡니다.',
-  '건강·체질': '건강운과 체질, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인할 수 있습니다.',
+  '커리어·이직': '직장, 이직, 커리어 방향과 관련된 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
+  '재물·투자': '재물 감각, 투자 흐름, 돈의 방향과 연결되는 사주 콘텐츠를 모아둡니다.',
+  '건강·체질': '건강과 체질, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인할 수 있습니다.',
   '육아·자녀교육': '자녀 성향, 교육 방향, 육아 고민과 연결되는 사주 콘텐츠를 모아봅니다.',
   기타: '일상 속 다양한 사주 이야기와 해석 콘텐츠를 폭넓게 살펴볼 수 있습니다.',
 }
@@ -41,10 +50,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const pageTitle = currentPage > 1 ? `${titleBase} ${currentPage}페이지` : titleBase
   const title = queryText ? `${queryText} 검색 결과 | ${pageTitle}` : pageTitle
   const description = queryText
-    ? `'${queryText}' 검색 결과를 모아봤습니다. 사주 해석과 궁합, 재물운, 건강운 관련 글을 빠르게 찾아보세요.`
+    ? `'${queryText}' 검색 결과를 모아봅니다. 사주 해석과 궁합, 재물, 건강 관련 글을 빠르게 찾아보세요.`
     : validCategory
       ? CATEGORY_DESCRIPTIONS[validCategory]
-      : '사주 해석과 궁합, 재물운, 건강운 등 다양한 주제를 블로그 글로 엮어보고 있습니다.'
+      : '사주 해석과 궁합, 재물, 건강 등 다양한 주제를 블로그 글로 풀어내고 있습니다.'
 
   const query = new URLSearchParams()
   if (validCategory) query.set('category', validCategory)
@@ -111,36 +120,14 @@ export default async function BlogListPage({ searchParams }: Props) {
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <div className="mb-10 flex flex-col gap-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight">블로그</h1>
           <CategoryFilter />
         </div>
 
-        <form action="/" method="get" className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
-          {validCategory ? <input type="hidden" name="category" value={validCategory} /> : null}
-          <input
-            type="text"
-            name="q"
-            defaultValue={queryText}
-            placeholder="제목이나 요약으로 글 검색"
-            className="h-11 flex-1 rounded-2xl border border-gray-200 px-4 text-sm text-gray-900 outline-none transition focus:border-black"
-          />
-          <div className="flex gap-2">
-            <button type="submit" className="inline-flex h-11 items-center justify-center rounded-2xl bg-black px-5 text-sm font-medium text-white transition hover:bg-gray-800">
-              검색
-            </button>
-            {queryText ? (
-              <a
-                href={validCategory ? `/?category=${encodeURIComponent(validCategory)}` : '/'}
-                className="inline-flex h-11 items-center justify-center rounded-2xl border border-gray-200 px-5 text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:text-black"
-              >
-                초기화
-              </a>
-            ) : null}
-          </div>
-        </form>
+        <BlogSearchForm category={validCategory} defaultQuery={queryText} />
 
         {queryText ? (
           <p className="text-sm text-gray-500">
@@ -149,11 +136,11 @@ export default async function BlogListPage({ searchParams }: Props) {
         ) : null}
       </div>
 
-      {featured && !validCategory && currentPage === 1 && !queryText && (
+      {featured && !validCategory && currentPage === 1 && !queryText ? (
         <section className="mb-12">
           <FeaturedCard post={featured} />
         </section>
-      )}
+      ) : null}
 
       {posts && posts.length > 0 ? (
         <section>
@@ -173,11 +160,11 @@ export default async function BlogListPage({ searchParams }: Props) {
         </div>
       )}
 
-      {totalPages > 1 && (
+      {totalPages > 1 ? (
         <div className="mt-12">
           <Pagination currentPage={currentPage} totalPages={totalPages} />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

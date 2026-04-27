@@ -30,7 +30,7 @@ export default function ConsultationForm() {
       }
 
       if (result?.id) {
-        router.push(`/counsel/${result.id}`)
+        router.push(`/counsel/${result.id}`, { scroll: false })
         router.refresh()
       }
     })
@@ -93,7 +93,7 @@ export default function ConsultationForm() {
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => router.push('/counsel')}
+          onClick={() => router.push('/counsel', { scroll: false })}
           className={buttonVariants({ variant: 'ghost', size: 'sm' })}
         >
           취소

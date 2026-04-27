@@ -15,17 +15,28 @@ const HERO_PALETTE = {
 
 export default async function CounselPage() {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [
+    {
+      data: { user },
+    },
+    { count: consultationCount },
+    { data: settings },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('consultations').select('*', { count: 'exact', head: true }),
+    supabase.from('site_settings').select('counsel_social_proof_boost').eq('id', 1).maybeSingle(),
+  ])
+
+  const actualConsultationCount = consultationCount ?? 0
+  const socialProofCount = actualConsultationCount + (settings?.counsel_social_proof_boost ?? 0)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <MenuHero
         eyebrow="Private Counsel"
         title="익명 고민 상담"
-        description={`사주 전문가 월덕요정이 직접 선정한 사연에 한해 무료로 고민 상담을 진행합니다.
-작성한 사연은 월덕요정과 작성자 본인만 볼 수 있고, 상담은 댓글 형태로 이어집니다.
+        description={`사주 전문가 사주로아가 직접 선정한 사연에 한해 무료로 고민 상담을 진행합니다.
+작성한 사연은 사주로아와 작성자 본인만 볼 수 있고, 상담은 댓글 형태로 이어집니다.
 선정된 사연은 식별 정보를 제거한 뒤 외부 콘텐츠 소재로 활용될 수 있습니다.`}
         palette={HERO_PALETTE}
         titleActions={
@@ -47,6 +58,11 @@ export default async function CounselPage() {
             : [{ href: '/login', label: '로그인하고 상담 남기기' }]
         }
       >
+        <div className="mt-5 flex justify-end">
+          <p className="rounded-full border border-violet-100 bg-white/70 px-4 py-2 text-xs text-violet-500 shadow-sm">
+            지금까지 <span className="font-semibold text-violet-700">{socialProofCount.toLocaleString('ko-KR')}명</span>이 익명 상담을 남겼어요
+          </p>
+        </div>
         <div className="mt-6 rounded-2xl bg-gray-50 p-5 text-sm text-gray-500 leading-7">
           <p>1. 실명, 연락처, 학교명, 회사명, 주소 등 식별 가능한 정보는 적지 않는 것을 권장합니다.</p>
           <p>2. 현재 처한 상황과 배경을 최대한 구체적으로 적어주실수록 상담으로 선정될 확률이 높아집니다.</p>

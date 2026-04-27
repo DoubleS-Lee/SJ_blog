@@ -17,12 +17,14 @@ export default function GuestCTA() {
       <div className="flex flex-col gap-2">
         <Link
           href="/signup"
+          scroll={false}
           className={buttonVariants({ className: 'w-full bg-white text-black hover:bg-zinc-100' })}
         >
           무료로 시작하기
         </Link>
         <Link
           href="/login"
+          scroll={false}
           className={buttonVariants({ variant: 'ghost', className: 'w-full text-zinc-400 hover:text-white hover:bg-zinc-800' })}
         >
           로그인

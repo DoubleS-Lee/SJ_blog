@@ -13,6 +13,7 @@ import {
 import './globals.css'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import Header from '@/components/layout/Header'
+import SocialChannelsFooter from '@/components/layout/SocialChannelsFooter'
 import { getSiteUrlObject, SITE_NAME } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase/server'
 
@@ -72,11 +73,11 @@ const gothicA1 = Gothic_A1({
 export const metadata: Metadata = {
   metadataBase: getSiteUrlObject(),
   title: {
-    default: `${SITE_NAME} | 나의 사주와 맞닿는 콘텐츠`,
+    default: `${SITE_NAME} | 사주 해석과 맞춤 콘텐츠`,
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    '사주 해석과 블로그 콘텐츠를 연결해 내 사주와 맞닿는 글을 자연스럽게 찾아보는 서비스입니다.',
+    '사주 해석과 블로그 콘텐츠를 연결해 내 사주에 맞는 글과 서비스를 자연스럽게 찾아보는 사주로아의 콘텐츠 서비스입니다.',
   openGraph: {
     siteName: SITE_NAME,
     locale: 'ko_KR',
@@ -100,18 +101,21 @@ export default async function RootLayout({
       lang="ko"
       className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-(--font-noto-sans-kr)">
+      <body className="flex min-h-full flex-col font-(--font-noto-sans-kr)">
         <AnalyticsTracker />
         <Header user={user} />
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-gray-100 py-8 mt-12">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-            <span>© 2026 {SITE_NAME} All rights reserved.</span>
-            <nav className="flex items-center gap-4">
-              <a href="/privacy" className="hover:text-black transition-colors">
-                개인정보 처리방침
-              </a>
-            </nav>
+        <footer className="mt-12 border-t border-gray-100 py-8">
+          <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6">
+            <SocialChannelsFooter />
+            <div className="flex flex-col items-center justify-between gap-4 text-xs text-gray-400 sm:flex-row">
+              <span>© 2026 {SITE_NAME} All rights reserved.</span>
+              <nav className="flex items-center gap-4">
+                <a href="/privacy" className="transition-colors hover:text-black">
+                  개인정보 처리방침
+                </a>
+              </nav>
+            </div>
           </div>
         </footer>
       </body>

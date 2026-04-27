@@ -10,7 +10,7 @@ import { LifeGraphChart } from './LifeGraphChart'
 import MenuHero from '@/components/layout/MenuHero'
 
 export const metadata: Metadata = {
-  title: '사주 생애 그래프 | 월덕요정의 사주이야기',
+  title: '사주 생애 그래프 | 사주로아의 사주이야기',
 }
 
 const DOMAIN_META: Record<

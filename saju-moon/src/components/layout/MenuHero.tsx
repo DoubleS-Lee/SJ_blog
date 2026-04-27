@@ -62,6 +62,7 @@ export default function MenuHero({
               <Link
                 key={`title-${action.href}-${action.label}`}
                 href={action.href}
+                scroll={false}
                 className={cn(
                   buttonVariants({ variant: action.variant, size: action.size ?? 'sm' }),
                   action.className,
@@ -85,6 +86,7 @@ export default function MenuHero({
             <Link
               key={`${action.href}-${action.label}`}
               href={action.href}
+              scroll={false}
               className={cn(
                 buttonVariants({ variant: action.variant, size: action.size ?? 'sm' }),
                 action.className,

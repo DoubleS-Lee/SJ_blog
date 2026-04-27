@@ -21,6 +21,7 @@ export default function JudgmentResult({ result, detail, showDetail = true }: Pr
         </p>
         <Link
           href="/mypage/saju"
+          scroll={false}
           className="inline-block text-sm font-medium bg-black text-white px-4 py-2 rounded hover:opacity-80 transition-opacity"
         >
           사주 입력하기

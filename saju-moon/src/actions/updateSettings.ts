@@ -31,6 +31,39 @@ function revalidateSettingTargets() {
   revalidatePath('/taekil', 'layout')
 }
 
+export async function bumpCounselSocialProof(): Promise<{ error?: string; amount?: number }> {
+  const { supabase, isAdmin } = await requireAdmin()
+  if (!isAdmin) return { error: '권한이 없습니다.' }
+
+  const amount = Math.floor(Math.random() * 10) + 1
+
+  const { data: current, error: fetchError } = await supabase
+    .from('site_settings')
+    .select('counsel_social_proof_boost')
+    .eq('id', 1)
+    .maybeSingle()
+
+  if (fetchError) {
+    console.error('[bumpCounselSocialProof][fetch]', fetchError)
+    return { error: '현재 설정을 불러오는 중 오류가 발생했습니다.' }
+  }
+
+  const nextValue = (current?.counsel_social_proof_boost ?? 0) + amount
+
+  const { error } = await supabase
+    .from('site_settings')
+    .update({ counsel_social_proof_boost: nextValue })
+    .eq('id', 1)
+
+  if (error) {
+    console.error('[bumpCounselSocialProof][update]', error)
+    return { error: '상담 신청 수 보정치 업데이트 중 오류가 발생했습니다.' }
+  }
+
+  revalidateSettingTargets()
+  return { amount }
+}
+
 export async function setGradeSeparation(enabled: boolean): Promise<{ error?: string }> {
   const { supabase, isAdmin } = await requireAdmin()
   if (!isAdmin) return { error: '권한이 없습니다.' }

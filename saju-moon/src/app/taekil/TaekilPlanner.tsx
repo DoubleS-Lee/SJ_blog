@@ -2,15 +2,13 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import {
-  getSelectionPurposes,
-  type DateSelectionMonthResult,
-  type DateSelectionRecommendation,
-  type SelectionPurpose,
+import type {
+  DateSelectionMonthResult,
+  DateSelectionRecommendation,
+  SelectionPurpose,
 } from '@/lib/saju/date-selection'
 import { formatGanjiWithReading } from '@/lib/saju/ganji-label'
-
-const WEEKDAY_HEADERS = ['일', '월', '화', '수', '목', '금', '토']
+import type { TaekilUiCopyBundle } from '@/lib/taekil/copy-data'
 
 function getInitialDate(
   currentDate: string | undefined,
@@ -25,36 +23,6 @@ function getInitialDate(
     ?? recommendations[0]?.date
     ?? ''
   )
-}
-
-function getPublicLevelLabel(level: DateSelectionRecommendation['level']) {
-  switch (level) {
-    case 'best':
-      return '강추천'
-    case 'good':
-      return '추천'
-    case 'normal':
-      return '보통'
-    case 'caution':
-      return '비추천'
-    case 'avoid':
-      return '제외'
-  }
-}
-
-function getCompactLevelLabel(level: DateSelectionRecommendation['level']) {
-  switch (level) {
-    case 'best':
-      return '강추'
-    case 'good':
-      return '추천'
-    case 'normal':
-      return '보통'
-    case 'caution':
-      return '비추'
-    case 'avoid':
-      return '제외'
-  }
 }
 
 function getLevelDotClass(level: DateSelectionRecommendation['level']) {
@@ -120,13 +88,17 @@ function getCellClass(level: DateSelectionRecommendation['level'], isSelected: b
 interface Props {
   data: DateSelectionMonthResult
   currentDate?: string
+  copy: TaekilUiCopyBundle
 }
 
-export default function TaekilPlanner({ data, currentDate }: Props) {
+export default function TaekilPlanner({ data, currentDate, copy }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const purposes = getSelectionPurposes()
+  const purposes = Object.entries(copy.purposes).map(([id, item]) => ({
+    id: id as SelectionPurpose,
+    ...item,
+  }))
   const [manualSelectedDate, setManualSelectedDate] = useState<string | null>(null)
 
   const selectedDate =
@@ -152,7 +124,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
     params.set('purpose', nextPurpose)
     params.set('year', String(year))
     params.set('month', String(month))
-    router.push(`${pathname}?${params.toString()}`)
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
   return (
@@ -160,9 +132,9 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
       <section className="rounded-[1.75rem] border border-gray-200 bg-white p-4 sm:rounded-[2rem] sm:p-6">
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-sm font-semibold text-gray-900">목적 선택</p>
+            <p className="text-sm font-semibold text-gray-900">{copy.page.purposeSectionTitle}</p>
             <p className="mt-1 text-sm leading-6 text-gray-500">
-              목적을 바꾸면 저장된 사주 기준으로 추천일이 다시 계산됩니다.
+              {copy.page.purposeSectionDescription}
             </p>
           </div>
 
@@ -179,6 +151,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                       ? 'border-black bg-black text-white'
                       : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-black'
                   }`}
+                  title={purpose.description}
                 >
                   {purpose.label}
                 </button>
@@ -196,25 +169,25 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
               onClick={() => updateQuery(data.purpose, prevMonth.year, prevMonth.month)}
               className="rounded-full border border-gray-200 px-3 py-2 text-xs text-gray-600 hover:border-gray-300 hover:text-black sm:text-sm"
             >
-              이전달
+              {copy.page.previousMonthLabel}
             </button>
             <div className="text-center">
               <p className="text-base font-bold text-gray-900 sm:text-lg">
                 {data.year}년 {data.month}월
               </p>
-              <p className="text-[11px] text-gray-400 sm:text-xs">개인화 택일 캘린더</p>
+              <p className="text-[11px] text-gray-400 sm:text-xs">{copy.page.calendarSubtitle}</p>
             </div>
             <button
               type="button"
               onClick={() => updateQuery(data.purpose, nextMonth.year, nextMonth.month)}
               className="rounded-full border border-gray-200 px-3 py-2 text-xs text-gray-600 hover:border-gray-300 hover:text-black sm:text-sm"
             >
-              다음달
+              {copy.page.nextMonthLabel}
             </button>
           </div>
 
           <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-gray-400 sm:mb-3 sm:gap-2 sm:text-xs">
-            {WEEKDAY_HEADERS.map((weekday) => (
+            {copy.weekdays.map((weekday) => (
               <div key={weekday}>{weekday}</div>
             ))}
           </div>
@@ -226,6 +199,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
 
             {data.recommendations.map((item) => {
               const isSelected = item.date === selected?.date
+              const levelCopy = copy.levels[item.level]
 
               return (
                 <button
@@ -248,10 +222,10 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                       className={`inline-flex max-w-full items-center whitespace-nowrap break-keep rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none tracking-[-0.01em] sm:px-2 sm:text-[10px] ${
                         isSelected ? 'border border-white/30 bg-white/20 text-white' : getLevelChipClass(item.level)
                       }`}
-                      title={getPublicLevelLabel(item.level)}
+                      title={levelCopy.publicLabel}
                     >
-                      <span className="sm:hidden">{getCompactLevelLabel(item.level)}</span>
-                      <span className="hidden sm:inline">{getPublicLevelLabel(item.level)}</span>
+                      <span className="sm:hidden">{levelCopy.compactLabel}</span>
+                      <span className="hidden sm:inline">{levelCopy.publicLabel}</span>
                     </span>
                   </div>
                 </button>
@@ -267,7 +241,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
               >
                 <span className={`size-2 rounded-full ${getLevelDotClass(level)}`} />
                 <span className={`whitespace-nowrap break-keep rounded-full px-2 py-0.5 text-[10px] font-semibold ${getLevelChipClass(level)}`}>
-                  {getPublicLevelLabel(level)}
+                  {copy.levels[level].publicLabel}
                 </span>
               </div>
             ))}
@@ -278,19 +252,19 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
           <section className="rounded-[1.75rem] border border-gray-200 bg-white p-4 sm:rounded-[2rem] sm:p-6">
             <div className="mb-4">
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-gray-400 sm:text-xs">
-                Selected
+                {copy.page.selectedEyebrow}
               </p>
               <div className="mt-2 flex flex-wrap items-end gap-x-2 gap-y-1">
                 <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
                   {selected.year}년 {selected.month}월 {selected.day}일 ({selected.weekdayLabel})
                 </h2>
                 <span className="text-xs font-medium text-gray-400 sm:text-sm">
-                  음력 {selected.lunarMonth}월 {selected.lunarDay}일
+                  {copy.page.lunarPrefix} {selected.lunarMonth}월 {selected.lunarDay}일
                 </span>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getLevelChipClass(selected.level)}`}>
-                  {getPublicLevelLabel(selected.level)}
+                  {copy.levels[selected.level].publicLabel}
                 </span>
                 <span className="text-sm text-gray-500">
                   {formatGanjiWithReading(selected.dayGanji)}일
@@ -300,16 +274,16 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
 
             {selected.level === 'avoid' ? (
               <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-sm font-semibold text-gray-900">제외 이유</p>
+                <p className="text-sm font-semibold text-gray-900">{copy.panels.avoidTitle}</p>
                 <div className="mt-3 space-y-2">
                   <p className="text-sm leading-6 text-gray-600">
-                    {selected.filteredOutReason ?? '이번 달 추천 후보로 보지는 않는 날짜입니다. 다른 추천일을 먼저 비교해 보세요.'}
+                    {selected.filteredOutReason ?? copy.panels.avoidFallback}
                   </p>
                 </div>
               </div>
             ) : selected.level === 'caution' ? (
               <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-sm font-semibold text-gray-900">비추천 이유</p>
+                <p className="text-sm font-semibold text-gray-900">{copy.panels.cautionTitle}</p>
                 <div className="mt-3 space-y-2">
                   {selected.cautions.length > 0 ? (
                     selected.cautions.map((reason) => (
@@ -319,7 +293,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                     ))
                   ) : (
                     <p className="text-sm leading-6 text-gray-600">
-                      크게 제외할 날짜는 아니지만 이번 목적에는 우선 추천하지 않는 날입니다.
+                      {copy.panels.cautionFallback}
                     </p>
                   )}
                 </div>
@@ -327,7 +301,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
             ) : selected.level === 'normal' ? (
               <div className="space-y-4">
                 <div className={`rounded-2xl p-4 ${getReasonPanelClass(selected.level)}`}>
-                  <p className="text-sm font-semibold text-gray-900">보통 포인트</p>
+                  <p className="text-sm font-semibold text-gray-900">{copy.panels.normalTitle}</p>
                   <div className="mt-3 space-y-2">
                     {selected.reasons.length > 0 ? (
                       selected.reasons.map((reason) => (
@@ -337,7 +311,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                       ))
                     ) : (
                       <p className="text-sm leading-6 text-gray-600">
-                        크게 강한 추천 포인트는 아니지만 무난하게 검토할 수 있는 날입니다.
+                        {copy.panels.normalFallback}
                       </p>
                     )}
                   </div>
@@ -345,7 +319,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
 
                 {selected.cautions.length > 0 ? (
                   <div className="rounded-2xl bg-amber-50 p-4">
-                    <p className="text-sm font-semibold text-gray-900">참고할 점</p>
+                    <p className="text-sm font-semibold text-gray-900">{copy.panels.noteTitle}</p>
                     <div className="mt-3 space-y-2">
                       {selected.cautions.map((reason) => (
                         <p key={reason} className="text-sm leading-6 text-gray-600">
@@ -359,7 +333,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
             ) : (
               <div className="space-y-4">
                 <div className={`rounded-2xl p-4 ${getReasonPanelClass(selected.level)}`}>
-                  <p className="text-sm font-semibold text-gray-900">추천 이유</p>
+                  <p className="text-sm font-semibold text-gray-900">{copy.panels.recommendedTitle}</p>
                   <div className="mt-3 space-y-2">
                     {selected.reasons.map((reason) => (
                       <p key={reason} className="text-sm leading-6 text-gray-600">
@@ -373,7 +347,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
           </section>
 
           <section className="rounded-[1.75rem] border border-gray-200 bg-white p-4 sm:rounded-[2rem] sm:p-6">
-            <p className="text-sm font-semibold text-gray-900">이 달의 상위 추천일</p>
+            <p className="text-sm font-semibold text-gray-900">{copy.panels.bestDatesTitle}</p>
             <div className="mt-4 space-y-3">
               {data.bestDates.length > 0 ? (
                 data.bestDates.map((item, index) => (
@@ -390,7 +364,7 @@ export default function TaekilPlanner({ data, currentDate }: Props) {
                 ))
               ) : (
                 <p className="rounded-2xl bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-500">
-                  이번 달에는 강한 추천일이 많지 않습니다. 다른 목적이나 다음 달도 함께 비교해보세요.
+                  {copy.panels.bestDatesEmpty}
                 </p>
               )}
             </div>

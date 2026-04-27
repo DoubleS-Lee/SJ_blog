@@ -4,9 +4,15 @@ import { buttonVariants } from '@/components/ui/button'
 
 export const metadata = { title: '글 관리' }
 
+const PAGE_SIZE = 20
+
 function formatDate(iso: string | null) {
   if (!iso) return '-'
-  return new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' })
+  return new Date(iso).toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 function sanitizeLikeQuery(value: string) {
@@ -14,28 +20,45 @@ function sanitizeLikeQuery(value: string) {
 }
 
 interface Props {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; page?: string }>
 }
 
 export default async function AdminPostsPage({ searchParams }: Props) {
-  const { q } = await searchParams
+  const { q, page } = await searchParams
   const queryText = q?.trim() ?? ''
   const searchKeyword = sanitizeLikeQuery(queryText)
+  const requestedPage = Math.max(1, Number.parseInt(page ?? '1', 10) || 1)
   const supabase = await createClient()
 
-  let query = supabase
+  let countQuery = supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+
+  let postsQuery = supabase
     .from('posts')
     .select('id, slug, title, category, is_published, is_featured, published_at, target_year, created_at')
     .order('created_at', { ascending: false })
 
   if (searchKeyword) {
-    query = query.or(`title.ilike.%${searchKeyword}%,category.ilike.%${searchKeyword}%,slug.ilike.%${searchKeyword}%`)
+    const filter = `title.ilike.%${searchKeyword}%,category.ilike.%${searchKeyword}%,slug.ilike.%${searchKeyword}%`
+    countQuery = countQuery.or(filter)
+    postsQuery = postsQuery.or(filter)
   }
 
-  const { data: posts } = await query
+  const { count } = await countQuery
+  const filteredCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE))
+  const currentPage = Math.min(requestedPage, totalPages)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
+  const { data: posts } = await postsQuery.range(from, to)
+
+  const startItem = filteredCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const endItem = filteredCount === 0 ? 0 : Math.min(currentPage * PAGE_SIZE, filteredCount)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">글 관리</h1>
@@ -44,7 +67,11 @@ export default async function AdminPostsPage({ searchParams }: Props) {
           </Link>
         </div>
 
-        <form action="/admin/posts" method="get" className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+        <form
+          action="/admin/posts"
+          method="get"
+          className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
+        >
           <input
             type="text"
             name="q"
@@ -64,11 +91,24 @@ export default async function AdminPostsPage({ searchParams }: Props) {
           </div>
         </form>
 
-        {queryText ? (
-          <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-900">'{queryText}'</span> 검색 결과입니다.
+        <div className="flex flex-col gap-2 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            {queryText ? (
+              <>
+                <span className="font-medium text-gray-900">'{queryText}'</span> 검색 결과입니다.
+              </>
+            ) : (
+              '전체 글 목록입니다.'
+            )}
           </p>
-        ) : null}
+          <p>
+            총 <span className="font-semibold text-gray-900">{filteredCount.toLocaleString('ko-KR')}</span>개 중{' '}
+            <span className="font-semibold text-gray-900">
+              {startItem}~{endItem}
+            </span>
+            개를 보고 있습니다.
+          </p>
+        </div>
       </div>
 
       {!posts || posts.length === 0 ? (
@@ -125,6 +165,58 @@ export default async function AdminPostsPage({ searchParams }: Props) {
           </table>
         </div>
       )}
+
+      {filteredCount > 0 ? (
+        <PaginationLinks currentPage={currentPage} totalPages={totalPages} queryText={queryText} />
+      ) : null}
+    </div>
+  )
+}
+
+function PaginationLinks({
+  currentPage,
+  totalPages,
+  queryText,
+}: {
+  currentPage: number
+  totalPages: number
+  queryText: string
+}) {
+  const buildHref = (page: number) => {
+    const params = new URLSearchParams()
+    if (queryText) params.set('q', queryText)
+    if (page > 1) params.set('page', String(page))
+    const query = params.toString()
+    return query ? `/admin/posts?${query}` : '/admin/posts'
+  }
+
+  return (
+    <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+      <Link
+        href={buildHref(Math.max(1, currentPage - 1))}
+        aria-disabled={currentPage <= 1}
+        scroll={false}
+        className={[
+          'rounded-full border border-gray-200 px-4 py-2 transition hover:border-black hover:text-black',
+          currentPage <= 1 ? 'pointer-events-none opacity-40' : '',
+        ].join(' ')}
+      >
+        이전
+      </Link>
+      <span className="font-medium text-gray-700">
+        {currentPage} / {totalPages}
+      </span>
+      <Link
+        href={buildHref(Math.min(totalPages, currentPage + 1))}
+        aria-disabled={currentPage >= totalPages}
+        scroll={false}
+        className={[
+          'rounded-full border border-gray-200 px-4 py-2 transition hover:border-black hover:text-black',
+          currentPage >= totalPages ? 'pointer-events-none opacity-40' : '',
+        ].join(' ')}
+      >
+        다음
+      </Link>
     </div>
   )
 }

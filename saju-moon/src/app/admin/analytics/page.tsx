@@ -1,23 +1,65 @@
 ﻿import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { buttonVariants } from '@/components/ui/button'
+import {
+  AnalyticsCategoryFilters,
+  AnalyticsCategoryRowLink,
+  AnalyticsCategorySortControls,
+  AnalyticsDateFilter,
+  AnalyticsRankingSortControls,
+} from './AnalyticsControls'
 
 export const metadata = { title: '분석 대시보드' }
 
-type RankingSortKey = 'views' | 'engagement' | 'likes' | 'clicks'
+type RankingSortKey = 'views' | 'engagement' | 'likes'
 type CategorySortKey = 'views' | 'likes' | 'engagement'
 
-type AnalyticsEventRow = {
-  created_at: string
-  event_name: string
-  session_id: string
-  page_type: string | null
-  page_path: string
-  content_type: string | null
-  content_id: string | null
-  content_title: string | null
+type AnalyticsDailyOverviewRow = {
+  metric_date: string
+  unique_visitors: number
+  page_views: number
+  total_engagement_ms: number
+  engagement_events: number
+}
+
+type AnalyticsDailyPageTypeRow = {
+  metric_date: string
+  page_type: string
+  views: number
+  total_engagement_ms: number
+  engagement_events: number
+}
+
+type AnalyticsDailyCategoryRow = {
+  metric_date: string
+  category: string
+  views: number
+  likes: number
+  total_engagement_ms: number
+  engagement_events: number
+}
+
+type AnalyticsDailyMenuRow = {
+  metric_date: string
+  menu_name: string
+  clicks: number
+}
+
+type AnalyticsDailyChannelRow = {
+  metric_date: string
+  channel: string
+  sessions: number
+}
+
+type AnalyticsDailyPostRow = {
+  metric_date: string
+  slug: string
+  title: string
   category: string | null
-  properties: Record<string, unknown> | null
+  views: number
+  likes: number
+  total_engagement_ms: number
+  engagement_events: number
 }
 
 type SearchParams = Promise<{
@@ -29,22 +71,10 @@ type SearchParams = Promise<{
   allPeriod?: string
 }>
 
-const RANKING_SORT_OPTIONS: Array<{ key: RankingSortKey; label: string; description: string }> = [
-  { key: 'views', label: '조회수 순', description: '가장 많이 본 글 위주로 봅니다.' },
-  { key: 'engagement', label: '체류시간 순', description: '실제로 오래 읽힌 글 위주로 봅니다.' },
-  { key: 'clicks', label: '클릭 순', description: '카드나 리스트에서 가장 많이 눌린 글을 봅니다.' },
-]
-
-const ACTIVE_RANKING_SORT_OPTIONS: Array<{ key: Exclude<RankingSortKey, 'clicks'>; label: string; description: string }> = [
+const ACTIVE_RANKING_SORT_OPTIONS: Array<{ key: RankingSortKey; label: string; description: string }> = [
   { key: 'views', label: '조회수 순', description: '가장 많이 본 글 위주로 봅니다.' },
   { key: 'engagement', label: '체류시간 순', description: '실제로 오래 읽힌 글 위주로 봅니다.' },
   { key: 'likes', label: '좋아요 순', description: '좋아요가 많이 쌓인 글 위주로 봅니다.' },
-]
-
-const CATEGORY_SORT_OPTIONS_LEGACY: Array<{ key: string; label: string }> = [
-  { key: 'views', label: '조회수 순' },
-  { key: 'click_rate', label: '클릭률 순' },
-  { key: 'engagement', label: '평균 체류시간 순' },
 ]
 
 const CATEGORY_SORT_OPTIONS: Array<{ key: CategorySortKey; label: string }> = [
@@ -194,111 +224,109 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
   const rangeLabel = allPeriod ? '전체 기간' : formatRangeLabel(startDate, endDate)
   const supabase = await createClient()
 
-  const since = `${startDate}T00:00:00+09:00`
-  const untilDate = new Date(`${endDate}T00:00:00+09:00`)
-  untilDate.setDate(untilDate.getDate() + 1)
-  const until = untilDate.toISOString()
+  let overviewQuery = supabase
+    .from('analytics_daily_overview')
+    .select('metric_date, unique_visitors, page_views, total_engagement_ms, engagement_events')
+    .order('metric_date', { ascending: true })
 
-  let analyticsQuery = supabase
-    .from('analytics_events')
-    .select('created_at, event_name, session_id, page_type, page_path, content_type, content_id, content_title, category, properties')
-    .order('created_at', { ascending: false })
-    .limit(20000)
+  let pageTypeQuery = supabase
+    .from('analytics_daily_page_type')
+    .select('metric_date, page_type, views, total_engagement_ms, engagement_events')
+
+  let categoryQuery = supabase
+    .from('analytics_daily_category')
+    .select('metric_date, category, views, likes, total_engagement_ms, engagement_events')
+
+  let menuQuery = supabase
+    .from('analytics_daily_menu')
+    .select('metric_date, menu_name, clicks')
+
+  let channelQuery = supabase
+    .from('analytics_daily_channel')
+    .select('metric_date, channel, sessions')
+
+  let postQuery = supabase
+    .from('analytics_daily_post')
+    .select('metric_date, slug, title, category, views, likes, total_engagement_ms, engagement_events')
 
   if (!allPeriod) {
-    analyticsQuery = analyticsQuery.gte('created_at', since).lt('created_at', until)
+    overviewQuery = overviewQuery.gte('metric_date', startDate).lte('metric_date', endDate)
+    pageTypeQuery = pageTypeQuery.gte('metric_date', startDate).lte('metric_date', endDate)
+    categoryQuery = categoryQuery.gte('metric_date', startDate).lte('metric_date', endDate)
+    menuQuery = menuQuery.gte('metric_date', startDate).lte('metric_date', endDate)
+    channelQuery = channelQuery.gte('metric_date', startDate).lte('metric_date', endDate)
+    postQuery = postQuery.gte('metric_date', startDate).lte('metric_date', endDate)
   }
 
-  const { data } = await analyticsQuery
+  const [
+    { data: overviewRowsData },
+    { data: pageTypeRowsData },
+    { data: categoryRowsData },
+    { data: menuRowsData },
+    { data: channelRowsData },
+    { data: postRowsData },
+    { data: todayOverviewRow },
+  ] = await Promise.all([
+    overviewQuery,
+    pageTypeQuery,
+    categoryQuery,
+    menuQuery,
+    channelQuery,
+    postQuery,
+    supabase
+      .from('analytics_daily_overview')
+      .select('metric_date, unique_visitors, page_views, total_engagement_ms, engagement_events')
+      .eq('metric_date', getTodayDateKey())
+      .maybeSingle(),
+  ])
 
-  let postLikesQuery = supabase
-    .from('post_likes')
-    .select('post_id, created_at')
-
-  if (!allPeriod) {
-    postLikesQuery = postLikesQuery.gte('created_at', since).lt('created_at', until)
-  }
-
-  const { data: postLikeRowsData } = await postLikesQuery
-
-  const events = (data ?? []) as AnalyticsEventRow[]
-  const postLikeRows = (postLikeRowsData ?? []) as Array<{ post_id: string; created_at: string }>
-  const pageViews = events.filter((event) => event.event_name === 'page_view')
-  const engagementEvents = events.filter((event) => event.event_name === 'engagement_time')
-  const contentClicks = events.filter((event) => event.event_name === 'content_click')
-  const menuClicks = events.filter((event) => event.event_name === 'menu_click')
+  const overviewRows = (overviewRowsData ?? []) as AnalyticsDailyOverviewRow[]
+  const pageTypeDailyRows = (pageTypeRowsData ?? []) as AnalyticsDailyPageTypeRow[]
+  const categoryDailyRows = (categoryRowsData ?? []) as AnalyticsDailyCategoryRow[]
+  const menuDailyRows = (menuRowsData ?? []) as AnalyticsDailyMenuRow[]
+  const channelDailyRows = (channelRowsData ?? []) as AnalyticsDailyChannelRow[]
+  const postDailyRows = (postRowsData ?? []) as AnalyticsDailyPostRow[]
 
   const availableCategories = Array.from(
     new Set(
-      [...pageViews, ...contentClicks]
-        .map((event) => event.category?.trim())
+      categoryDailyRows
+        .map((row) => row.category?.trim())
         .filter((category): category is string => Boolean(category)),
     ),
   ).sort((a, b) => a.localeCompare(b, 'ko-KR'))
 
   const selectedCategory = getCategoryFilter(categoryRaw, availableCategories)
 
-  const categoryLikedPostIds = Array.from(new Set(postLikeRows.map((row) => row.post_id)))
-  const categoryLikedPostsMetaMap =
-    categoryLikedPostIds.length > 0
-      ? new Map(
-          (
-            await supabase
-              .from('posts')
-              .select('id, category')
-              .in('id', categoryLikedPostIds)
-          ).data?.map((post) => [post.id, post]) ?? [],
-        )
-      : new Map<string, { id: string; category: string | null }>()
-
-  const todayKey = getTodayDateKey()
-  const todayVisitors = new Set(
-    pageViews
-      .filter((event) => getKstDateKey(event.created_at) === todayKey)
-      .map((event) => event.session_id),
-  ).size
-  const periodVisitors = new Set(pageViews.map((event) => event.session_id)).size
-  const pageViewCount = pageViews.length
+  const todayVisitors = (todayOverviewRow as AnalyticsDailyOverviewRow | null)?.unique_visitors ?? 0
+  const periodVisitors = overviewRows.reduce((sum, row) => sum + row.unique_visitors, 0)
+  const pageViewCount = overviewRows.reduce((sum, row) => sum + row.page_views, 0)
+  const totalEngagementMs = overviewRows.reduce((sum, row) => sum + row.total_engagement_ms, 0)
+  const totalEngagementEvents = overviewRows.reduce((sum, row) => sum + row.engagement_events, 0)
   const averageEngagementMs =
-    engagementEvents.length > 0
-      ? Math.round(
-          engagementEvents.reduce(
-            (sum, event) => sum + Number(event.properties?.engagement_time_ms ?? 0),
-            0,
-          ) / engagementEvents.length,
-        )
-      : 0
+    totalEngagementEvents > 0 ? Math.round(totalEngagementMs / totalEngagementEvents) : 0
 
-  const dateKeys = buildDateKeys(startDate, endDate)
-  const dailyVisitorsMap = new Map<string, Set<string>>()
-  for (const event of pageViews) {
-    const key = getKstDateKey(event.created_at)
-    const sessions = dailyVisitorsMap.get(key) ?? new Set<string>()
-    sessions.add(event.session_id)
-    dailyVisitorsMap.set(key, sessions)
-  }
-
-  const dailyVisitors = dateKeys.map((dateKey) => ({
-    key: dateKey,
-    label: formatDayLabel(dateKey),
-    value: dailyVisitorsMap.get(dateKey)?.size ?? 0,
-  }))
+  const dailyVisitors = (
+    allPeriod
+      ? overviewRows.map((row) => row.metric_date)
+      : buildDateKeys(startDate, endDate)
+  ).map((dateKey) => {
+    const row = overviewRows.find((item) => item.metric_date === dateKey)
+    return {
+      key: dateKey,
+      label: formatDayLabel(dateKey),
+      value: row?.unique_visitors ?? 0,
+    }
+  })
 
   const maxDailyVisitors = Math.max(1, ...dailyVisitors.map((item) => item.value))
 
   const pageTypeStats = new Map<string, { views: number; engagementMs: number; engagements: number }>()
-  for (const event of pageViews) {
-    const pageType = event.page_type ?? 'other'
-    const entry = pageTypeStats.get(pageType) ?? { views: 0, engagementMs: 0, engagements: 0 }
-    entry.views += 1
-    pageTypeStats.set(pageType, entry)
-  }
-  for (const event of engagementEvents) {
-    const pageType = event.page_type ?? 'other'
-    const entry = pageTypeStats.get(pageType) ?? { views: 0, engagementMs: 0, engagements: 0 }
-    entry.engagementMs += Number(event.properties?.engagement_time_ms ?? 0)
-    entry.engagements += 1
-    pageTypeStats.set(pageType, entry)
+  for (const row of pageTypeDailyRows) {
+    const entry = pageTypeStats.get(row.page_type) ?? { views: 0, engagementMs: 0, engagements: 0 }
+    entry.views += row.views
+    entry.engagementMs += row.total_engagement_ms
+    entry.engagements += row.engagement_events
+    pageTypeStats.set(row.page_type, entry)
   }
 
   const pageTypeRows = Array.from(pageTypeStats.entries())
@@ -321,47 +349,19 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     }
   >()
 
-  for (const event of pageViews) {
-    const category = event.category?.trim()
-    if (!category) continue
-    const entry = categoryStats.get(category) ?? {
-      category,
+  for (const row of categoryDailyRows) {
+    const entry = categoryStats.get(row.category) ?? {
+      category: row.category,
       views: 0,
       likes: 0,
       engagementMs: 0,
       engagements: 0,
     }
-    entry.views += 1
-    categoryStats.set(category, entry)
-  }
-
-  for (const row of postLikeRows) {
-    const post = categoryLikedPostsMetaMap.get(row.post_id)
-    const category = post?.category?.trim()
-    if (!category) continue
-    const entry = categoryStats.get(category) ?? {
-      category,
-      views: 0,
-      likes: 0,
-      engagementMs: 0,
-      engagements: 0,
-    }
-    entry.likes += 1
-    categoryStats.set(category, entry)
-  }
-
-  for (const event of engagementEvents) {
-    const category = event.category?.trim()
-    if (!category) continue
-    const entry = categoryStats.get(category) ?? {
-      category,
-      views: 0,
-      likes: 0,
-      engagementMs: 0,
-      engagements: 0,
-    }
-    entry.engagementMs += Number(event.properties?.engagement_time_ms ?? 0)
-    entry.engagements += 1
+    entry.views += row.views
+    entry.likes += row.likes
+    entry.engagementMs += row.total_engagement_ms
+    entry.engagements += row.engagement_events
+    categoryStats.set(row.category, entry)
   }
 
   const categoryRows = Array.from(categoryStats.values())
@@ -388,47 +388,29 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     })
 
   const menuStats = new Map<string, number>()
-  for (const event of menuClicks) {
-    const menuName = String(event.properties?.menu_name ?? '기타')
-    menuStats.set(menuName, (menuStats.get(menuName) ?? 0) + 1)
+  for (const row of menuDailyRows) {
+    menuStats.set(row.menu_name, (menuStats.get(row.menu_name) ?? 0) + row.clicks)
   }
 
   const topMenuRows = Array.from(menuStats.entries())
     .map(([menuName, count]) => ({ menuName, count }))
     .sort((a, b) => b.count - a.count)
 
-  const filteredPageViewsForRanking =
-    selectedCategory === 'all'
-      ? pageViews
-      : pageViews.filter((event) => event.category === selectedCategory)
-  const filteredContentClicksForRanking =
-    selectedCategory === 'all'
-      ? contentClicks
-      : contentClicks.filter((event) => event.category === selectedCategory)
-  const filteredEngagementForRanking =
-    selectedCategory === 'all'
-      ? engagementEvents
-      : engagementEvents.filter((event) => event.category === selectedCategory)
+  const channelStats = new Map<string, number>()
+  for (const row of channelDailyRows) {
+    channelStats.set(row.channel, (channelStats.get(row.channel) ?? 0) + row.sessions)
+  }
 
-  const likedPostIds = Array.from(new Set(postLikeRows.map((row) => row.post_id)))
-  const likedPostsMetaMap =
-    likedPostIds.length > 0
-      ? new Map(
-          (
-            await supabase
-              .from('posts')
-              .select('id, slug, title, category')
-              .in('id', likedPostIds)
-          ).data?.map((post) => [post.id, post]) ?? [],
-        )
-      : new Map<string, { id: string; slug: string; title: string | null; category: string | null }>()
+  const channelRows = Array.from(channelStats.entries())
+    .map(([channel, sessions]) => ({ channel, sessions }))
+    .sort((a, b) => b.sessions - a.sessions)
 
-  const filteredPostLikesForRanking = postLikeRows.filter((row) => {
-    const post = likedPostsMetaMap.get(row.post_id)
-    if (!post) return false
-    if (selectedCategory === 'all') return true
-    return post.category === selectedCategory
-  })
+  const totalChannelSessions = channelRows.reduce((sum, row) => sum + row.sessions, 0)
+
+  const filteredPostDailyRows =
+    selectedCategory === 'all'
+      ? postDailyRows
+      : postDailyRows.filter((row) => row.category === selectedCategory)
 
   const contentStats = new Map<
     string,
@@ -443,80 +425,30 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     }
   >()
 
-  for (const event of filteredPageViewsForRanking) {
-    if (event.content_type !== 'blog_post') continue
-    const key = event.content_id ?? event.page_path
-    const title = event.content_title ?? event.content_id ?? event.page_path
-    const entry = contentStats.get(key) ?? {
-      slug: key,
-      title,
-      category: event.category,
+  for (const row of filteredPostDailyRows) {
+    const entry = contentStats.get(row.slug) ?? {
+      slug: row.slug,
+      title: row.title,
+      category: row.category,
       views: 0,
       likes: 0,
       engagementMs: 0,
       engagements: 0,
     }
-    entry.views += 1
-    contentStats.set(key, entry)
+    entry.views += row.views
+    entry.likes += row.likes
+    entry.engagementMs += row.total_engagement_ms
+    entry.engagements += row.engagement_events
+    entry.title = row.title || entry.title
+    entry.category = row.category ?? entry.category
+    contentStats.set(row.slug, entry)
   }
 
-  for (const event of filteredContentClicksForRanking) {
-    if (event.content_type !== 'blog_post') continue
-    const key = event.content_id ?? event.page_path
-    const title = event.content_title ?? event.content_id ?? event.page_path
-    const entry = contentStats.get(key) ?? {
-      slug: key,
-      title,
-      category: event.category,
-      views: 0,
-      likes: 0,
-      engagementMs: 0,
-      engagements: 0,
-    }
-    contentStats.set(key, entry)
-  }
-
-  for (const row of filteredPostLikesForRanking) {
-    const post = likedPostsMetaMap.get(row.post_id)
-    if (!post) continue
-    const key = post.slug
-    const entry = contentStats.get(key) ?? {
-      slug: post.slug,
-      title: post.title ?? post.slug,
-      category: post.category,
-      views: 0,
-      likes: 0,
-      engagementMs: 0,
-      engagements: 0,
-    }
-    entry.likes += 1
-    contentStats.set(key, entry)
-  }
-
-  for (const event of filteredEngagementForRanking) {
-    if (event.content_type !== 'blog_post') continue
-    const key = event.content_id ?? event.page_path
-    const title = event.content_title ?? event.content_id ?? event.page_path
-    const entry = contentStats.get(key) ?? {
-      slug: key,
-      title,
-      category: event.category,
-      views: 0,
-      likes: 0,
-      engagementMs: 0,
-      engagements: 0,
-    }
-    entry.engagementMs += Number(event.properties?.engagement_time_ms ?? 0)
-    entry.engagements += 1
-    contentStats.set(key, entry)
-  }
-
-  const topPostRowsBase = Array.from(contentStats.values()).map((item) => ({
-    ...item,
-    averageEngagementMs: item.engagements > 0 ? Math.round(item.engagementMs / item.engagements) : 0,
-  }))
-
-  const topPostRows = topPostRowsBase
+  const topPostRows = Array.from(contentStats.values())
+    .map((item) => ({
+      ...item,
+      averageEngagementMs: item.engagements > 0 ? Math.round(item.engagementMs / item.engagements) : 0,
+    }))
     .sort((a, b) => {
       if (sortConfig.key === 'engagement') {
         if (b.averageEngagementMs !== a.averageEngagementMs) return b.averageEngagementMs - a.averageEngagementMs
@@ -566,49 +498,19 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
           <p className="text-xs text-gray-400">현재 기준: {rangeLabel}</p>
         </div>
 
-        <form action="/admin/analytics" method="get" className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
-          <input type="hidden" name="sort" value={sortConfig.key} />
-          <input type="hidden" name="category" value={selectedCategory} />
-          <input type="hidden" name="categorySort" value={categorySortConfig.key} />
-          <input type="hidden" name="allPeriod" value="0" />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <label className="flex flex-col gap-1 text-xs text-gray-500">
-              시작일
-              <input
-                type="date"
-                name="startDate"
-                defaultValue={startDate}
-                className="h-10 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 outline-none transition focus:border-black"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-gray-500">
-              종료일
-              <input
-                type="date"
-                name="endDate"
-                defaultValue={endDate}
-                className="h-10 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 outline-none transition focus:border-black"
-              />
-            </label>
-            <button type="submit" className={buttonVariants({ size: 'sm' })}>
-              적용
-            </button>
-            <Link
-              href={buildAnalyticsHref(startDate, endDate, sortConfig.key, selectedCategory, categorySortConfig.key, true)}
-              className={buttonVariants({
-                size: 'sm',
-                variant: allPeriod ? 'default' : 'outline',
-              })}
-            >
-              전체 기간
-            </Link>
-          </div>
-        </form>
+        <AnalyticsDateFilter
+          startDate={startDate}
+          endDate={endDate}
+          sort={sortConfig.key}
+          category={selectedCategory}
+          categorySort={categorySortConfig.key}
+          allPeriod={allPeriod}
+        />
       </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="오늘 방문자" value={todayVisitors.toLocaleString('ko-KR')} hint="고유 세션 기준" />
-        <MetricCard label="선택 기간 방문자" value={periodVisitors.toLocaleString('ko-KR')} hint="선택한 날짜 범위" />
+        <MetricCard label="선택 기간 방문자" value={periodVisitors.toLocaleString('ko-KR')} hint="일별 고유 세션 합계" />
         <MetricCard label="선택 기간 페이지뷰" value={pageViewCount.toLocaleString('ko-KR')} hint="page_view 이벤트" />
         <MetricCard label="평균 체류시간" value={formatDuration(averageEngagementMs)} hint="engagement_time 기준" />
       </section>
@@ -618,20 +520,14 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
         <p className="mt-1 text-xs text-gray-400">
           카테고리별 조회 수, 좋아요 수, 평균 체류시간을 함께 보면 실제로 반응이 이어지는 주제를 빠르게 파악할 수 있습니다.
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {CATEGORY_SORT_OPTIONS.map((option) => (
-            <Link
-              key={option.key}
-              href={buildAnalyticsHref(startDate, endDate, sortConfig.key, selectedCategory, option.key, allPeriod)}
-              className={buttonVariants({
-                size: 'xs',
-                variant: categorySortConfig.key === option.key ? 'default' : 'outline',
-              })}
-            >
-              {option.label}
-            </Link>
-          ))}
-        </div>
+        <AnalyticsCategorySortControls
+          startDate={startDate}
+          endDate={endDate}
+          sort={sortConfig.key}
+          category={selectedCategory}
+          categorySort={categorySortConfig.key}
+          allPeriod={allPeriod}
+        />
         <p className="mt-3 text-xs text-gray-500">
           카테고리를 클릭하면 바로 아래 인기 글 랭킹이 해당 카테고리 기준으로 연동됩니다.
           {selectedCategory !== 'all' ? ' 현재 선택: ' + selectedCategory : ' 현재 선택: 전체'}
@@ -654,15 +550,19 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
                     className={row.category === selectedCategory ? 'border-t border-pink-100 bg-pink-50/60' : 'border-t border-gray-100'}
                   >
                     <td className="px-4 py-3 font-medium text-gray-800">
-                      <Link
-                        href={buildAnalyticsHref(startDate, endDate, sortConfig.key, row.category, categorySortConfig.key, allPeriod)}
-                        className="inline-flex items-center gap-2 hover:text-pink-600"
+                      <AnalyticsCategoryRowLink
+                        startDate={startDate}
+                        endDate={endDate}
+                        sort={sortConfig.key}
+                        category={row.category}
+                        categorySort={categorySortConfig.key}
+                        allPeriod={allPeriod}
                       >
                         {row.category}
                         {row.category === selectedCategory ? (
                           <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[11px] text-pink-600">선택됨</span>
                         ) : null}
-                      </Link>
+                      </AnalyticsCategoryRowLink>
                     </td>
                     <td className="px-4 py-3 text-gray-500">{row.views.toLocaleString('ko-KR')}</td>
                     <td className="px-4 py-3 text-gray-500">{row.likes.toLocaleString('ko-KR')}</td>
@@ -701,6 +601,41 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
         </div>
 
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold tracking-tight">유입 채널</h2>
+          <p className="mt-1 text-xs text-gray-400">
+            세션 시작 시점의 referrer를 기준으로 구글, 네이버, 인스타그램, 유튜브, 쓰레드, 직접접속으로 분류합니다.
+          </p>
+          <div className="mt-6 space-y-4">
+            {channelRows.length > 0 ? (
+              channelRows.map((item) => {
+                const ratio = totalChannelSessions > 0 ? Math.round((item.sessions / totalChannelSessions) * 100) : 0
+
+                return (
+                  <div key={item.channel} className="space-y-2">
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <span className="font-medium text-gray-800">{item.channel}</span>
+                      <span className="text-gray-500">
+                        {item.sessions.toLocaleString('ko-KR')}회 · {ratio}%
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-pink-400 to-fuchsia-500"
+                        style={{ width: `${Math.max(ratio, item.sessions > 0 ? 6 : 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <EmptyState text="유입 채널 데이터가 아직 없습니다." />
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold tracking-tight">상위 메뉴 클릭</h2>
           <div className="mt-6 space-y-4">
             {topMenuRows.length > 0 ? (
@@ -720,9 +655,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
             )}
           </div>
         </div>
-      </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold tracking-tight">메뉴별 체류시간</h2>
           <p className="mt-1 text-xs text-gray-400">어떤 메뉴가 실제로 오래 머물게 하는지 보는 지표입니다.</p>
@@ -768,48 +701,25 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
                     : ' 현재는 전체 카테고리 기준입니다.'}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {ACTIVE_RANKING_SORT_OPTIONS.map((option) => {
-                  const active = option.key === sortConfig.key
-                  return (
-                    <Link
-                      key={option.key}
-                      href={buildAnalyticsHref(startDate, endDate, option.key, selectedCategory, categorySortConfig.key, allPeriod)}
-                      className={buttonVariants({
-                        size: 'xs',
-                        variant: active ? 'default' : 'outline',
-                      })}
-                    >
-                      {option.label}
-                    </Link>
-                  )
-                })}
-              </div>
+              <AnalyticsRankingSortControls
+                startDate={startDate}
+                endDate={endDate}
+                sort={sortConfig.key}
+                category={selectedCategory}
+                categorySort={categorySortConfig.key}
+                allPeriod={allPeriod}
+              />
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={buildAnalyticsHref(startDate, endDate, sortConfig.key, 'all', categorySortConfig.key, allPeriod)}
-                className={buttonVariants({
-                  size: 'xs',
-                  variant: selectedCategory === 'all' ? 'default' : 'outline',
-                })}
-              >
-                전체
-              </Link>
-              {availableCategories.map((category) => (
-                <Link
-                  key={category}
-                  href={buildAnalyticsHref(startDate, endDate, sortConfig.key, category, categorySortConfig.key, allPeriod)}
-                  className={buttonVariants({
-                    size: 'xs',
-                    variant: selectedCategory === category ? 'default' : 'outline',
-                  })}
-                >
-                  {category}
-                </Link>
-              ))}
-            </div>
+            <AnalyticsCategoryFilters
+              startDate={startDate}
+              endDate={endDate}
+              sort={sortConfig.key}
+              category={selectedCategory}
+              categorySort={categorySortConfig.key}
+              allPeriod={allPeriod}
+              categories={availableCategories}
+            />
           </div>
 
           <div className="mt-6 space-y-4">
@@ -839,6 +749,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Link
                           href={`/posts/${item.slug}`}
+                          scroll={false}
                           className={buttonVariants({ variant: 'outline', size: 'xs' })}
                         >
                           공개 글 보기
@@ -846,6 +757,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
                         {item.postId ? (
                           <Link
                             href={`/admin/posts/${item.postId}`}
+                            scroll={false}
                             className={buttonVariants({ size: 'xs' })}
                           >
                             관리자 수정

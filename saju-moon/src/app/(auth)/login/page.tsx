@@ -33,7 +33,7 @@ export default function LoginPage() {
         {/* 헤더 */}
         <div className="text-center">
           <Link href="/" className="text-2xl font-bold tracking-tight">
-            월덕요정의 사주이야기
+            사주로아의 사주이야기
           </Link>
           <p className="mt-2 text-sm text-gray-500">
             소셜 계정으로 간편하게 시작하세요
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
         {/* 약관 안내 */}
         <p className="text-center text-xs text-gray-400 leading-relaxed">
-          계속하면 월덕요정의 사주이야기의{' '}
+          계속하면 사주로아의 사주이야기의{' '}
           <Link href="/terms" className="underline underline-offset-2">
             이용약관
           </Link>{' '}

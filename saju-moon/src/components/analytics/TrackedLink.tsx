@@ -24,6 +24,7 @@ export default function TrackedLink({
   properties,
   onClick,
   href,
+  scroll,
   ...props
 }: TrackedLinkProps) {
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
@@ -51,5 +52,5 @@ export default function TrackedLink({
     })
   }
 
-  return <Link {...props} href={href} onClick={handleClick} />
+  return <Link {...props} href={href} scroll={scroll ?? false} onClick={handleClick} />
 }

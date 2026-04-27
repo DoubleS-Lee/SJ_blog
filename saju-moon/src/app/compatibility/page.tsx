@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
+import TextCopyGuard from '@/components/common/TextCopyGuard'
 import MenuHero from '@/components/layout/MenuHero'
-import { buildCompatibilityPreviewCards } from '@/lib/compatibility/rules'
+import { buildCompatibilityPreviewCardsWithDb } from '@/lib/compatibility/copy-service'
 import type { CompatibilitySection } from '@/lib/compatibility/types'
 import { loadCompatibilityPageContext } from '@/lib/compatibility/page-context'
 import { renderCompatibilityTemplate } from '@/lib/compatibility/template'
@@ -8,7 +9,7 @@ import CompatibilityModeTabs from './_components/CompatibilityModeTabs'
 import CompatibilityPairPanel from './_components/CompatibilityPairPanel'
 
 export const metadata: Metadata = {
-  title: '궁합 | 월덕요정의 사주이야기',
+  title: '궁합 | 사주로아의 사주이야기',
   description: '내 사주와 저장된 상대 사주를 비교하는 궁합 페이지입니다.',
 }
 
@@ -65,7 +66,7 @@ export default async function CompatibilityPage({ searchParams }: Props) {
 
   const previewCards =
     context.maleManseryeok && context.femaleManseryeok
-      ? buildCompatibilityPreviewCards(context.maleManseryeok, context.femaleManseryeok)
+      ? await buildCompatibilityPreviewCardsWithDb(context.maleManseryeok, context.femaleManseryeok)
       : []
   const targetName = context.selectedEntry?.nickname ?? '상대'
   const maleName = context.validMaleRole === 'me' ? context.myDisplayName : targetName
@@ -77,7 +78,7 @@ export default async function CompatibilityPage({ searchParams }: Props) {
         eyebrow="Compatibility"
         title="궁합 총운"
         description={`내 사주와 저장된 상대의 사주를 함께 분석해 궁합을 보여드립니다.
-          월덕요정이 직접 설계한 궁합 로직을 바탕으로, 5가지 주제별 결과를 근거와 함께 풀어드립니다.`}
+          사주로아가 직접 설계한 궁합 로직을 바탕으로, 5가지 주제별 결과를 근거와 함께 풀어드립니다.`}
         palette={HERO_PALETTE}
       />
 
@@ -128,12 +129,14 @@ export default async function CompatibilityPage({ searchParams }: Props) {
                     <h3 className="text-lg font-semibold text-gray-900">
                       {getCompatibilityMetricLabel(card.section)}
                     </h3>
-                    <p className="mt-3 text-sm font-semibold leading-6 text-gray-700">{summary}</p>
-                    <div className="mt-3 space-y-3 text-sm leading-7 text-gray-500">
-                      {splitDetailIntoParagraphs(detail).map((paragraph, index) => (
-                        <p key={`${card.section}-${index}`}>{paragraph}</p>
-                      ))}
-                    </div>
+                    <TextCopyGuard className="mt-3">
+                      <p className="text-sm font-semibold leading-6 text-gray-700">{summary}</p>
+                      <div className="mt-3 space-y-3 text-sm leading-7 text-gray-500">
+                        {splitDetailIntoParagraphs(detail).map((paragraph, index) => (
+                          <p key={`${card.section}-${index}`}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </TextCopyGuard>
                   </article>
                 )
               })()

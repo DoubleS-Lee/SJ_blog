@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { Fragment, type ReactNode } from 'react'
+import TextCopyGuard from '@/components/common/TextCopyGuard'
 import MenuHero from '@/components/layout/MenuHero'
 import { getCurrentUserAdminState } from '@/lib/auth/admin'
 import { generateReport, type Ohang, type ReportUserData, type Sipsung, type SipsungGroup } from '@/lib/interpretation/report'
 
 export const metadata: Metadata = {
-  title: '사주 해석 | 월덕요정의 사주이야기',
+  title: '사주 해석 | 사주로아의 사주이야기',
   description:
     '총운 요약, 재물운, 직업운, 건강운, 연애운, 결혼운, 학업/성장운, 대인관계운 카테고리로 사주 해석을 제공합니다.',
 }
@@ -217,9 +218,9 @@ export default async function InterpretationPage() {
       <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">총운 요약</h2>
         {reportText ? (
-          <div className="mt-4 space-y-4 rounded-2xl border border-violet-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#fcfaff_100%)] p-5">
+          <TextCopyGuard className="mt-4 space-y-4 rounded-2xl border border-violet-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#fcfaff_100%)] p-5">
             {renderReportMarkdownLike(reportText)}
-          </div>
+          </TextCopyGuard>
         ) : (
           <div className="mt-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm leading-7 text-gray-600">
             로그인 후 만세력과 오행/십성 데이터가 준비되면 총운 요약 리포트를 자동 생성해 보여드립니다.
