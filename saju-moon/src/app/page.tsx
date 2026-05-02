@@ -40,6 +40,10 @@ function sanitizeLikeQuery(value: string) {
   return value.replace(/[%_,()]/g, ' ').trim()
 }
 
+function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
+  return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
+}
+
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { category, page, q } = await searchParams
   const currentPage = Math.max(1, parseInt(page ?? '1'))
@@ -87,24 +91,29 @@ export default async function BlogListPage({ searchParams }: Props) {
   const queryText = normalizeSearchQuery(q)
   const searchKeyword = sanitizeLikeQuery(queryText)
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
-  const { data: featured } = await supabase
+  const { data: featured } = await applyPublishedVisibilityFilter(
+    supabase
     .from('posts')
     .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count')
     .eq('is_published', true)
     .eq('is_featured', true)
-    .lte('published_at', new Date().toISOString())
     .order('published_at', { ascending: false })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle(),
+    nowIso,
+  )
 
-  let query = supabase
+  let query = applyPublishedVisibilityFilter(
+    supabase
     .from('posts')
     .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count', {
       count: 'exact',
     })
-    .eq('is_published', true)
-    .lte('published_at', new Date().toISOString())
+    .eq('is_published', true),
+    nowIso,
+  )
 
   const validCategory = VALID_CATEGORIES.includes(category as Category) ? (category as Category) : undefined
   if (validCategory) query = query.eq('category', validCategory)

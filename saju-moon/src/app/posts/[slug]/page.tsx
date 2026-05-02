@@ -24,6 +24,10 @@ function formatDate(iso: string | null) {
   })
 }
 
+function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
+  return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
+}
+
 interface Props {
   params: Promise<{ slug: string }>
 }
@@ -130,13 +134,16 @@ function buildJudgmentUserDataFromCalculated(result: SajuResult): JudgmentUserDa
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase
+  const nowIso = new Date().toISOString()
+  const { data } = await applyPublishedVisibilityFilter(
+    supabase
     .from('posts')
     .select('slug, title, summary, tags, thumbnail_url, category, published_at, updated_at')
     .eq('slug', slug)
     .eq('is_published', true)
-    .lte('published_at', new Date().toISOString())
-    .single()
+    .single(),
+    nowIso,
+  )
 
   if (!data) return {}
 
@@ -177,14 +184,17 @@ export async function generateMetadata({ params }: Props) {
 export default async function PostDetailPage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
+  const nowIso = new Date().toISOString()
 
-  const { data: post } = await supabase
+  const { data: post } = await applyPublishedVisibilityFilter(
+    supabase
     .from('posts')
     .select('id, slug, title, summary, content, thumbnail_url, category, published_at, updated_at, target_year, judgment_rules, judgment_detail, view_count, like_count, tags')
     .eq('slug', slug)
     .eq('is_published', true)
-    .lte('published_at', new Date().toISOString())
-    .single()
+    .single(),
+    nowIso,
+  )
 
   if (!post) notFound()
 
