@@ -28,6 +28,14 @@ function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
   return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
 }
 
+function decodeSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug)
+  } catch {
+    return slug
+  }
+}
+
 interface Props {
   params: Promise<{ slug: string }>
 }
@@ -132,7 +140,8 @@ function buildJudgmentUserDataFromCalculated(result: SajuResult): JudgmentUserDa
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { slug } = await params
+  const { slug: rawSlug } = await params
+  const slug = decodeSlug(rawSlug)
   const supabase = await createClient()
   const nowIso = new Date().toISOString()
   const { data } = await applyPublishedVisibilityFilter(
@@ -182,7 +191,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PostDetailPage({ params }: Props) {
-  const { slug } = await params
+  const { slug: rawSlug } = await params
+  const slug = decodeSlug(rawSlug)
   const supabase = await createClient()
   const nowIso = new Date().toISOString()
 
