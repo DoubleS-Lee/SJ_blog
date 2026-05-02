@@ -13,15 +13,13 @@ export default function robots(): MetadataRoute.Robots {
           '/mypage',
           '/mypage/',
           '/api/',
-          '/auth/',
           '/login',
           '/agree',
           '/counsel/new',
-          '/counsel/*',
+          '/counsel/',
         ],
       },
     ],
     sitemap: `${getSiteUrl()}/sitemap.xml`,
-    host: getSiteUrl(),
   }
 }

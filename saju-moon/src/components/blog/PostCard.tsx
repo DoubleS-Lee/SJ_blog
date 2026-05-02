@@ -39,37 +39,33 @@ export default function PostCard({ post }: { post: Post }) {
       category={post.category}
       properties={{ list_context: 'post_grid' }}
     >
-      {/* 썸네일 */}
-      <div className="relative aspect-square bg-zinc-900 mb-4 overflow-hidden">
+      <div className="relative mb-4 aspect-square overflow-hidden bg-zinc-900">
         {post.thumbnail_url ? (
           <Image
             src={post.thumbnail_url}
             alt={post.title}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover group-hover:opacity-90 transition-opacity"
+            className="object-cover transition-opacity group-hover:opacity-90"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl opacity-20 select-none">☽</span>
+            <span className="select-none text-3xl opacity-20">SAJU</span>
           </div>
         )}
-        {/* 연도 뱃지 */}
+
         {post.target_year && (
-          <span className="absolute top-2 left-2 bg-white/90 text-xs font-medium px-2 py-0.5 rounded">
+          <span className="absolute left-2 top-2 rounded bg-white/90 px-2 py-0.5 text-xs font-medium">
             {post.target_year}년 기준
           </span>
         )}
-
       </div>
 
-      {/* 메타 */}
-      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
         {post.category}
       </span>
 
-      {/* 제목 */}
-      <h3 className="mt-1.5 text-base font-bold leading-snug group-hover:underline underline-offset-4 line-clamp-2">
+      <h3 className="mt-1.5 line-clamp-2 text-base font-bold leading-snug underline-offset-4 group-hover:underline">
         {post.title}
       </h3>
 

@@ -109,10 +109,10 @@ export default async function RootLayout({
           <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6">
             <SocialChannelsFooter />
             <div className="flex flex-col items-center justify-between gap-4 text-xs text-gray-400 sm:flex-row">
-              <span>© 2026 {SITE_NAME} All rights reserved.</span>
+              <span>Copyright 2026 {SITE_NAME}. All rights reserved.</span>
               <nav className="flex items-center gap-4">
                 <a href="/privacy" className="transition-colors hover:text-black">
-                  개인정보 처리방침
+                  개인정보처리방침
                 </a>
               </nav>
             </div>

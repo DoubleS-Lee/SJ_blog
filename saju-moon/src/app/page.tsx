@@ -21,9 +21,9 @@ type Category = (typeof VALID_CATEGORIES)[number]
 
 const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   '연애·궁합': '연애 흐름, 궁합, 관계 해석처럼 감정과 인연에 관한 사주 콘텐츠를 모아봅니다.',
-  '커리어·이직': '직장, 이직, 커리어 방향과 관련된 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
-  '재물·투자': '재물 감각, 투자 흐름, 돈의 방향과 연결되는 사주 콘텐츠를 모아둡니다.',
-  '건강·체질': '건강과 체질, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인할 수 있습니다.',
+  '커리어·이직': '직장, 이직, 커리어의 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
+  '재물·투자': '재물 감각, 투자 흐름, 돈의 방향과 연결되는 사주 콘텐츠를 모아둔 카테고리입니다.',
+  '건강·체질': '건강과 체질, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인해보세요.',
   '육아·자녀교육': '자녀 성향, 교육 방향, 육아 고민과 연결되는 사주 콘텐츠를 모아봅니다.',
   기타: '일상 속 다양한 사주 이야기와 해석 콘텐츠를 폭넓게 살펴볼 수 있습니다.',
 }
@@ -57,7 +57,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     ? `'${queryText}' 검색 결과를 모아봅니다. 사주 해석과 궁합, 재물, 건강 관련 글을 빠르게 찾아보세요.`
     : validCategory
       ? CATEGORY_DESCRIPTIONS[validCategory]
-      : '사주 해석과 궁합, 재물, 건강 등 다양한 주제를 블로그 글로 풀어내고 있습니다.'
+      : '사주 해석과 궁합, 재물, 건강 등 다양한 주제를 블로그 글로 전합니다.'
 
   const query = new URLSearchParams()
   if (validCategory) query.set('category', validCategory)
@@ -95,23 +95,23 @@ export default async function BlogListPage({ searchParams }: Props) {
 
   const { data: featured } = await applyPublishedVisibilityFilter(
     supabase
-    .from('posts')
-    .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count')
-    .eq('is_published', true)
-    .eq('is_featured', true)
-    .order('published_at', { ascending: false })
-    .limit(1)
-    .maybeSingle(),
+      .from('posts')
+      .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count')
+      .eq('is_published', true)
+      .eq('is_featured', true)
+      .order('published_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     nowIso,
   )
 
   let query = applyPublishedVisibilityFilter(
     supabase
-    .from('posts')
-    .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count', {
-      count: 'exact',
-    })
-    .eq('is_published', true),
+      .from('posts')
+      .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count', {
+        count: 'exact',
+      })
+      .eq('is_published', true),
     nowIso,
   )
 

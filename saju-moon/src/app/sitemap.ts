@@ -2,7 +2,14 @@ import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { buildAbsoluteUrl } from '@/lib/seo/site'
 
-const CATEGORY_PATHS = ['연애·궁합', '커리어·이직', '재물·투자', '건강·체질', '육아·자녀교육', '기타']
+const CATEGORY_PATHS = [
+  '연애·궁합',
+  '커리어·이직',
+  '재물·투자',
+  '건강·체질',
+  '육아·자녀교육',
+  '기타',
+]
 
 function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
   return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
