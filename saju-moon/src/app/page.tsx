@@ -1,13 +1,16 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
 import FeaturedCard from '@/components/blog/FeaturedCard'
 import PostCard from '@/components/blog/PostCard'
 import CategoryFilter from '@/components/blog/CategoryFilter'
 import Pagination from '@/components/blog/Pagination'
 import BlogSearchForm from '@/components/blog/BlogSearchForm'
 import { buildAbsoluteUrl, SITE_NAME } from '@/lib/seo/site'
+import {
+  getCachedFeaturedPost,
+  getCachedPublicPostsPage,
+  getPublicPostsVisibilityIso,
+} from '@/lib/posts/public'
 
-const PAGE_SIZE = 10
 const VALID_CATEGORIES = [
   '연애·궁합',
   '커리어·이직',
@@ -38,10 +41,6 @@ function normalizeSearchQuery(raw?: string) {
 
 function sanitizeLikeQuery(value: string) {
   return value.replace(/[%_,()]/g, ' ').trim()
-}
-
-function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
-  return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -90,43 +89,13 @@ export default async function BlogListPage({ searchParams }: Props) {
   const currentPage = Math.max(1, parseInt(page ?? '1'))
   const queryText = normalizeSearchQuery(q)
   const searchKeyword = sanitizeLikeQuery(queryText)
-  const supabase = await createClient()
-  const nowIso = new Date().toISOString()
-
-  const { data: featured } = await applyPublishedVisibilityFilter(
-    supabase
-      .from('posts')
-      .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count')
-      .eq('is_published', true)
-      .eq('is_featured', true)
-      .order('published_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    nowIso,
-  )
-
-  let query = applyPublishedVisibilityFilter(
-    supabase
-      .from('posts')
-      .select('slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count', {
-        count: 'exact',
-      })
-      .eq('is_published', true),
-    nowIso,
-  )
+  const nowIso = getPublicPostsVisibilityIso()
 
   const validCategory = VALID_CATEGORIES.includes(category as Category) ? (category as Category) : undefined
-  if (validCategory) query = query.eq('category', validCategory)
-  if (searchKeyword) {
-    query = query.or(`title.ilike.%${searchKeyword}%,summary.ilike.%${searchKeyword}%`)
-  }
-
-  const from = (currentPage - 1) * PAGE_SIZE
-  const { data: posts, count } = await query
-    .order('published_at', { ascending: false })
-    .range(from, from + PAGE_SIZE - 1)
-
-  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
+  const [featured, { posts: visiblePosts, hasNextPage }] = await Promise.all([
+    !validCategory && currentPage === 1 && !queryText ? getCachedFeaturedPost(nowIso) : Promise.resolve(null),
+    getCachedPublicPostsPage(validCategory, searchKeyword, currentPage, nowIso),
+  ])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -151,10 +120,10 @@ export default async function BlogListPage({ searchParams }: Props) {
         </section>
       ) : null}
 
-      {posts && posts.length > 0 ? (
+      {visiblePosts.length > 0 ? (
         <section>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
-            {posts.map((post) => (
+            {visiblePosts.map((post) => (
               <PostCard key={post.slug} post={post} />
             ))}
           </div>
@@ -169,9 +138,9 @@ export default async function BlogListPage({ searchParams }: Props) {
         </div>
       )}
 
-      {totalPages > 1 ? (
+      {currentPage > 1 || hasNextPage ? (
         <div className="mt-12">
-          <Pagination currentPage={currentPage} totalPages={totalPages} />
+          <Pagination currentPage={currentPage} hasNextPage={hasNextPage} />
         </div>
       ) : null}
     </div>

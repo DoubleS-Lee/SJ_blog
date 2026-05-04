@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Json } from '@/types/supabase'
 import type { JudgmentRules } from '@/types/judgment'
 import { nanoid } from 'nanoid'
@@ -118,7 +118,6 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
     if (updated?.slug) {
       revalidatePath(`/posts/${updated.slug}`)
     }
-    revalidatePath('/')
   } else {
     // 신규 — slug nanoid 7자리 자동 생성
     const slug = `${slugifyTitle(data.title)}-${nanoid(6)}`
@@ -146,10 +145,10 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
       console.error('[savePost] insert error:', error)
       return { error: '저장 중 오류가 발생했습니다.' }
     }
-
-    revalidatePath('/')
   }
 
+  revalidatePath('/')
+  revalidateTag('posts', 'max')
   return { redirectTo: '/admin/posts' }
 }
 
@@ -169,5 +168,7 @@ export async function deletePost(id: string): Promise<{ error?: string; redirect
   const { error } = await supabase.from('posts').delete().eq('id', id)
   if (error) return { error: '삭제 중 오류가 발생했습니다.' }
 
+  revalidatePath('/')
+  revalidateTag('posts', 'max')
   return { redirectTo: '/admin/posts' }
 }

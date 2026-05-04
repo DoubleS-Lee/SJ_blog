@@ -45,6 +45,46 @@ function isoToLocal(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+async function optimizeThumbnailFile(file: File) {
+  if (file.type === 'image/gif') return file
+
+  const imageUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new window.Image()
+      nextImage.onload = () => resolve(nextImage)
+      nextImage.onerror = () => reject(new Error('이미지를 불러오지 못했습니다.'))
+      nextImage.src = imageUrl
+    })
+
+    const maxDimension = 1200
+    const scale = Math.min(1, maxDimension / Math.max(image.width, image.height))
+    const width = Math.max(1, Math.round(image.width * scale))
+    const height = Math.max(1, Math.round(image.height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext('2d')
+    if (!context) return file
+
+    context.drawImage(image, 0, 0, width, height)
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', 0.82)
+    })
+
+    if (!blob || blob.size >= file.size) return file
+
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'thumbnail'
+    return new File([blob], `${baseName}.webp`, { type: 'image/webp' })
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
+}
+
 export default function PostForm({ initialData }: Props) {
   const router = useRouter()
   const [title, setTitle] = useState(initialData?.title ?? '')
@@ -99,8 +139,9 @@ export default function PostForm({ initialData }: Props) {
     const file = e.target.files?.[0]
     if (!file) return
     setIsUploading(true)
+    const optimizedFile = await optimizeThumbnailFile(file)
     const fd = new FormData()
-    fd.append('file', file)
+    fd.append('file', optimizedFile)
     const res = await fetch('/api/upload/image', { method: 'POST', body: fd })
     const json = await res.json()
     setIsUploading(false)
