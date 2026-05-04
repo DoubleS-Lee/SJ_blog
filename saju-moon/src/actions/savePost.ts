@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import type { Json } from '@/types/supabase'
 import type { JudgmentRules } from '@/types/judgment'
@@ -37,7 +36,7 @@ function slugifyTitle(title: string) {
   return normalized.slice(0, 80).replace(/-$/g, '') || 'post'
 }
 
-export async function savePost(data: PostFormData): Promise<{ error?: string }> {
+export async function savePost(data: PostFormData): Promise<{ error?: string; redirectTo?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '로그인이 필요합니다.' }
@@ -151,10 +150,10 @@ export async function savePost(data: PostFormData): Promise<{ error?: string }> 
     revalidatePath('/')
   }
 
-  redirect('/admin/posts')
+  return { redirectTo: '/admin/posts' }
 }
 
-export async function deletePost(id: string): Promise<{ error?: string }> {
+export async function deletePost(id: string): Promise<{ error?: string; redirectTo?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '로그인이 필요합니다.' }
@@ -170,5 +169,5 @@ export async function deletePost(id: string): Promise<{ error?: string }> {
   const { error } = await supabase.from('posts').delete().eq('id', id)
   if (error) return { error: '삭제 중 오류가 발생했습니다.' }
 
-  redirect('/admin/posts')
+  return { redirectTo: '/admin/posts' }
 }

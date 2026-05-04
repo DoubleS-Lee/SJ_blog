@@ -53,13 +53,23 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let userId: string | null = null
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    userId = user?.id ?? null
+  } catch (error) {
+    const authCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : null
+    if (authCode !== 'refresh_token_not_found') {
+      console.error('[analytics.track][auth]', error)
+    }
+  }
 
   const { error } = await supabaseAdmin.from('analytics_events').insert({
     event_name: payload.eventName,
-    user_id: user?.id ?? null,
+    user_id: userId,
     session_id: sessionId,
     page_type: sanitizeText(payload.pageType, 80),
     page_path: pagePath,

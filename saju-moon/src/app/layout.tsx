@@ -92,9 +92,19 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+
+  try {
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser()
+    user = currentUser
+  } catch (error) {
+    const authCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : null
+    if (authCode !== 'refresh_token_not_found') {
+      throw error
+    }
+  }
 
   return (
     <html

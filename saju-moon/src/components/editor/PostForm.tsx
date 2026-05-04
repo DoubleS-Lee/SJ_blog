@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { savePost, deletePost, type PostFormData } from '@/actions/savePost'
 import { buttonVariants } from '@/components/ui/button'
@@ -45,6 +46,7 @@ function isoToLocal(iso: string): string {
 }
 
 export default function PostForm({ initialData }: Props) {
+  const router = useRouter()
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [summary, setSummary] = useState(initialData?.summary ?? '')
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialData?.thumbnail_url ?? null)
@@ -131,7 +133,11 @@ export default function PostForm({ initialData }: Props) {
     setError(null)
     startTransition(async () => {
       const result = await savePost(buildPayload(false, null))
-      if (result?.error) setError(result.error)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      if (result?.redirectTo) router.push(result.redirectTo)
     })
   }
 
@@ -140,7 +146,11 @@ export default function PostForm({ initialData }: Props) {
     startTransition(async () => {
       // published_at = null → server uses now
       const result = await savePost(buildPayload(true, null))
-      if (result?.error) setError(result.error)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      if (result?.redirectTo) router.push(result.redirectTo)
     })
   }
 
@@ -151,7 +161,11 @@ export default function PostForm({ initialData }: Props) {
     setError(null)
     startTransition(async () => {
       const result = await savePost(buildPayload(true, iso))
-      if (result?.error) setError(result.error)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      if (result?.redirectTo) router.push(result.redirectTo)
     })
   }
 
@@ -160,7 +174,11 @@ export default function PostForm({ initialData }: Props) {
     if (!confirm('이 글을 삭제하시겠습니까? 되돌릴 수 없습니다.')) return
     startDeleteTransition(async () => {
       const result = await deletePost(initialData.id)
-      if (result?.error) setError(result.error)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      if (result?.redirectTo) router.push(result.redirectTo)
     })
   }
 

@@ -37,20 +37,20 @@ export default function BlogSearchForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
+      className="w-full"
     >
-      <input
-        type="text"
-        name="q"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="제목이나 요약으로 글 검색"
-        className="h-11 flex-1 rounded-2xl border border-gray-200 px-4 text-sm text-gray-900 outline-none transition focus:border-black"
-      />
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          name="q"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="제목이나 요약으로 글 검색"
+          className="h-11 min-w-0 flex-1 rounded-2xl border border-gray-200 px-4 text-sm text-gray-900 outline-none transition focus:border-black"
+        />
         <button
           type="submit"
-          className="inline-flex h-11 items-center justify-center rounded-2xl bg-black px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+          className="inline-flex h-11 shrink-0 items-center justify-center rounded-2xl bg-black px-5 text-sm font-medium text-white transition hover:bg-gray-800"
         >
           검색
         </button>
@@ -58,7 +58,7 @@ export default function BlogSearchForm({
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-gray-200 px-5 text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:text-black"
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-2xl border border-gray-200 px-4 text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:text-black"
           >
             초기화
           </button>
