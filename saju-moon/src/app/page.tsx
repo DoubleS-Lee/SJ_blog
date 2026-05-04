@@ -130,7 +130,7 @@ export default async function BlogListPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-10 flex flex-col gap-5">
+      <div className="mb-3 flex flex-col gap-3 sm:mb-8 sm:gap-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight">블로그</h1>
           <CategoryFilter />
@@ -146,14 +146,14 @@ export default async function BlogListPage({ searchParams }: Props) {
       </div>
 
       {featured && !validCategory && currentPage === 1 && !queryText ? (
-        <section className="mb-12">
+        <section className="mb-3 sm:mb-10">
           <FeaturedCard post={featured} />
         </section>
       ) : null}
 
       {posts && posts.length > 0 ? (
         <section>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
             {posts.map((post) => (
               <PostCard key={post.slug} post={post} />
             ))}
