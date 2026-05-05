@@ -18,6 +18,9 @@ import type { Editor } from '@tiptap/core'
 import type { EditorView } from '@tiptap/pm/view'
 
 const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px']
+const DEFAULT_FONT_SIZE = '16px'
+const DEFAULT_FONT_SIZE_OPTION = '__default_font_size__'
+const DEFAULT_FONT_FAMILY_LABEL = 'Noto Sans KR'
 
 const TEXT_COLORS = [
   '#000000', '#374151', '#6B7280', '#EF4444', '#F97316',
@@ -30,14 +33,14 @@ const HIGHLIGHT_COLORS = [
 ]
 
 const FONT_FAMILIES = [
-  { label: '글씨체', value: '' },
-  { label: '명조', value: '"Nanum Myeongjo", "Batang", serif' },
-  { label: '네이버 고딕', value: '"Nanum Gothic", "Malgun Gothic", sans-serif' },
-  { label: '타자기', value: '"Courier New", "Consolas", monospace' },
-  { label: '둥근 고딕', value: '"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif' },
+  { label: `기본 (${DEFAULT_FONT_FAMILY_LABEL})`, value: '' },
+  { label: '나눔명조', value: '"Nanum Myeongjo", "Batang", serif' },
+  { label: '나눔고딕', value: '"Nanum Gothic", "Malgun Gothic", sans-serif' },
+  { label: '고정폭', value: '"Courier New", "Consolas", monospace' },
+  { label: '애플/노토 고딕', value: '"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif' },
   { label: 'Do Hyeon', value: 'var(--font-do-hyeon)' },
-  { label: '나눔고딕', value: 'var(--font-nanum-gothic)' },
-  { label: '나눔명조', value: 'var(--font-nanum-myeongjo)' },
+  { label: '나눔고딕 웹폰트', value: 'var(--font-nanum-gothic)' },
+  { label: '나눔명조 웹폰트', value: 'var(--font-nanum-myeongjo)' },
   { label: 'Jua', value: 'var(--font-jua)' },
   { label: 'Black Han Sans', value: 'var(--font-black-han-sans)' },
   { label: 'Gaegu', value: 'var(--font-gaegu)' },
@@ -77,7 +80,7 @@ const CalloutExtension = Node.create({
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
-        style: `background-color:${c.bg};border-left:4px solid ${c.border};padding:12px 16px;border-radius:0 6px 6px 0;margin:8px 0`,
+        style: `background-color:${c.bg};border-left:4px solid ${c.border};padding:12px 16px;border-radius:0 6px 6px 0;display:block;width:fit-content;max-width:80%;margin:12px auto;box-sizing:border-box`,
       }),
       0,
     ]
@@ -98,7 +101,7 @@ const PullquoteExtension = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-pullquote': '',
-        style: 'border-top:2px solid #111;border-bottom:2px solid #111;padding:20px 24px;margin:24px 0;text-align:center;font-size:1.5rem;font-style:italic;font-weight:300;line-height:1.5;color:#1a1a1a',
+        style: 'border-top:2px solid #111;border-bottom:2px solid #111;padding:20px 24px;display:block;width:fit-content;max-width:80%;margin:24px auto;text-align:center;font-size:1.5rem;font-style:italic;font-weight:300;line-height:1.5;color:#1a1a1a;box-sizing:border-box',
       }),
       0,
     ]
@@ -117,7 +120,7 @@ function SpeechBubbleView() {
         background: '#fff',
         display: 'inline-block',
         minWidth: '80px',
-        maxWidth: '80%',
+        maxWidth: '72%',
         boxSizing: 'border-box',
       }}>
         <NodeViewContent />
@@ -141,7 +144,7 @@ const SpeechBubbleExtension = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-speech-bubble': '',
-        style: 'position:relative;border:1.5px solid #aaa;border-radius:8px;padding:16px 20px;margin:16px 0 28px 0;background:#fff',
+        style: 'position:relative;border:1.5px solid #aaa;border-radius:8px;padding:16px 20px;margin:16px auto 28px;background:#fff;display:block;width:fit-content;max-width:72%;box-sizing:border-box',
       }),
       ['div', { 'data-sbc': '' }, 0],
       ['div', { style: 'position:absolute;bottom:-16px;left:28px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:16px solid #aaa;pointer-events:none' }],
@@ -165,7 +168,7 @@ function MemoBoxView() {
         overflow: 'hidden',
         display: 'inline-block',
         minWidth: '80px',
-        maxWidth: '80%',
+        maxWidth: '72%',
         boxSizing: 'border-box',
       }}>
         <NodeViewContent />
@@ -189,7 +192,7 @@ const MemoBoxExtension = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-memo-box': '',
-        style: 'position:relative;border:1.5px solid #c0c0c0;padding:16px 20px;margin:16px 0;background:#fff;overflow:hidden',
+        style: 'position:relative;border:1.5px solid #c0c0c0;padding:16px 20px;margin:16px auto;background:#fff;overflow:hidden;display:block;width:fit-content;max-width:72%;box-sizing:border-box',
       }),
       ['div', { 'data-mbc': '' }, 0],
       ['div', { style: 'position:absolute;bottom:0;right:0;width:26px;height:26px;background:#b8b8b8;clip-path:polygon(100% 0,100% 100%,0 100%);pointer-events:none' }],
@@ -212,7 +215,7 @@ function BracketFrameView() {
         padding: '20px 24px',
         display: 'inline-block',
         minWidth: '80px',
-        maxWidth: '80%',
+        maxWidth: '72%',
         boxSizing: 'border-box',
       }}>
         <NodeViewContent />
@@ -240,7 +243,7 @@ const BracketFrameExtension = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-bracket-frame': '',
-        style: 'position:relative;padding:20px 24px;margin:16px 0',
+        style: 'position:relative;padding:20px 24px;margin:16px auto;display:block;width:fit-content;max-width:72%;box-sizing:border-box',
       }),
       ['div', { 'data-bfc': '' }, 0],
       ['div', { style: `${s};top:0;left:0;border-top:${b};border-left:${b}` }],
@@ -363,14 +366,38 @@ export default function RichEditor({
   initialContent,
   onChange,
   placeholder = '내용을 입력하세요...',
-  minHeight = '320px',
+  minHeight = '640px',
 }: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<Editor | null>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showHighlightPicker, setShowHighlightPicker] = useState(false)
   const [showBlockPicker, setShowBlockPicker] = useState(false)
   const [showFontPicker, setShowFontPicker] = useState(false)
+  const [currentFontSize, setCurrentFontSize] = useState('')
+  const [currentFontFamily, setCurrentFontFamily] = useState('')
+  const [currentColor, setCurrentColor] = useState<string | undefined>(undefined)
+  const [currentHighlight, setCurrentHighlight] = useState<string | undefined>(undefined)
+  const [, setSelectionVersion] = useState(0)
+
+  const closeAll = useCallback(() => {
+    setShowColorPicker(false)
+    setShowHighlightPicker(false)
+    setShowBlockPicker(false)
+    setShowFontPicker(false)
+  }, [])
+
+  const syncToolbarState = useCallback((instance: Editor | null) => {
+    if (!instance) return
+
+    const textStyleAttributes = instance.getAttributes('textStyle')
+    setCurrentFontSize((textStyleAttributes.fontSize as string | undefined) ?? '')
+    setCurrentFontFamily((textStyleAttributes.fontFamily as string | undefined) ?? '')
+    setCurrentColor(textStyleAttributes.color as string | undefined)
+    setCurrentHighlight(instance.getAttributes('highlight').color as string | undefined)
+    setSelectionVersion(version => version + 1)
+  }, [])
 
   const uploadImage = useCallback(async (file: File, editor: Editor) => {
     const formData = new FormData()
@@ -436,6 +463,36 @@ export default function RichEditor({
     }
   }, [editor, initialContent])
 
+  useEffect(() => {
+    if (!editor) return
+
+    syncToolbarState(editor)
+
+    const handleSelectionUpdate = () => syncToolbarState(editor)
+    const handleTransaction = () => syncToolbarState(editor)
+
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    editor.on('transaction', handleTransaction)
+
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate)
+      editor.off('transaction', handleTransaction)
+    }
+  }, [editor, syncToolbarState])
+
+  useEffect(() => {
+    if (!showColorPicker && !showHighlightPicker && !showBlockPicker && !showFontPicker) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target
+      if (target instanceof globalThis.Node && toolbarRef.current?.contains(target)) return
+      closeAll()
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [showColorPicker, showHighlightPicker, showBlockPicker, showFontPicker, closeAll])
+
   if (!editor) return null
 
   function handleImageButtonClick() { fileInputRef.current?.click() }
@@ -447,16 +504,16 @@ export default function RichEditor({
     await uploadImage(file, editor)
   }
 
-  const currentColor = editor.getAttributes('textStyle').color as string | undefined
-  const currentHighlight = editor.getAttributes('highlight').color as string | undefined
-  const closeAll = () => { setShowColorPicker(false); setShowHighlightPicker(false); setShowBlockPicker(false); setShowFontPicker(false) }
+  const currentFontFamilyLabel = currentFontFamily
+    ? FONT_FAMILIES.find(f => f.value === currentFontFamily)?.label ?? DEFAULT_FONT_FAMILY_LABEL
+    : DEFAULT_FONT_FAMILY_LABEL
 
   return (
     <div className="border border-gray-200 rounded-md overflow-hidden bg-white flex flex-col">
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
       {/* 툴바 */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-100 px-2 py-1.5 bg-gray-50">
+      <div ref={toolbarRef} className="flex flex-wrap items-center gap-0.5 border-b border-gray-100 px-2 py-1.5 bg-gray-50">
         {/* 굵기·기울임·밑줄 */}
         <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="굵게">B</ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="기울임"><em>I</em></ToolbarButton>
@@ -467,13 +524,16 @@ export default function RichEditor({
         <select
           title="글자 크기"
           className="text-xs text-gray-600 bg-transparent border border-gray-200 rounded px-1 py-0.5 focus:outline-none cursor-pointer"
-          value={editor.getAttributes('textStyle').fontSize ?? ''}
+          value={currentFontSize || DEFAULT_FONT_SIZE_OPTION}
           onChange={e => {
-            if (e.target.value) editor.chain().focus().setFontSize(e.target.value).run()
-            else editor.chain().focus().unsetFontSize().run()
+            if (e.target.value === DEFAULT_FONT_SIZE_OPTION) {
+              editor.chain().focus().unsetFontSize().run()
+            } else {
+              editor.chain().focus().setFontSize(e.target.value).run()
+            }
           }}
         >
-          <option value="">크기</option>
+          <option value={DEFAULT_FONT_SIZE_OPTION}>기본 (16px)</option>
           {FONT_SIZES.map(s => <option key={s} value={s}>{s.replace('px', '')}</option>)}
         </select>
 
@@ -485,9 +545,7 @@ export default function RichEditor({
             onMouseDown={e => { e.preventDefault(); setShowFontPicker(v => !v); setShowColorPicker(false); setShowHighlightPicker(false); setShowBlockPicker(false) }}
             className="flex items-center gap-1 text-xs text-gray-600 bg-transparent border border-gray-200 rounded px-1.5 py-0.5 hover:bg-gray-100 transition-colors cursor-pointer"
           >
-            <span style={{ fontFamily: editor.getAttributes('textStyle').fontFamily || undefined }}>
-              {FONT_FAMILIES.find(f => f.value === (editor.getAttributes('textStyle').fontFamily ?? ''))?.label ?? '글씨체'}
-            </span>
+            <span>{currentFontFamilyLabel}</span>
             <span className="text-gray-400">▾</span>
           </button>
           {showFontPicker && (
@@ -502,7 +560,7 @@ export default function RichEditor({
                     else editor.chain().focus().unsetFontFamily().run()
                     setShowFontPicker(false)
                   }}
-                  className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 transition-colors ${(editor.getAttributes('textStyle').fontFamily ?? '') === f.value ? 'bg-gray-100' : ''}`}
+                  className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 transition-colors ${currentFontFamily === f.value ? 'bg-gray-100' : ''}`}
                   style={{ fontFamily: f.value || undefined }}
                 >
                   {f.label}
@@ -530,7 +588,9 @@ export default function RichEditor({
                 {TEXT_COLORS.map(color => (
                   <button key={color} type="button" title={color}
                     onMouseDown={e => { e.preventDefault(); editor.chain().focus().setColor(color).run(); setShowColorPicker(false) }}
-                    className="w-6 h-6 rounded border-2 border-transparent hover:border-gray-500 transition-colors"
+                    className={`w-6 h-6 rounded border-2 hover:border-gray-500 transition-colors ${
+                      currentColor === color ? 'border-gray-400' : 'border-transparent'
+                    }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
@@ -560,7 +620,9 @@ export default function RichEditor({
                 {HIGHLIGHT_COLORS.map(color => (
                   <button key={color} type="button" title={color}
                     onMouseDown={e => { e.preventDefault(); editor.chain().focus().setHighlight({ color }).run(); setShowHighlightPicker(false) }}
-                    className="w-6 h-6 rounded border-2 border-transparent hover:border-gray-500 transition-colors"
+                    className={`w-6 h-6 rounded border-2 hover:border-gray-500 transition-colors ${
+                      currentHighlight === color ? 'border-gray-400' : 'border-transparent'
+                    }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}

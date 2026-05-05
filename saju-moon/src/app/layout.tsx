@@ -77,7 +77,7 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    '사주 해석과 블로그 콘텐츠를 연결해 내 사주에 맞는 글과 서비스를 자연스럽게 찾아보는 사주로아의 콘텐츠 서비스입니다.',
+    '사주 해석과 블로그 콘텐츠를 연결해 나에게 맞는 글과 서비스를 자연스럽게 찾아보는 사주로아의 콘텐츠 서비스입니다.',
   openGraph: {
     siteName: SITE_NAME,
     locale: 'ko_KR',
@@ -119,7 +119,10 @@ export default async function RootLayout({
           <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6">
             <SocialChannelsFooter />
             <div className="flex flex-col items-center justify-between gap-4 text-xs text-gray-400 sm:flex-row">
-              <span>Copyright 2026 {SITE_NAME}. All rights reserved.</span>
+              <span className="text-center sm:text-left">
+                Copyright 2026 {SITE_NAME}. All rights reserved. {' | '}
+                이메일: 3aroundv@gmail.com
+              </span>
               <nav className="flex items-center gap-4">
                 <a href="/privacy" className="transition-colors hover:text-black">
                   개인정보처리방침

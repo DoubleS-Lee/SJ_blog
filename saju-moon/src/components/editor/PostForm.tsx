@@ -339,7 +339,7 @@ export default function PostForm({ initialData }: Props) {
           initialContent={initialData?.content}
           onChange={setContent}
           placeholder="본문을 작성하세요..."
-          minHeight="400px"
+          minHeight="800px"
         />
       </div>
 

@@ -134,5 +134,98 @@
 .prose hr {
   border: none;
   border-top: 3px solid #000000;
-  margin: 1.5rem 0;
+  width: 33.3333%;
+  margin: 1.5rem auto;
+}
+
+.ProseMirror h2,
+.prose h2 {
+  margin: 1.75rem 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ProseMirror h3,
+.prose h3 {
+  margin: 1.5rem 0 0.625rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ProseMirror ul,
+.prose ul {
+  width: fit-content;
+  max-width: 72%;
+  margin: 1rem auto;
+  padding-left: 1.5rem;
+  list-style: disc;
+  text-align: left;
+}
+
+.ProseMirror ol,
+.prose ol {
+  width: fit-content;
+  max-width: 72%;
+  margin: 1rem auto;
+  padding-left: 1.5rem;
+  list-style: decimal;
+  text-align: left;
+}
+
+.ProseMirror li,
+.prose li {
+  margin: 0.25rem 0;
+}
+
+.ProseMirror li > p,
+.prose li > p {
+  display: inline;
+  margin: 0;
+}
+
+.ProseMirror blockquote,
+.prose blockquote {
+  position: relative;
+  width: fit-content;
+  max-width: 72%;
+  margin: 1.5rem auto;
+  padding: 1rem 3rem;
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-style: italic;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.ProseMirror blockquote::before,
+.prose blockquote::before,
+.ProseMirror blockquote::after,
+.prose blockquote::after {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #9ca3af;
+  font-style: normal;
+}
+
+.ProseMirror blockquote::before,
+.prose blockquote::before {
+  content: '“';
+  left: 0.5rem;
+}
+
+.ProseMirror blockquote::after,
+.prose blockquote::after {
+  content: '”';
+  right: 0.5rem;
+}
+
+.ProseMirror blockquote p,
+.prose blockquote p {
+  margin: 0;
 }
