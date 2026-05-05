@@ -2,8 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+function getSafeOrigin(request: NextRequest) {
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const hostHeader = request.headers.get('host')
+  const protocol =
+    request.headers.get('x-forwarded-proto') ??
+    (process.env.NODE_ENV === 'development' ? 'http' : 'https')
+
+  const rawHost = forwardedHost ?? hostHeader
+
+  if (rawHost) {
+    const normalizedHost = rawHost.replace(/^0\.0\.0\.0(?=[:/]|$)/, 'localhost')
+    return `${protocol}://${normalizedHost}`
+  }
+
+  const { origin } = new URL(request.url)
+  return origin.replace('://0.0.0.0', '://localhost')
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
+  const origin = getSafeOrigin(request)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
 

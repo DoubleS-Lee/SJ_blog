@@ -266,6 +266,7 @@ export interface Database {
           created_at: string
           event_name: string
           user_id: string | null
+          visitor_id: string
           session_id: string
           page_type: string | null
           page_path: string
@@ -274,6 +275,11 @@ export interface Database {
           content_title: string | null
           category: string | null
           referrer: string | null
+          utm_source: string | null
+          utm_medium: string | null
+          utm_campaign: string | null
+          landing_page: string | null
+          landing_post_slug: string | null
           properties: Json
         }
         Insert: {
@@ -281,6 +287,7 @@ export interface Database {
           created_at?: string
           event_name: string
           user_id?: string | null
+          visitor_id: string
           session_id: string
           page_type?: string | null
           page_path: string
@@ -289,6 +296,11 @@ export interface Database {
           content_title?: string | null
           category?: string | null
           referrer?: string | null
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          landing_page?: string | null
+          landing_post_slug?: string | null
           properties?: Json
         }
         Update: {
@@ -296,6 +308,7 @@ export interface Database {
           created_at?: string
           event_name?: string
           user_id?: string | null
+          visitor_id?: string
           session_id?: string
           page_type?: string | null
           page_path?: string
@@ -304,6 +317,11 @@ export interface Database {
           content_title?: string | null
           category?: string | null
           referrer?: string | null
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          landing_page?: string | null
+          landing_post_slug?: string | null
           properties?: Json
         }
         Relationships: []
@@ -312,25 +330,37 @@ export interface Database {
         Row: {
           metric_date: string
           unique_visitors: number
+          sessions: number
+          new_visitors: number
+          returning_visitors: number
           page_views: number
           total_engagement_ms: number
           engagement_events: number
+          engaged_sessions: number
           updated_at: string
         }
         Insert: {
           metric_date: string
           unique_visitors?: number
+          sessions?: number
+          new_visitors?: number
+          returning_visitors?: number
           page_views?: number
           total_engagement_ms?: number
           engagement_events?: number
+          engaged_sessions?: number
           updated_at?: string
         }
         Update: {
           metric_date?: string
           unique_visitors?: number
+          sessions?: number
+          new_visitors?: number
+          returning_visitors?: number
           page_views?: number
           total_engagement_ms?: number
           engagement_events?: number
+          engaged_sessions?: number
           updated_at?: string
         }
         Relationships: []
@@ -418,18 +448,24 @@ export interface Database {
           metric_date: string
           channel: string
           sessions: number
+          visitors: number
+          engaged_sessions: number
           updated_at: string
         }
         Insert: {
           metric_date: string
           channel: string
           sessions?: number
+          visitors?: number
+          engaged_sessions?: number
           updated_at?: string
         }
         Update: {
           metric_date?: string
           channel?: string
           sessions?: number
+          visitors?: number
+          engaged_sessions?: number
           updated_at?: string
         }
         Relationships: []
@@ -444,6 +480,9 @@ export interface Database {
           likes: number
           total_engagement_ms: number
           engagement_events: number
+          landing_sessions: number
+          visitors: number
+          engaged_sessions: number
           updated_at: string
         }
         Insert: {
@@ -455,6 +494,9 @@ export interface Database {
           likes?: number
           total_engagement_ms?: number
           engagement_events?: number
+          landing_sessions?: number
+          visitors?: number
+          engaged_sessions?: number
           updated_at?: string
         }
         Update: {
@@ -466,6 +508,9 @@ export interface Database {
           likes?: number
           total_engagement_ms?: number
           engagement_events?: number
+          landing_sessions?: number
+          visitors?: number
+          engaged_sessions?: number
           updated_at?: string
         }
         Relationships: []
