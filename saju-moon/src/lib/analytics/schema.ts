@@ -12,6 +12,7 @@ export const ANALYTICS_EVENT_NAMES = [
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number]
 
 export interface AnalyticsTrackPayload {
+  visitorId?: string
   eventName: AnalyticsEventName
   sessionId: string
   pagePath: string
@@ -21,5 +22,10 @@ export interface AnalyticsTrackPayload {
   contentTitle?: string | null
   category?: string | null
   referrer?: string | null
+  utmSource?: string | null
+  utmMedium?: string | null
+  utmCampaign?: string | null
+  landingPage?: string | null
+  landingPostSlug?: string | null
   properties?: Record<string, string | number | boolean | null>
 }

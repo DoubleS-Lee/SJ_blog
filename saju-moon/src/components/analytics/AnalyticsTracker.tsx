@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { buildCurrentPagePayload, getOrCreateAnalyticsSessionId, trackAnalyticsEvent } from '@/lib/analytics/client'
+import {
+  buildCurrentPagePayload,
+  getOrCreateAnalyticsSessionId,
+  getOrCreateAnalyticsVisitorId,
+  trackAnalyticsEvent,
+} from '@/lib/analytics/client'
 
 const SCROLL_THRESHOLDS = [25, 50, 75, 100] as const
 
@@ -20,13 +25,17 @@ export default function AnalyticsTracker() {
     const search = searchParams.toString()
     const pagePayload = buildCurrentPagePayload('page_view', pathname, search)
     const session = getOrCreateAnalyticsSessionId()
+    const visitor = getOrCreateAnalyticsVisitorId()
 
     if (session.isNewSession) {
       void trackAnalyticsEvent({
         ...pagePayload,
         eventName: 'session_start',
+        landingPage: pagePayload.pagePath,
+        landingPostSlug: pagePayload.contentType === 'blog_post' ? pagePayload.contentId : null,
         properties: {
           entry_path: pagePayload.pagePath,
+          is_new_visitor: visitor.isNewVisitor,
         },
       })
     }

@@ -4,10 +4,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { buttonVariants } from '@/components/ui/button'
 
-type RankingSortKey = 'views' | 'engagement' | 'likes'
+type RankingSortKey = 'views' | 'engagement' | 'likes' | 'landing'
 type CategorySortKey = 'views' | 'likes' | 'engagement'
 
 const ACTIVE_RANKING_SORT_OPTIONS: Array<{ key: RankingSortKey; label: string }> = [
+  { key: 'landing', label: '유입 기여 순' },
   { key: 'views', label: '조회수 순' },
   { key: 'engagement', label: '체류시간 순' },
   { key: 'likes', label: '좋아요 순' },
@@ -62,10 +63,7 @@ export function AnalyticsDateFilter({
   }
 
   return (
-    <form
-      action={handleSubmit}
-      className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
-    >
+    <form action={handleSubmit} className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <label className="flex flex-col gap-1 text-xs text-gray-500">
           시작일

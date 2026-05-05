@@ -4,6 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { ANALYTICS_EVENT_NAMES, type AnalyticsTrackPayload } from '@/lib/analytics/schema'
 
 const ALLOWED_EVENT_NAMES = new Set<string>(ANALYTICS_EVENT_NAMES)
+const BOT_USER_AGENT_PATTERN =
+  /(bot|crawler|spider|slurp|bingpreview|googleweblight|google-extended|mediapartners-google|facebookexternalhit|meta-externalagent|twitterbot|linkedinbot|whatsapp|slackbot|discordbot|telegrambot|naverbot|yeti|daumoa|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|headlesschrome|lighthouse)/i
 
 function sanitizeText(value: unknown, maxLength = 255) {
   if (typeof value !== 'string') return null
@@ -32,6 +34,23 @@ function sanitizeProperties(input: unknown) {
   )
 }
 
+function isIgnoredAnalyticsRequest(request: Request) {
+  const userAgent = request.headers.get('user-agent') ?? ''
+  const purpose = request.headers.get('purpose') ?? request.headers.get('sec-purpose') ?? ''
+  const nextRouterPrefetch = request.headers.get('next-router-prefetch')
+  const xMiddlewarePrefetch = request.headers.get('x-middleware-prefetch')
+
+  if (BOT_USER_AGENT_PATTERN.test(userAgent)) {
+    return true
+  }
+
+  if (purpose.toLowerCase().includes('prefetch')) {
+    return true
+  }
+
+  return nextRouterPrefetch === '1' || xMiddlewarePrefetch === '1'
+}
+
 export async function POST(request: Request) {
   let payload: AnalyticsTrackPayload
 
@@ -46,10 +65,15 @@ export async function POST(request: Request) {
   }
 
   const sessionId = sanitizeText(payload.sessionId, 120)
+  const visitorId = sanitizeText(payload.visitorId, 120)
   const pagePath = sanitizeText(payload.pagePath, 500)
 
-  if (!sessionId || !pagePath) {
+  if (!sessionId || !pagePath || !visitorId) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
+  }
+
+  if (isIgnoredAnalyticsRequest(request)) {
+    return NextResponse.json({ ok: true, ignored: true })
   }
 
   const supabase = await createClient()
@@ -70,6 +94,7 @@ export async function POST(request: Request) {
   const { error } = await supabaseAdmin.from('analytics_events').insert({
     event_name: payload.eventName,
     user_id: userId,
+    visitor_id: visitorId,
     session_id: sessionId,
     page_type: sanitizeText(payload.pageType, 80),
     page_path: pagePath,
@@ -78,6 +103,11 @@ export async function POST(request: Request) {
     content_title: sanitizeText(payload.contentTitle, 255),
     category: sanitizeText(payload.category, 120),
     referrer: sanitizeText(payload.referrer, 500),
+    utm_source: sanitizeText(payload.utmSource, 120),
+    utm_medium: sanitizeText(payload.utmMedium, 120),
+    utm_campaign: sanitizeText(payload.utmCampaign, 160),
+    landing_page: sanitizeText(payload.landingPage, 500),
+    landing_post_slug: sanitizeText(payload.landingPostSlug, 200),
     properties: sanitizeProperties(payload.properties),
   })
 
