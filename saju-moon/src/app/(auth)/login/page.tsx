@@ -101,6 +101,10 @@ export default function LoginPage() {
     document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=600; SameSite=Lax`
   }
 
+  function startKakaoWebFallback(next: string) {
+    window.location.href = `/auth/kakao/start?next=${encodeURIComponent(next)}`
+  }
+
   function buildAndroidIntentUrl(packageName: string) {
     const loginUrl = new URL(getLoginUrl())
     const hostAndPath = `${loginUrl.host}${loginUrl.pathname}${loginUrl.search}${loginUrl.hash}`
@@ -145,6 +149,38 @@ export default function LoginPage() {
 
         setLoginCookie(KAKAO_LOGIN_STATE_COOKIE, state)
         setLoginCookie(KAKAO_LOGIN_NEXT_COOKIE, next)
+
+        const currentHref = window.location.href
+        let fallbackTriggered = false
+
+        const fallbackToWebLogin = () => {
+          if (fallbackTriggered) return
+          fallbackTriggered = true
+          window.removeEventListener('pagehide', cancelFallback)
+          document.removeEventListener('visibilitychange', handleVisibilityChange)
+          startKakaoWebFallback(next)
+        }
+
+        const cancelFallback = () => {
+          fallbackTriggered = true
+          window.removeEventListener('pagehide', cancelFallback)
+          document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'hidden') {
+            cancelFallback()
+          }
+        }
+
+        window.addEventListener('pagehide', cancelFallback, { once: true })
+        document.addEventListener('visibilitychange', handleVisibilityChange, { once: true })
+
+        window.setTimeout(() => {
+          if (!fallbackTriggered && document.visibilityState === 'visible' && window.location.href === currentHref) {
+            fallbackToWebLogin()
+          }
+        }, 1200)
 
         kakaoAuth.authorize({
           redirectUri: `${window.location.origin}/auth/kakao/callback`,
