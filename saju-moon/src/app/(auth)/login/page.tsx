@@ -42,6 +42,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isKakaoReady, setIsKakaoReady] = useState(false)
   const [isEmbeddedBrowser, setIsEmbeddedBrowser] = useState(false)
   const [isAndroid, setIsAndroid] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
@@ -63,7 +64,12 @@ export default function LoginPage() {
 
     void loadKakaoSdk(kakaoKey).catch(() => {
       // Ignore preload failure here. The actual login click path handles the user-facing error.
+      setIsKakaoReady(false)
+      return
     })
+      .then(() => {
+        setIsKakaoReady(true)
+      })
   }, [])
 
   useEffect(() => {
@@ -129,13 +135,11 @@ export default function LoginPage() {
       }
 
       try {
-        await loadKakaoSdk(kakaoKey)
-
         const state = createLoginState()
         const next = getNextPath()
         const kakaoAuth = window.Kakao?.Auth
 
-        if (!kakaoAuth?.authorize) {
+        if (!isKakaoReady || !kakaoAuth?.authorize) {
           throw new Error('Kakao Auth SDK is not available.')
         }
 
@@ -147,8 +151,6 @@ export default function LoginPage() {
           state,
           scope: 'openid',
         })
-
-        setLoading(null)
         return
       } catch (sdkError) {
         console.error('[login][kakao]', sdkError)
