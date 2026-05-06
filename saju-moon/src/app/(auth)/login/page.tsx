@@ -2,19 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { loadKakaoSdk } from '@/lib/kakao/sdk'
 import Link from 'next/link'
 
 function detectEmbeddedBrowser(userAgent: string, referrer: string) {
   const metaInAppPattern = /Instagram|Threads|FBAN|FBAV|MetaIAB/i
+  const youtubeInAppPattern = /YouTube/i
   const androidWebViewPattern = /\bwv\b|Version\/4\.0/i
-  const inAppReferrerPattern = /instagram\.com|threads\.net|l\.instagram\.com|lm\.facebook\.com/i
+  const inAppReferrerPattern =
+    /instagram\.com|threads\.net|l\.instagram\.com|lm\.facebook\.com|youtube\.com|m\.youtube\.com|youtu\.be/i
 
   return (
     metaInAppPattern.test(userAgent) ||
+    youtubeInAppPattern.test(userAgent) ||
     (/\bAndroid\b/i.test(userAgent) && androidWebViewPattern.test(userAgent)) ||
     inAppReferrerPattern.test(referrer)
   )
 }
+
+const KAKAO_LOGIN_STATE_COOKIE = 'kakao_login_state'
+const KAKAO_LOGIN_NEXT_COOKIE = 'kakao_login_next'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
@@ -36,6 +43,15 @@ export default function LoginPage() {
 
   function getLoginUrl() {
     return `${window.location.origin}/login`
+  }
+
+  function getNextPath() {
+    const next = new URLSearchParams(window.location.search).get('next')
+    return next?.startsWith('/') ? next : '/'
+  }
+
+  function setLoginCookie(name: string, value: string) {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=600; SameSite=Lax`
   }
 
   function buildAndroidIntentUrl(packageName: string) {
@@ -62,6 +78,37 @@ export default function LoginPage() {
     setLoading(provider)
     setError(null)
     setCopyMessage(null)
+
+    if (provider === 'kakao') {
+      const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY
+      if (!kakaoKey) {
+        setError('카카오 로그인 설정이 아직 완료되지 않았습니다.')
+        setLoading(null)
+        return
+      }
+
+      try {
+        await loadKakaoSdk(kakaoKey)
+
+        const state = crypto.randomUUID()
+        const next = getNextPath()
+
+        setLoginCookie(KAKAO_LOGIN_STATE_COOKIE, state)
+        setLoginCookie(KAKAO_LOGIN_NEXT_COOKIE, next)
+
+        window.Kakao?.Auth.authorize({
+          redirectUri: `${window.location.origin}/auth/kakao/callback`,
+          state,
+          scope: 'openid',
+        })
+        return
+      } catch (sdkError) {
+        console.error('[login][kakao]', sdkError)
+        setError('카카오 로그인을 시작하지 못했습니다. 다시 시도해 주세요.')
+        setLoading(null)
+        return
+      }
+    }
 
     if (provider === 'google' && isEmbeddedBrowser) {
       setShowExternalBrowserOptions(true)
@@ -101,9 +148,8 @@ export default function LoginPage() {
 
         {isEmbeddedBrowser && (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <p>Threads/인스타 인앱브라우저에서는 Google 로그인이 차단될 수 있습니다.</p>
-            <p>카카오는 웹 로그인 화면으로 진행되며, 설치된 카카오톡 앱 자동 로그인은 현재 웹 OAuth 흐름에서는 지원되지 않습니다.</p>
-            <p>이 안내는 인앱브라우저에서 열렸을 때만 표시되며, 일반 브라우저에서는 바로 로그인할 수 있습니다.</p>
+            <p>인앱브라우저에서는 Google 로그인이 차단될 수 있습니다.</p>
+            <p>Chrome, 삼성인터넷 같은 외부 브라우저에서 로그인하는 것이 가장 안전합니다.</p>
           </div>
         )}
 
@@ -197,14 +243,14 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => openAndroidBrowser('com.android.chrome')}
-                  className="flex h-12 items-center justify-center rounded-xl bg-black text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  className="flex h-12 items-center justify-center rounded-xl border border-gray-900 bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-gray-800"
                 >
                   Chrome에서 로그인 화면 열기
                 </button>
                 <button
                   type="button"
                   onClick={() => openAndroidBrowser('com.sec.android.app.sbrowser')}
-                  className="flex h-12 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="flex h-12 items-center justify-center rounded-xl border border-gray-900 bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-gray-800"
                 >
                   삼성인터넷에서 로그인 화면 열기
                 </button>
@@ -221,7 +267,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={copyLoginLink}
-              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl border border-gray-900 bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-gray-800"
             >
               로그인 링크 복사
             </button>

@@ -3,18 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { togglePostLike } from '@/actions/posts'
-
-declare global {
-  interface Window {
-    Kakao?: {
-      isInitialized: () => boolean
-      init: (key: string) => void
-      Share: {
-        sendDefault: (payload: Record<string, unknown>) => void
-      }
-    }
-  }
-}
+import { loadKakaoSdk, resetKakaoSdkPromise } from '@/lib/kakao/sdk'
 
 interface PostEngagementBarProps {
   postId: string
@@ -26,10 +15,7 @@ interface PostEngagementBarProps {
   isLoggedIn: boolean
 }
 
-const KAKAO_SDK_ID = 'kakao-share-sdk'
 const HOT_PINK = '#ff1493'
-
-let kakaoSdkPromise: Promise<void> | null = null
 
 function toAbsoluteImageUrl(imageUrl: string | null, origin: string) {
   if (!imageUrl) return `${origin}/moon.png`
@@ -53,50 +39,6 @@ function HeartIcon({ filled }: { filled: boolean }) {
       <path d="M20.8 4.6c-1.8-1.7-4.6-1.7-6.3.1L12 7.2 9.5 4.7C7.8 2.9 5 2.9 3.2 4.6 1.3 6.4 1.3 9.3 3.1 11.1L12 20l8.9-8.9c1.8-1.8 1.8-4.7-.1-6.5Z" />
     </svg>
   )
-}
-
-function loadKakaoSdk(key: string) {
-  if (typeof window === 'undefined') return Promise.reject(new Error('browser only'))
-  if (window.Kakao) {
-    if (!window.Kakao.isInitialized()) window.Kakao.init(key)
-    return Promise.resolve()
-  }
-
-  if (kakaoSdkPromise) return kakaoSdkPromise
-
-  kakaoSdkPromise = new Promise((resolve, reject) => {
-    const existingScript = document.getElementById(KAKAO_SDK_ID) as HTMLScriptElement | null
-
-    if (existingScript) {
-      existingScript.addEventListener('load', () => {
-        if (!window.Kakao) {
-          reject(new Error('Kakao SDK was not loaded.'))
-          return
-        }
-        if (!window.Kakao.isInitialized()) window.Kakao.init(key)
-        resolve()
-      })
-      existingScript.addEventListener('error', () => reject(new Error('Kakao SDK load failed.')))
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = KAKAO_SDK_ID
-    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js'
-    script.async = true
-    script.onload = () => {
-      if (!window.Kakao) {
-        reject(new Error('Kakao SDK was not loaded.'))
-        return
-      }
-      if (!window.Kakao.isInitialized()) window.Kakao.init(key)
-      resolve()
-    }
-    script.onerror = () => reject(new Error('Kakao SDK load failed.'))
-    document.head.appendChild(script)
-  })
-
-  return kakaoSdkPromise
 }
 
 async function copyTextToClipboard(text: string) {
@@ -163,7 +105,7 @@ export default function PostEngagementBar({
     const key = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY
     if (!key) return
     void loadKakaoSdk(key).catch(() => {
-      kakaoSdkPromise = null
+      resetKakaoSdkPromise()
     })
   }, [])
 
