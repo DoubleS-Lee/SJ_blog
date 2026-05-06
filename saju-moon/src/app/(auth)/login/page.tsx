@@ -145,8 +145,14 @@ export default function LoginPage() {
       }
 
       try {
-        const state = createLoginState()
         const next = getNextPath()
+
+        if (isIOS) {
+          startKakaoWebFallback(next)
+          return
+        }
+
+        const state = createLoginState()
         const kakaoAuth = window.Kakao?.Auth
 
         if (!isKakaoReady || !kakaoAuth?.authorize) {
@@ -353,8 +359,18 @@ export default function LoginPage() {
 
             {isIOS && (
               <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 text-sm leading-6 text-gray-600">
-                <p>iPhone에서는 웹페이지가 Safari를 바로 강제로 열 수 없습니다.</p>
-                <p className="mt-1">상단 또는 하단 메뉴에서 Safari로 열기를 선택해 주세요.</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M12 15V4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M8 8L12 4L16 8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M5 14.5V18C5 18.5523 5.44772 19 6 19H18C18.5523 19 19 18.5523 19 18V14.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p>
+                    ? ?? ??? <span className="font-medium text-gray-900">'?? ?????? ??'</span> ??? ?????.
+                  </p>
+                </div>
               </div>
             )}
 
