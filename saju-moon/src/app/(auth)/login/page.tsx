@@ -4,6 +4,18 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+function detectEmbeddedBrowser(userAgent: string, referrer: string) {
+  const metaInAppPattern = /Instagram|Threads|FBAN|FBAV|MetaIAB/i
+  const androidWebViewPattern = /\bwv\b|Version\/4\.0/i
+  const inAppReferrerPattern = /instagram\.com|threads\.net|l\.instagram\.com|lm\.facebook\.com/i
+
+  return (
+    metaInAppPattern.test(userAgent) ||
+    (/\bAndroid\b/i.test(userAgent) && androidWebViewPattern.test(userAgent)) ||
+    inAppReferrerPattern.test(referrer)
+  )
+}
+
 export default function LoginPage() {
   const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -15,7 +27,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     const userAgent = navigator.userAgent ?? ''
-    setIsEmbeddedBrowser(/Instagram|Threads|FBAN|FBAV/i.test(userAgent))
+    const referrer = document.referrer ?? ''
+
+    setIsEmbeddedBrowser(detectEmbeddedBrowser(userAgent, referrer))
     setIsAndroid(/Android/i.test(userAgent))
     setIsIOS(/iPhone|iPad|iPod/i.test(userAgent))
   }, [])
