@@ -18,7 +18,7 @@ export default function GuestCTA() {
         <Link
           href="/signup"
           scroll={false}
-          className={buttonVariants({ className: 'w-full bg-white text-black hover:bg-zinc-100' })}
+          className="hidden"
         >
           무료로 시작하기
         </Link>

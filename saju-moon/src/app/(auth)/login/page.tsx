@@ -1,16 +1,61 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isEmbeddedBrowser, setIsEmbeddedBrowser] = useState(false)
+  const [isAndroid, setIsAndroid] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
+  const [showExternalBrowserOptions, setShowExternalBrowserOptions] = useState(false)
+  const [copyMessage, setCopyMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent ?? ''
+    setIsEmbeddedBrowser(/Instagram|Threads|FBAN|FBAV/i.test(userAgent))
+    setIsAndroid(/Android/i.test(userAgent))
+    setIsIOS(/iPhone|iPad|iPod/i.test(userAgent))
+  }, [])
+
+  function getLoginUrl() {
+    return `${window.location.origin}/login`
+  }
+
+  function buildAndroidIntentUrl(packageName: string) {
+    const loginUrl = new URL(getLoginUrl())
+    const hostAndPath = `${loginUrl.host}${loginUrl.pathname}${loginUrl.search}${loginUrl.hash}`
+
+    return `intent://${hostAndPath}#Intent;scheme=${loginUrl.protocol.replace(':', '')};package=${packageName};S.browser_fallback_url=${encodeURIComponent(loginUrl.toString())};end`
+  }
+
+  function openAndroidBrowser(packageName: string) {
+    window.location.href = buildAndroidIntentUrl(packageName)
+  }
+
+  async function copyLoginLink() {
+    try {
+      await navigator.clipboard.writeText(getLoginUrl())
+      setCopyMessage('로그인 링크를 복사했어요. 외부 브라우저 주소창에 붙여 넣어 주세요.')
+    } catch {
+      setCopyMessage('링크 복사에 실패했습니다. 우측 메뉴에서 브라우저로 열어 주세요.')
+    }
+  }
 
   async function signInWith(provider: 'google' | 'kakao') {
     setLoading(provider)
     setError(null)
+    setCopyMessage(null)
+
+    if (provider === 'google' && isEmbeddedBrowser) {
+      setShowExternalBrowserOptions(true)
+      setLoading(null)
+      return
+    }
+
+    setShowExternalBrowserOptions(false)
 
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
@@ -39,6 +84,14 @@ export default function LoginPage() {
             소셜 계정으로 간편하게 시작하세요
           </p>
         </div>
+
+        {isEmbeddedBrowser && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p>Threads/인스타 인앱브라우저에서는 Google 로그인이 차단될 수 있습니다.</p>
+            <p>카카오는 웹 로그인 화면으로 진행되며, 설치된 카카오톡 앱 자동 로그인은 현재 웹 OAuth 흐름에서는 지원되지 않습니다.</p>
+            <p>이 안내는 인앱브라우저에서 열렸을 때만 표시되며, 일반 브라우저에서는 바로 로그인할 수 있습니다.</p>
+          </div>
+        )}
 
         {/* 소셜 로그인 버튼 */}
         <div className="flex flex-col gap-3">
@@ -99,6 +152,72 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+
+      {showExternalBrowserOptions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-base font-semibold text-gray-900">
+                  외부 브라우저에서 로그인해 주세요
+                </p>
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  Threads, 인스타 같은 인앱브라우저에서는 Google 로그인이 차단될 수 있어요.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExternalBrowserOptions(false)}
+                className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                aria-label="닫기"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.5 4.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M13.5 4.5L4.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {isAndroid && (
+              <div className="mt-5 flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => openAndroidBrowser('com.android.chrome')}
+                  className="flex h-12 items-center justify-center rounded-xl bg-black text-sm font-medium text-white transition-opacity hover:opacity-90"
+                >
+                  Chrome에서 로그인 화면 열기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAndroidBrowser('com.sec.android.app.sbrowser')}
+                  className="flex h-12 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  삼성인터넷에서 로그인 화면 열기
+                </button>
+              </div>
+            )}
+
+            {isIOS && (
+              <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 text-sm leading-6 text-gray-600">
+                <p>iPhone에서는 웹페이지가 Safari를 바로 강제로 열 수 없습니다.</p>
+                <p className="mt-1">상단 또는 하단 메뉴에서 Safari로 열기를 선택해 주세요.</p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={copyLoginLink}
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              로그인 링크 복사
+            </button>
+
+            {copyMessage && (
+              <p className="mt-3 text-center text-xs leading-5 text-gray-500">{copyMessage}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

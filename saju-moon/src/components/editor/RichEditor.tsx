@@ -736,7 +736,7 @@ export default function RichEditor({
 
         {/* 되돌리기 */}
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} active={false} title="되돌리기">↩</ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} active={false} title="다시실행">↪</ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} active={false} title="다시 실행">↪</ToolbarButton>
 
         {/* 이미지 정렬 버튼 */}
         <Divider />
