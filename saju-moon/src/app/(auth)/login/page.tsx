@@ -368,11 +368,15 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <p>
-                    ? ?? ??? <span className="font-medium text-gray-900">'?? ?????? ??'</span> ??? ?????.
+                    이 버튼 누르고 <span className="font-medium text-gray-900">'외부 브라우저에서 열기'</span> 버튼을 눌러주세요.
                   </p>
                 </div>
               </div>
             )}
+
+            <p className="mt-4 text-center text-[11px] font-medium tracking-[0.18em] text-gray-400">
+              또는
+            </p>
 
             <button
               type="button"
