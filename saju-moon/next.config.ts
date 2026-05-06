@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === 'development'
+
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -9,12 +11,13 @@ const csp = [
   "img-src 'self' data: blob: https://*.supabase.co",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-inline' https://t1.kakaocdn.net",
-  "connect-src 'self' https://*.supabase.co https://t1.kakaocdn.net",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://t1.kakaocdn.net`,
+  `connect-src 'self' https://*.supabase.co https://t1.kakaocdn.net${isDev ? " ws: wss:" : ''}`,
   "frame-src 'self' https://*.kakao.com https://*.kakaocdn.net",
 ].join('; ')
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['192.168.219.110'],
   images: {
     remotePatterns: [
       {

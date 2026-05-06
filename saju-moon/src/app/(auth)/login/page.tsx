@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { loadKakaoSdk } from '@/lib/kakao/sdk'
 import Link from 'next/link'
@@ -23,7 +24,22 @@ function detectEmbeddedBrowser(userAgent: string, referrer: string) {
 const KAKAO_LOGIN_STATE_COOKIE = 'kakao_login_state'
 const KAKAO_LOGIN_NEXT_COOKIE = 'kakao_login_next'
 
+function createLoginState() {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID()
+  }
+
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const bytes = new Uint8Array(16)
+    window.crypto.getRandomValues(bytes)
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 export default function LoginPage() {
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isEmbeddedBrowser, setIsEmbeddedBrowser] = useState(false)
@@ -40,6 +56,31 @@ export default function LoginPage() {
     setIsAndroid(/Android/i.test(userAgent))
     setIsIOS(/iPhone|iPad|iPod/i.test(userAgent))
   }, [])
+
+  useEffect(() => {
+    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY
+    if (!kakaoKey) return
+
+    void loadKakaoSdk(kakaoKey).catch(() => {
+      // Ignore preload failure here. The actual login click path handles the user-facing error.
+    })
+  }, [])
+
+  useEffect(() => {
+    const errorCode = searchParams.get('error')
+    if (!errorCode) return
+
+    const errorMessageMap: Record<string, string> = {
+      missing_code: '로그인 인가 코드가 없어 다시 로그인해 주세요.',
+      invalid_state: '로그인 요청이 만료되었거나 유효하지 않습니다. 다시 시도해 주세요.',
+      kakao_auth_failed: '카카오 로그인 요청이 취소되었거나 실패했습니다.',
+      kakao_config_missing: '카카오 로그인 설정이 아직 완료되지 않았습니다.',
+      kakao_token_failed: '카카오 토큰 발급에 실패했습니다. 콘솔 설정을 다시 확인해 주세요.',
+      auth_failed: '로그인 처리에 실패했습니다. 다시 시도해 주세요.',
+    }
+
+    setError(errorMessageMap[errorCode] ?? '로그인에 실패했습니다. 다시 시도해 주세요.')
+  }, [searchParams])
 
   function getLoginUrl() {
     return `${window.location.origin}/login`
@@ -90,17 +131,24 @@ export default function LoginPage() {
       try {
         await loadKakaoSdk(kakaoKey)
 
-        const state = crypto.randomUUID()
+        const state = createLoginState()
         const next = getNextPath()
+        const kakaoAuth = window.Kakao?.Auth
+
+        if (!kakaoAuth?.authorize) {
+          throw new Error('Kakao Auth SDK is not available.')
+        }
 
         setLoginCookie(KAKAO_LOGIN_STATE_COOKIE, state)
         setLoginCookie(KAKAO_LOGIN_NEXT_COOKIE, next)
 
-        window.Kakao?.Auth.authorize({
+        kakaoAuth.authorize({
           redirectUri: `${window.location.origin}/auth/kakao/callback`,
           state,
           scope: 'openid',
         })
+
+        setLoading(null)
         return
       } catch (sdkError) {
         console.error('[login][kakao]', sdkError)
