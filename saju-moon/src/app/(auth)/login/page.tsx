@@ -368,7 +368,7 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <p>
-                    이 버튼 누르고 <span className="font-medium text-gray-900">'외부 브라우저에서 열기'</span> 버튼을 눌러주세요.
+                    하단의 같은 모양 버튼을 누른 뒤 <span className="font-medium text-gray-900">'외부 브라우저에서 열기'</span>를 눌러주세요.
                   </p>
                 </div>
               </div>
