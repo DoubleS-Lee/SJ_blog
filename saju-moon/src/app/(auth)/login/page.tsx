@@ -12,12 +12,18 @@ function detectEmbeddedBrowser(userAgent: string, referrer: string) {
   const androidWebViewPattern = /\bwv\b|Version\/4\.0/i
   const inAppReferrerPattern =
     /instagram\.com|threads\.net|l\.instagram\.com|lm\.facebook\.com|youtube\.com|m\.youtube\.com|youtu\.be/i
+  const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
+  const isKnownIOSBrowser =
+    /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(userAgent) ||
+    /Version\/[\d.]+.*Safari\//i.test(userAgent)
+  const looksLikeUnknownIOSWebView = isIOS && !isKnownIOSBrowser
 
   return (
     metaInAppPattern.test(userAgent) ||
     youtubeInAppPattern.test(userAgent) ||
     (/\bAndroid\b/i.test(userAgent) && androidWebViewPattern.test(userAgent)) ||
-    inAppReferrerPattern.test(referrer)
+    inAppReferrerPattern.test(referrer) ||
+    looksLikeUnknownIOSWebView
   )
 }
 
@@ -152,29 +158,31 @@ export default function LoginPage() {
 
         const currentHref = window.location.href
         let fallbackTriggered = false
+        let pageWasHidden = false
+
+        const cleanupFallbackListeners = () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
 
         const fallbackToWebLogin = () => {
           if (fallbackTriggered) return
           fallbackTriggered = true
-          window.removeEventListener('pagehide', cancelFallback)
-          document.removeEventListener('visibilitychange', handleVisibilityChange)
+          cleanupFallbackListeners()
           startKakaoWebFallback(next)
-        }
-
-        const cancelFallback = () => {
-          fallbackTriggered = true
-          window.removeEventListener('pagehide', cancelFallback)
-          document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
 
         const handleVisibilityChange = () => {
           if (document.visibilityState === 'hidden') {
-            cancelFallback()
+            pageWasHidden = true
+            return
+          }
+
+          if (pageWasHidden && window.location.href === currentHref) {
+            fallbackToWebLogin()
           }
         }
 
-        window.addEventListener('pagehide', cancelFallback, { once: true })
-        document.addEventListener('visibilitychange', handleVisibilityChange, { once: true })
+        document.addEventListener('visibilitychange', handleVisibilityChange)
 
         window.setTimeout(() => {
           if (!fallbackTriggered && document.visibilityState === 'visible' && window.location.href === currentHref) {
