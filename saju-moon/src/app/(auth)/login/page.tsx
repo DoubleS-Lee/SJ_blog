@@ -244,7 +244,7 @@ export default function LoginPage() {
           <button
             onClick={() => signInWith('kakao')}
             disabled={loading !== null}
-            className="flex items-center justify-center gap-3 w-full h-11 rounded-md font-medium text-sm transition-opacity disabled:opacity-60"
+            className="order-2 flex items-center justify-center gap-3 w-full h-11 rounded-md font-medium text-sm transition-opacity disabled:opacity-60"
             style={{ backgroundColor: '#FEE500', color: '#000000' }}
           >
             {loading === 'kakao' ? (
@@ -260,7 +260,7 @@ export default function LoginPage() {
           <button
             onClick={() => signInWith('google')}
             disabled={loading !== null}
-            className="flex items-center justify-center gap-3 w-full h-11 rounded-md border border-gray-200 bg-white font-medium text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60"
+            className="order-1 flex items-center justify-center gap-3 w-full h-11 rounded-md border border-slate-800 bg-slate-800 font-medium text-sm text-white hover:bg-slate-700 transition-colors disabled:opacity-60"
           >
             {loading === 'google' ? (
               <span className="animate-pulse">연결 중...</span>
