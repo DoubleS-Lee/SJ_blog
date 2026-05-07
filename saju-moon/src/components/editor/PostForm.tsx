@@ -111,10 +111,29 @@ export default function PostForm({ initialData }: Props) {
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
 
+  function parseTags(value: string) {
+    return value
+      .split(/[\s,]+/)
+      .map((part) => part.trim().replace(/^#+/, '').replace(/,$/, ''))
+      .filter(Boolean)
+  }
+
   function addTag(value: string) {
-    const tag = value.trim().replace(/,/g, '')
-    if (!tag || tags.includes(tag) || tags.length >= 10) return
-    setTags(prev => [...prev, tag])
+    const parsedTags = parseTags(value)
+    if (parsedTags.length === 0) return
+
+    setTags((prev) => {
+      const next = [...prev]
+
+      for (const tag of parsedTags) {
+        if (next.length >= 10) break
+        if (next.includes(tag)) continue
+        next.push(tag)
+      }
+
+      return next
+    })
+
     setTagInput('')
   }
 
@@ -129,6 +148,16 @@ export default function PostForm({ initialData }: Props) {
     } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
       setTags(prev => prev.slice(0, -1))
     }
+  }
+
+  function handleTagPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const pastedText = e.clipboardData.getData('text')
+    const parsedTags = parseTags(pastedText)
+
+    if (parsedTags.length <= 1) return
+
+    e.preventDefault()
+    addTag(pastedText)
   }
 
   const [error, setError] = useState<string | null>(null)
@@ -273,6 +302,7 @@ export default function PostForm({ initialData }: Props) {
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
             onKeyDown={handleTagKeyDown}
+            onPaste={handleTagPaste}
             onBlur={() => { if (tagInput) addTag(tagInput) }}
             placeholder={tags.length === 0 ? '태그 입력...' : ''}
             className="flex-1 min-w-24 text-sm focus:outline-none bg-transparent"
