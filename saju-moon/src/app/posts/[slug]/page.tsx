@@ -36,6 +36,29 @@ function decodeSlug(slug: string) {
   }
 }
 
+function splitContentForInlineGuestCta(content: JSONContent | null): {
+  before: JSONContent
+  after: JSONContent
+} | null {
+  if (!content || content.type !== 'doc' || !Array.isArray(content.content)) return null
+  if (content.content.length < 4) return null
+
+  const splitIndex = Math.min(
+    content.content.length - 2,
+    Math.max(2, Math.ceil(content.content.length * 0.35)),
+  )
+
+  const beforeContent = content.content.slice(0, splitIndex)
+  const afterContent = content.content.slice(splitIndex)
+
+  if (beforeContent.length === 0 || afterContent.length === 0) return null
+
+  return {
+    before: { ...content, content: beforeContent },
+    after: { ...content, content: afterContent },
+  }
+}
+
 interface Props {
   params: Promise<{ slug: string }>
 }
@@ -333,6 +356,7 @@ export default async function PostDetailPage({ params }: Props) {
   }
   const showTopJudgmentNotice = hasJudgmentTarget && matchedTargetNames.length > 0
   const showBottomJudgmentDetail = showTopJudgmentNotice && !!matchedDetailContent
+  const inlineGuestSplit = !isLoggedIn ? splitContentForInlineGuestCta(post.content as JSONContent) : null
   const postDescription = buildSeoDescription(
     post.summary,
     `${post.title}에 대한 사주 해석과 블로그 글입니다.`,
@@ -429,6 +453,12 @@ export default async function PostDetailPage({ params }: Props) {
             </span>
           </div>
 
+          {!isLoggedIn ? (
+            <div className="mb-8">
+              <GuestCTA />
+            </div>
+          ) : null}
+
           {showTopJudgmentNotice && (
             <div className="mb-8 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-center">
               <p className="text-sm font-semibold leading-6 text-sky-900">
@@ -453,9 +483,25 @@ export default async function PostDetailPage({ params }: Props) {
             </div>
           )}
 
-          <div className="prose prose-gray max-w-none">
-            <TiptapRenderer content={post.content as JSONContent} />
-          </div>
+          {inlineGuestSplit ? (
+            <>
+              <div className="prose prose-gray max-w-none">
+                <TiptapRenderer content={inlineGuestSplit.before} />
+              </div>
+
+              <div className="my-10">
+                <GuestCTA variant="inline" />
+              </div>
+
+              <div className="prose prose-gray max-w-none">
+                <TiptapRenderer content={inlineGuestSplit.after} />
+              </div>
+            </>
+          ) : (
+            <div className="prose prose-gray max-w-none">
+              <TiptapRenderer content={post.content as JSONContent} />
+            </div>
+          )}
 
           {showBottomJudgmentDetail && (
             <section className="mt-10 rounded-3xl border border-sky-100 bg-sky-50/80 px-6 py-6">
@@ -478,9 +524,7 @@ export default async function PostDetailPage({ params }: Props) {
 
         <aside className="w-full shrink-0 lg:w-[40%] lg:max-w-sm">
           <div className="sticky top-20 flex flex-col gap-6">
-            {!isLoggedIn ? (
-              <GuestCTA />
-            ) : gradeSeparationEnabled && role === 'free' ? (
+            {isLoggedIn && gradeSeparationEnabled && role === 'free' ? (
               post.judgment_rules ? <GradeCTA /> : null
             ) : null}
           </div>
