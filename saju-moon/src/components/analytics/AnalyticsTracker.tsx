@@ -22,10 +22,13 @@ export default function AnalyticsTracker() {
       return
     }
 
-    const search = searchParams.toString()
-    const pagePayload = buildCurrentPagePayload('page_view', pathname, search)
     const session = getOrCreateAnalyticsSessionId()
     const visitor = getOrCreateAnalyticsVisitorId()
+    const search = searchParams.toString()
+    const pagePayload = buildCurrentPagePayload('page_view', pathname, search, {
+      sessionId: session.sessionId,
+      visitorId: visitor.visitorId,
+    })
 
     if (session.isNewSession) {
       void trackAnalyticsEvent({

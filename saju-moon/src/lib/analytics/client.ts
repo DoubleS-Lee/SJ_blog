@@ -154,11 +154,19 @@ export async function trackAnalyticsEvent(payload: AnalyticsTrackPayload, option
   }
 }
 
-export function buildCurrentPagePayload(eventName: AnalyticsEventName, pathname: string, search = '') {
+export function buildCurrentPagePayload(
+  eventName: AnalyticsEventName,
+  pathname: string,
+  search = '',
+  identities?: {
+    sessionId?: string
+    visitorId?: string
+  },
+) {
   const pagePath = search ? `${pathname}?${search}` : pathname
   const { contentType, contentId } = inferContentMeta(pathname)
-  const { sessionId } = getOrCreateAnalyticsSessionId()
-  const { visitorId } = getOrCreateAnalyticsVisitorId()
+  const sessionId = identities?.sessionId ?? getOrCreateAnalyticsSessionId().sessionId
+  const visitorId = identities?.visitorId ?? getOrCreateAnalyticsVisitorId().visitorId
 
   return {
     eventName,
