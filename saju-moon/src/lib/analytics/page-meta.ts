@@ -15,18 +15,26 @@ export function inferPageType(pathname: string) {
   return 'other'
 }
 
+function safeDecodePathSegment(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 export function inferContentMeta(pathname: string) {
   if (pathname.startsWith('/posts/')) {
     return {
       contentType: 'blog_post',
-      contentId: pathname.replace('/posts/', ''),
+      contentId: safeDecodePathSegment(pathname.replace('/posts/', '')),
     }
   }
 
   if (pathname.startsWith('/compatibility/')) {
     return {
       contentType: 'compatibility_period',
-      contentId: pathname.replace('/compatibility/', ''),
+      contentId: safeDecodePathSegment(pathname.replace('/compatibility/', '')),
     }
   }
 

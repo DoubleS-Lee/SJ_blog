@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     page_type: sanitizeText(payload.pageType, 80),
     page_path: pagePath,
     content_type: sanitizeText(payload.contentType, 80),
-    content_id: sanitizeText(payload.contentId, 200),
+    content_id: sanitizeText(payload.contentId, 500),
     content_title: sanitizeText(payload.contentTitle, 255),
     category: sanitizeText(payload.category, 120),
     referrer: sanitizeText(payload.referrer, 500),
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     utm_medium: sanitizeText(payload.utmMedium, 120),
     utm_campaign: sanitizeText(payload.utmCampaign, 160),
     landing_page: sanitizeText(payload.landingPage, 500),
-    landing_post_slug: sanitizeText(payload.landingPostSlug, 200),
+    landing_post_slug: sanitizeText(payload.landingPostSlug, 500),
     properties: sanitizeProperties(payload.properties),
   })
 

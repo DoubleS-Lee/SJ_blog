@@ -216,6 +216,19 @@ function safeDecodeURIComponent(value: string) {
   }
 }
 
+function matchesAnalyticsSlug(candidateSlug: string, analyticsSlug: string) {
+  if (candidateSlug === analyticsSlug) return true
+
+  const encodedCandidate = encodeURIComponent(candidateSlug)
+  if (encodedCandidate === analyticsSlug) return true
+
+  if (analyticsSlug.includes('%') && encodedCandidate.startsWith(analyticsSlug)) {
+    return true
+  }
+
+  return candidateSlug.startsWith(analyticsSlug)
+}
+
 function getRangeIsoBounds(startDate: string, endDate: string) {
   return {
     startIso: `${startDate}T00:00:00+09:00`,
@@ -609,35 +622,56 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     ),
   )
 
-  const postMetaMap =
+  const exactPostMatches =
     topPostSlugCandidates.length > 0
-      ? new Map(
-          (
-            await supabase
-              .from('posts')
-              .select('id, slug, title')
-              .in('slug', topPostSlugCandidates)
-          ).data?.flatMap((post) => {
-            const encodedSlug = encodeURIComponent(post.slug)
-            const entry = [post.slug, { id: post.id, slug: post.slug, title: post.title }] as const
-            if (encodedSlug === post.slug) {
-              return [entry]
-            }
-            return [entry, [encodedSlug, { id: post.id, slug: post.slug, title: post.title }] as const]
-          }) ?? [],
-        )
-      : new Map<string, { id: string; slug: string; title: string | null }>()
+      ? (
+          await supabase
+            .from('posts')
+            .select('id, slug, title')
+            .in('slug', topPostSlugCandidates)
+        ).data ?? []
+      : []
+
+  const exactPostMetaMap = new Map(
+    exactPostMatches.flatMap((post) => {
+      const encodedSlug = encodeURIComponent(post.slug)
+      const entry = [post.slug, { id: post.id, slug: post.slug, title: post.title }] as const
+      if (encodedSlug === post.slug) {
+        return [entry]
+      }
+      return [entry, [encodedSlug, { id: post.id, slug: post.slug, title: post.title }] as const]
+    }),
+  )
+
+  const unresolvedPostSlugs = topPostRows
+    .map((item) => item.slug)
+    .filter((slug) => !exactPostMetaMap.has(slug) && !exactPostMetaMap.has(safeDecodeURIComponent(slug)))
+
+  const allPosts =
+    unresolvedPostSlugs.length > 0
+      ? (
+          await supabase
+            .from('posts')
+            .select('id, slug, title')
+        ).data ?? []
+      : []
 
   const rankedPostRows = topPostRows.map((item) => ({
     ...item,
     title:
-      postMetaMap.get(item.slug)?.title?.trim() ||
-      postMetaMap.get(safeDecodeURIComponent(item.slug))?.title?.trim() ||
+      exactPostMetaMap.get(item.slug)?.title?.trim() ||
+      exactPostMetaMap.get(safeDecodeURIComponent(item.slug))?.title?.trim() ||
+      allPosts.find((post) => matchesAnalyticsSlug(post.slug, item.slug))?.title?.trim() ||
       (item.title && item.title !== item.slug ? item.title : '제목을 찾을 수 없는 글'),
-    postId: postMetaMap.get(item.slug)?.id ?? postMetaMap.get(safeDecodeURIComponent(item.slug))?.id ?? null,
+    postId:
+      exactPostMetaMap.get(item.slug)?.id ??
+      exactPostMetaMap.get(safeDecodeURIComponent(item.slug))?.id ??
+      allPosts.find((post) => matchesAnalyticsSlug(post.slug, item.slug))?.id ??
+      null,
     publicSlug:
-      postMetaMap.get(item.slug)?.slug ??
-      postMetaMap.get(safeDecodeURIComponent(item.slug))?.slug ??
+      exactPostMetaMap.get(item.slug)?.slug ??
+      exactPostMetaMap.get(safeDecodeURIComponent(item.slug))?.slug ??
+      allPosts.find((post) => matchesAnalyticsSlug(post.slug, item.slug))?.slug ??
       safeDecodeURIComponent(item.slug),
   }))
 
