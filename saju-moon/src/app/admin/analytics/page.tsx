@@ -73,6 +73,7 @@ type AnalyticsDailyPostRow = {
 
 type AnalyticsSessionStartRow = {
   created_at: string
+  user_id: string | null
   visitor_id: string
   session_id: string
   referrer: string | null
@@ -221,6 +222,49 @@ function getRangeIsoBounds(startDate: string, endDate: string) {
   }
 }
 
+function getAnalyticsPersonKey(row: Pick<AnalyticsSessionStartRow, 'user_id' | 'visitor_id'>) {
+  return row.user_id ? `user:${row.user_id}` : `visitor:${row.visitor_id}`
+}
+
+function classifyAcquisitionChannel(row: Pick<AnalyticsSessionStartRow, 'referrer' | 'utm_source' | 'utm_medium'>) {
+  const referrer = (row.referrer ?? '').trim().toLowerCase()
+  const source = (row.utm_source ?? '').trim().toLowerCase()
+  const medium = (row.utm_medium ?? '').trim().toLowerCase()
+
+  if (source === 'google' || source === 'google-search') return '구글 검색'
+  if (source === 'naver' || source === 'naver-search') return '네이버 검색'
+  if (['instagram', 'ig', 'insta'].includes(source)) return '인스타그램'
+  if (['kakaotalk', 'kakao', 'kakao-talk'].includes(source)) return '카카오톡'
+  if (['youtube', 'youtu', 'youtube-search'].includes(source)) return '유튜브'
+  if (source === 'threads') return '쓰레드'
+  if (['social', 'social-media', 'social_network', 'social-network', 'social network'].includes(medium)) {
+    return '기타 소셜'
+  }
+  if (['cpc', 'ppc', 'paid', 'paid-social', 'display', 'banner'].includes(medium) && source) {
+    return '유료 캠페인'
+  }
+  if (!referrer) return '직접접속'
+  if (referrer.includes('google.')) return '구글 검색'
+  if (referrer.includes('search.naver.') || referrer.includes('m.search.naver.')) return '네이버 검색'
+  if (referrer.includes('blog.naver.')) return '네이버 블로그'
+  if (referrer.includes('instagram.')) return '인스타그램'
+  if (referrer.includes('kakao.') || referrer.includes('kakaotalk.')) return '카카오톡'
+  if (referrer.includes('youtube.') || referrer.includes('youtu.be')) return '유튜브'
+  if (referrer.includes('threads.')) return '쓰레드'
+  if (
+    referrer.includes('facebook.') ||
+    referrer.includes('fb.') ||
+    referrer.includes('twitter.') ||
+    referrer.includes('x.com') ||
+    referrer.includes('t.co') ||
+    referrer.includes('linkedin.') ||
+    referrer.includes('m.blog.')
+  ) {
+    return '기타 소셜'
+  }
+  return '기타'
+}
+
 interface Props {
   searchParams: SearchParams
 }
@@ -272,7 +316,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
 
   let sessionHistoryQuery = supabase
     .from('analytics_events')
-    .select('created_at, visitor_id, session_id, referrer, landing_post_slug, utm_source, utm_medium, utm_campaign, landing_page')
+    .select('created_at, user_id, visitor_id, session_id, referrer, landing_post_slug, utm_source, utm_medium, utm_campaign, landing_page')
     .eq('event_name', 'session_start')
     .order('created_at', { ascending: true })
 
@@ -319,21 +363,22 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
         return createdAt >= startTimestamp && createdAt <= endTimestamp
       })
 
-  const firstSeenByVisitor = new Map<string, string>()
+  const firstSeenByPerson = new Map<string, string>()
   for (const row of sessionHistoryRows) {
-    if (!firstSeenByVisitor.has(row.visitor_id)) {
-      firstSeenByVisitor.set(row.visitor_id, row.created_at)
+    const personKey = getAnalyticsPersonKey(row)
+    if (!firstSeenByPerson.has(personKey)) {
+      firstSeenByPerson.set(personKey, row.created_at)
     }
   }
 
-  const distinctVisitors = new Set(rangeSessionRows.map((row) => row.visitor_id))
+  const distinctVisitors = new Set(rangeSessionRows.map((row) => getAnalyticsPersonKey(row)))
   const newVisitors = new Set(
     rangeSessionRows
       .filter((row) => {
-        const firstSeenAt = firstSeenByVisitor.get(row.visitor_id)
+        const firstSeenAt = firstSeenByPerson.get(getAnalyticsPersonKey(row))
         return firstSeenAt ? getKstDateKey(firstSeenAt) >= startDate && getKstDateKey(firstSeenAt) <= endDate : false
       })
-      .map((row) => row.visitor_id),
+      .map((row) => getAnalyticsPersonKey(row)),
   )
   const returningVisitors = new Set(
     Array.from(distinctVisitors).filter((visitorId) => !newVisitors.has(visitorId)),
@@ -355,7 +400,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
   for (const row of rangeSessionRows) {
     const dateKey = getKstDateKey(row.created_at)
     const visitors = dailyVisitorMap.get(dateKey) ?? new Set<string>()
-    visitors.add(row.visitor_id)
+    visitors.add(getAnalyticsPersonKey(row))
     dailyVisitorMap.set(dateKey, visitors)
   }
 
@@ -457,17 +502,22 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     .map(([menuName, count]) => ({ menuName, count }))
     .sort((a, b) => b.count - a.count)
 
-  const channelStats = new Map<string, { sessions: number; visitors: number; engagedSessions: number }>()
+  const channelStats = new Map<string, { sessions: number; engagedSessions: number; people: Set<string> }>()
   for (const row of channelDailyRows) {
-    const entry = channelStats.get(row.channel) ?? { sessions: 0, visitors: 0, engagedSessions: 0 }
+    const entry = channelStats.get(row.channel) ?? { sessions: 0, engagedSessions: 0, people: new Set<string>() }
     entry.sessions += row.sessions
-    entry.visitors += row.visitors
     entry.engagedSessions += row.engaged_sessions
     channelStats.set(row.channel, entry)
   }
+  for (const row of rangeSessionRows) {
+    const channel = classifyAcquisitionChannel(row)
+    const entry = channelStats.get(channel) ?? { sessions: 0, engagedSessions: 0, people: new Set<string>() }
+    entry.people.add(getAnalyticsPersonKey(row))
+    channelStats.set(channel, entry)
+  }
 
   const channelRows = Array.from(channelStats.entries())
-    .map(([channel, stats]) => ({ channel, ...stats }))
+    .map(([channel, stats]) => ({ channel, sessions: stats.sessions, engagedSessions: stats.engagedSessions, visitors: stats.people.size }))
     .sort((a, b) => b.sessions - a.sessions)
 
   const totalChannelSessions = channelRows.reduce((sum, row) => sum + row.sessions, 0)
@@ -590,6 +640,10 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       safeDecodeURIComponent(item.slug),
   }))
 
+  const topPostHighlight = rankedPostRows[0] ?? null
+  const topChannelHighlight = channelRows[0] ?? null
+  const topMenuHighlight = topMenuRows[0] ?? null
+
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -612,12 +666,36 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <MetricCard label="선택 기간 고유 방문자" value={uniqueVisitorCount.toLocaleString('ko-KR')} hint="visitor_id 기준 고유 브라우저" />
-        <MetricCard label="신규 방문자" value={newVisitorCount.toLocaleString('ko-KR')} hint="해당 기간 첫 방문 브라우저" />
-        <MetricCard label="재방문자" value={returningVisitorCount.toLocaleString('ko-KR')} hint="이전 이력이 있는 브라우저" />
-        <MetricCard label="유입 세션" value={sessionCount.toLocaleString('ko-KR')} hint="session_start 기준" />
-        <MetricCard label="참여 세션" value={engagedSessions.toLocaleString('ko-KR')} hint="15초 이상 또는 50% 스크롤" />
-        <MetricCard label="선택 기간 페이지뷰" value={pageViewCount.toLocaleString('ko-KR')} hint={`평균 체류 ${formatDuration(averageEngagementMs)}`} />
+        <MetricCard label="들어온 사람" value={uniqueVisitorCount.toLocaleString('ko-KR')} hint="선택 기간 동안 사이트에 들어온 사람 추정치" />
+        <MetricCard label="방문 횟수" value={sessionCount.toLocaleString('ko-KR')} hint="사이트에 들어온 총 횟수" />
+        <MetricCard label="실제로 읽은 방문" value={engagedSessions.toLocaleString('ko-KR')} hint="15초 이상 머물거나 50% 이상 읽은 방문" />
+        <MetricCard
+          label="인기 글 1위"
+          value={topPostHighlight?.title ?? '아직 데이터 없음'}
+          hint={
+            topPostHighlight
+              ? '가장 많이 읽힌 글'
+              : '선택 기간에 집계된 글 데이터가 아직 없습니다.'
+          }
+        />
+        <MetricCard
+          label="가장 강한 유입 채널"
+          value={topChannelHighlight?.channel ?? '아직 데이터 없음'}
+          hint={
+            topChannelHighlight
+              ? '사람이 가장 많이 들어온 유입 경로'
+              : '선택 기간에 집계된 유입 채널이 아직 없습니다.'
+          }
+        />
+        <MetricCard
+          label="가장 많이 본 메뉴"
+          value={topMenuHighlight ? MENU_LABELS[topMenuHighlight.menuName] ?? topMenuHighlight.menuName : '아직 데이터 없음'}
+          hint={
+            topMenuHighlight
+              ? '가장 많이 눌러본 메뉴'
+              : '선택 기간에 집계된 메뉴 클릭이 아직 없습니다.'
+          }
+        />
       </section>
 
       <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -688,7 +766,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_1fr]">
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">날짜별 고유 방문자</h2>
+          <h2 className="text-lg font-semibold tracking-tight">날짜별 방문자 추정</h2>
           <div className="mt-6 space-y-4">
             {dailyVisitors.map((item) => (
               <div key={item.key} className="grid grid-cols-[92px_1fr_52px] items-center gap-3">
@@ -708,7 +786,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold tracking-tight">유입 채널</h2>
           <p className="mt-1 text-xs text-gray-400">
-            단순 세션 수가 아니라 채널별 고유 방문자와 참여 세션도 함께 봅니다.
+            채널별 방문자 추정치와 참여 세션을 함께 보면 어떤 유입이 실제 반응으로 이어지는지 읽기 쉽습니다.
           </p>
           <div className="mt-6 space-y-4">
             {channelRows.length > 0 ? (
@@ -720,7 +798,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
                     <div className="flex items-center justify-between gap-4 text-sm">
                       <span className="font-medium text-gray-800">{item.channel}</span>
                       <span className="text-right text-gray-500">
-                        세션 {item.sessions.toLocaleString('ko-KR')} · 방문자 {item.visitors.toLocaleString('ko-KR')} · 참여 {item.engagedSessions.toLocaleString('ko-KR')}
+                        세션 {item.sessions.toLocaleString('ko-KR')} · 방문자 추정 {item.visitors.toLocaleString('ko-KR')} · 참여 {item.engagedSessions.toLocaleString('ko-KR')}
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-gray-100">
@@ -890,10 +968,18 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
 }
 
 function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+  const isNumericValue = /^[\d,]+$/.test(value)
+
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
       <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-3 text-3xl font-bold tracking-tight text-gray-900">{value}</p>
+      <p
+        className={`mt-3 font-bold tracking-tight text-gray-900 ${
+          isNumericValue ? 'text-3xl' : 'text-xl leading-snug'
+        }`}
+      >
+        {value}
+      </p>
       <p className="mt-2 text-xs text-gray-400">{hint}</p>
     </div>
   )
