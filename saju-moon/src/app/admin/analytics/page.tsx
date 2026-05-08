@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { buttonVariants } from '@/components/ui/button'
 import {
   AnalyticsCategoryFilters,
@@ -314,7 +315,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     .from('analytics_daily_post')
     .select('metric_date, slug, title, category, views, likes, total_engagement_ms, engagement_events, landing_sessions, visitors, engaged_sessions')
 
-  let sessionHistoryQuery = supabase
+  let sessionHistoryQuery = supabaseAdmin
     .from('analytics_events')
     .select('created_at, user_id, visitor_id, session_id, referrer, landing_post_slug, utm_source, utm_medium, utm_campaign, landing_page')
     .eq('event_name', 'session_start')
