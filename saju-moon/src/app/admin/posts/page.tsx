@@ -30,10 +30,7 @@ export default async function AdminPostsPage({ searchParams }: Props) {
   const requestedPage = Math.max(1, Number.parseInt(page ?? '1', 10) || 1)
   const supabase = await createClient()
 
-  let countQuery = supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-
+  let countQuery = supabase.from('posts').select('*', { count: 'exact', head: true })
   let postsQuery = supabase
     .from('posts')
     .select('id, slug, title, category, is_published, is_featured, published_at, target_year, created_at')
@@ -51,7 +48,6 @@ export default async function AdminPostsPage({ searchParams }: Props) {
   const currentPage = Math.min(requestedPage, totalPages)
   const from = (currentPage - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
-
   const { data: posts } = await postsQuery.range(from, to)
 
   const startItem = filteredCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
@@ -62,9 +58,14 @@ export default async function AdminPostsPage({ searchParams }: Props) {
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">글 관리</h1>
-          <Link href="/admin/posts/new" className={buttonVariants({ size: 'sm' })}>
-            + 새 글 작성
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/posts/import" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+              네이버 글 가져오기
+            </Link>
+            <Link href="/admin/posts/new" className={buttonVariants({ size: 'sm' })}>
+              + 새 글 작성
+            </Link>
+          </div>
         </div>
 
         <form
@@ -95,7 +96,7 @@ export default async function AdminPostsPage({ searchParams }: Props) {
           <p>
             {queryText ? (
               <>
-                <span className="font-medium text-gray-900">'{queryText}'</span> 검색 결과입니다.
+                <span className="font-medium text-gray-900">&lsquo;{queryText}&rsquo;</span> 검색 결과입니다.
               </>
             ) : (
               '전체 글 목록입니다.'

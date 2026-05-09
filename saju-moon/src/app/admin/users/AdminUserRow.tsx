@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { updateManagedUser } from '@/actions/adminUsers'
 import { buttonVariants } from '@/components/ui/button'
 
@@ -47,29 +47,35 @@ export default function AdminUserRow({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="border-b border-gray-50 last:border-b-0">
-      <div className="grid grid-cols-[minmax(0,2.8fr)_120px_380px_90px] gap-4 px-4 py-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-gray-900">{user.nickname?.trim() || '닉네임 없음'}</span>
-            {user.is_admin ? (
-              <span className="rounded-full bg-black px-2 py-0.5 text-[11px] font-medium text-white">관리자</span>
-            ) : null}
+    <Fragment>
+      <tr className="border-b border-gray-50 align-middle last:border-b-0">
+        <td className="px-4 py-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="truncate text-base font-semibold text-gray-900">
+                {user.nickname?.trim() || '닉네임 없음'}
+              </span>
+              {user.is_admin ? (
+                <span className="rounded-full bg-black px-2 py-0.5 text-[11px] font-medium text-white">관리자</span>
+              ) : null}
+            </div>
+            <p className="mt-1 truncate text-sm text-gray-500">{user.email || '이메일 없음'}</p>
           </div>
-          <p className="mt-1 truncate text-sm text-gray-500">{user.email || '이메일 없음'}</p>
-        </div>
+        </td>
 
-        <div className="flex items-center">
+        <td className="px-4 py-3">
           {hasSaju ? (
-            <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
               입력 완료
             </span>
           ) : (
-            <span className="rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-400">미입력</span>
+            <span className="inline-flex rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-400">
+              미입력
+            </span>
           )}
-        </div>
+        </td>
 
-        <div className="flex items-center">
+        <td className="px-4 py-3">
           <form action={updateManagedUser} className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="userId" value={user.id} />
             <select
@@ -89,9 +95,9 @@ export default function AdminUserRow({
               저장
             </button>
           </form>
-        </div>
+        </td>
 
-        <div className="flex items-center">
+        <td className="px-4 py-3 text-right">
           <button
             type="button"
             onClick={() => setExpanded((current) => !current)}
@@ -99,33 +105,35 @@ export default function AdminUserRow({
           >
             {expanded ? '닫기' : '상세'}
           </button>
-        </div>
-      </div>
+        </td>
+      </tr>
 
       {expanded ? (
-        <div className="border-t border-gray-100 bg-gray-50/70 px-4 py-3 text-sm text-gray-600">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span>
-              <span className="text-xs text-gray-400">가입일</span>
-              <span className="ml-2 font-medium text-gray-800">{formatDateOnly(user.created_at)}</span>
-            </span>
-            <span>
-              <span className="text-xs text-gray-400">약관 동의</span>
-              <span className="ml-2 font-medium text-gray-800">
-                {user.terms_agreed_at ? formatDateOnly(user.terms_agreed_at) : '미동의'}
+        <tr className="border-b border-gray-50 bg-gray-50/70">
+          <td colSpan={4} className="px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-gray-600">
+              <span className="whitespace-nowrap">
+                <span className="text-xs text-gray-400">가입일</span>
+                <span className="ml-2 font-medium text-gray-800">{formatDateOnly(user.created_at)}</span>
               </span>
-            </span>
-            <span>
-              <span className="text-xs text-gray-400">최근 수정</span>
-              <span className="ml-2 font-medium text-gray-800">{formatDateTime(user.updated_at)}</span>
-            </span>
-            <span>
-              <span className="text-xs text-gray-400">회원 ID</span>
-              <span className="ml-2 font-mono text-gray-700">{user.id.slice(0, 8)}</span>
-            </span>
-          </div>
-        </div>
+              <span className="whitespace-nowrap">
+                <span className="text-xs text-gray-400">약관 동의</span>
+                <span className="ml-2 font-medium text-gray-800">
+                  {user.terms_agreed_at ? formatDateOnly(user.terms_agreed_at) : '미동의'}
+                </span>
+              </span>
+              <span className="whitespace-nowrap">
+                <span className="text-xs text-gray-400">최근 수정</span>
+                <span className="ml-2 font-medium text-gray-800">{formatDateTime(user.updated_at)}</span>
+              </span>
+              <span className="whitespace-nowrap">
+                <span className="text-xs text-gray-400">회원 ID</span>
+                <span className="ml-2 font-mono text-gray-700">{user.id.slice(0, 8)}</span>
+              </span>
+            </div>
+          </td>
+        </tr>
       ) : null}
-    </div>
+    </Fragment>
   )
 }
