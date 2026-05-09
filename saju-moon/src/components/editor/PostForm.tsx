@@ -9,6 +9,8 @@ import JudgmentEditor from './JudgmentEditor'
 import type { JSONContent } from '@tiptap/react'
 import type { JudgmentRules } from '@/types/judgment'
 
+const MAX_POST_TAGS = 30
+
 // Next.js Server Action의 깊은 객체 직렬화 버그 우회: JSON 문자열로 변환
 function toJsonString(val: unknown): string {
   return JSON.stringify(val)
@@ -126,7 +128,7 @@ export default function PostForm({ initialData }: Props) {
       const next = [...prev]
 
       for (const tag of parsedTags) {
-        if (next.length >= 10) break
+        if (next.length >= MAX_POST_TAGS) break
         if (next.includes(tag)) continue
         next.push(tag)
       }
@@ -285,7 +287,7 @@ export default function PostForm({ initialData }: Props) {
       {/* 태그 */}
       <div>
         <label className={labelCls}>
-          태그 <span className="text-gray-400 font-normal text-xs">(SEO · 내부 검색용, Enter 또는 콤마로 추가, 최대 10개)</span>
+          태그 <span className="text-gray-400 font-normal text-xs">(SEO · 내부 검색용, Enter 또는 콤마로 추가, 최대 30개)</span>
         </label>
         <div className="flex flex-wrap gap-1.5 p-2 min-h-10 border border-gray-200 rounded-md bg-white cursor-text"
           onClick={() => document.getElementById('tag-input')?.focus()}

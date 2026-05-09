@@ -22,10 +22,7 @@ export default async function AdminUsersPage({
   const searchKeyword = sanitizeLikeQuery(queryText)
   const requestedPage = Math.max(1, Number.parseInt(page ?? '1', 10) || 1)
 
-  let countQuery = supabaseAdmin
-    .from('users')
-    .select('*', { count: 'exact', head: true })
-
+  let countQuery = supabaseAdmin.from('users').select('*', { count: 'exact', head: true })
   let usersQuery = supabaseAdmin
     .from('users')
     .select('id, email, nickname, role, is_admin, terms_agreed_at, created_at, updated_at')
@@ -59,13 +56,13 @@ export default async function AdminUsersPage({
   const endItem = filteredCount === 0 ? 0 : Math.min(currentPage * PAGE_SIZE, filteredCount)
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-5 flex flex-col gap-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-xl font-bold">회원 관리</h1>
             <p className="mt-1 text-sm text-gray-500">
-              회원을 빠르게 훑어보고 등급과 관리자 여부를 바로 조정할 수 있습니다.
+              회원을 빠르게 찾아보고 등급과 관리자 여부를 바로 조정할 수 있습니다.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-500 shadow-sm">
@@ -103,7 +100,7 @@ export default async function AdminUsersPage({
           <p>
             {queryText ? (
               <>
-                <span className="font-medium text-gray-900">'{queryText}'</span> 검색 결과입니다.
+                <span className="font-medium text-gray-900">&lsquo;{queryText}&rsquo;</span> 검색 결과입니다.
               </>
             ) : (
               '회원 전체 목록입니다.'
@@ -125,18 +122,27 @@ export default async function AdminUsersPage({
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="grid grid-cols-[minmax(0,2.8fr)_120px_380px_90px] gap-4 border-b border-gray-100 bg-gray-50 px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-400">
-            <div>회원</div>
-            <div>사주</div>
-            <div>관리</div>
-            <div>상세</div>
-          </div>
-
-          <div>
-            {users.map((user) => (
-              <AdminUserRow key={user.id} user={user} hasSaju={sajuUserIds.has(user.id)} />
-            ))}
-          </div>
+          <table className="w-full table-fixed">
+            <colgroup>
+              <col className="w-[52%]" />
+              <col className="w-[12%]" />
+              <col className="w-[28%]" />
+              <col className="w-[8%]" />
+            </colgroup>
+            <thead className="bg-gray-50">
+              <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                <th className="px-4 py-3">회원</th>
+                <th className="px-4 py-3">사주</th>
+                <th className="px-4 py-3">관리</th>
+                <th className="px-4 py-3 text-right">상세</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <AdminUserRow key={user.id} user={user} hasSaju={sajuUserIds.has(user.id)} />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
