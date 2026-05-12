@@ -141,6 +141,18 @@ export async function GET(request: NextRequest) {
       const agreeUrl = `${origin}/agree?next=${encodeURIComponent(next)}`
       return NextResponse.redirect(agreeUrl)
     }
+
+    if (next === '/') {
+      const { data: sajuProfile } = await supabase
+        .from('user_saju')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!sajuProfile) {
+        return NextResponse.redirect(`${origin}/mypage/saju`)
+      }
+    }
   }
 
   return NextResponse.redirect(`${origin}${next}`)

@@ -69,6 +69,18 @@ export async function GET(request: NextRequest) {
       const agreeUrl = `${origin}/agree?next=${encodeURIComponent(next.startsWith('/') ? next : '/')}`
       return NextResponse.redirect(agreeUrl)
     }
+
+    if (!next.startsWith('/') || next === '/') {
+      const { data: sajuProfile } = await supabase
+        .from('user_saju')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!sajuProfile) {
+        return NextResponse.redirect(`${origin}/mypage/saju`)
+      }
+    }
   }
 
   // next 파라미터가 외부 URL이면 홈으로 (오픈 리다이렉트 방지)

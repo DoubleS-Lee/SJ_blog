@@ -23,7 +23,21 @@ export default async function AgreePage({ searchParams }: Props) {
     .maybeSingle()
 
   if (profile?.terms_agreed_at) {
-    redirect(next?.startsWith('/') ? next : '/')
+    const safeNext = next?.startsWith('/') ? next : '/'
+
+    if (safeNext === '/') {
+      const { data: sajuProfile } = await supabase
+        .from('user_saju')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!sajuProfile) {
+        redirect('/mypage/saju')
+      }
+    }
+
+    redirect(safeNext)
   }
 
   return (

@@ -20,5 +20,18 @@ export async function agreeTerms(next: string = '/'): Promise<{ error?: string }
   }
 
   const safePath = next.startsWith('/') ? next : '/'
+
+  if (safePath === '/') {
+    const { data: sajuProfile } = await supabase
+      .from('user_saju')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!sajuProfile) {
+      redirect('/mypage/saju')
+    }
+  }
+
   redirect(safePath)
 }
