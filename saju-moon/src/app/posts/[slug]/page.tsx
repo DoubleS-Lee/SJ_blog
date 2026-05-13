@@ -485,8 +485,8 @@ export default async function PostDetailPage({ params }: Props) {
                 </div>
               )}
               {showInlineJudgmentDetail && (
-                <div className="mt-5 border-t border-sky-200/80 pt-5 text-left">
-                  <div className="prose prose-sm prose-gray mx-auto max-w-none prose-headings:text-sky-950 prose-p:text-sky-950">
+                <div className="mt-4 border-t border-sky-200/70 pt-4">
+                  <div className="prose prose-sm mx-auto max-w-2xl text-center prose-p:my-0 prose-p:text-[15px] prose-p:leading-7 prose-p:text-sky-900 prose-strong:text-sky-950 prose-underline:text-sky-950 prose-headings:text-sky-950 prose-a:text-sky-700">
                     <TiptapRenderer content={matchedDetailContent} />
                   </div>
                 </div>
