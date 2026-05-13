@@ -19,7 +19,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
 
   const { data: post } = await supabase
     .from('posts')
-    .select('id, title, summary, thumbnail_url, category, content, judgment_rules, target_year, is_featured, is_published, published_at, tags')
+    .select('id, title, summary, thumbnail_url, category, content, judgment_rules, target_year, is_featured, is_published, published_at, scheduled_publish_at, tags')
     .eq('id', id)
     .single()
 
@@ -50,6 +50,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
           is_featured: post.is_featured,
           is_published: post.is_published,
           published_at: post.published_at,
+          scheduled_publish_at: post.scheduled_publish_at,
           tags: post.tags,
         }}
       />

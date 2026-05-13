@@ -641,6 +641,7 @@ export interface Database {
           is_featured: boolean
           is_published: boolean
           published_at: string | null
+          scheduled_publish_at: string | null
           target_year: number | null
           view_count: number
           like_count: number
@@ -662,6 +663,7 @@ export interface Database {
           is_featured?: boolean
           is_published?: boolean
           published_at?: string | null
+          scheduled_publish_at?: string | null
           target_year?: number | null
           view_count?: number
           like_count?: number
@@ -682,6 +684,7 @@ export interface Database {
           is_featured?: boolean
           is_published?: boolean
           published_at?: string | null
+          scheduled_publish_at?: string | null
           target_year?: number | null
           view_count?: number
           like_count?: number

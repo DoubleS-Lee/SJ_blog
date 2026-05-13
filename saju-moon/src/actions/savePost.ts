@@ -21,6 +21,7 @@ export interface PostFormData {
   is_featured: boolean
   is_published: boolean
   published_at: string | null
+  scheduled_publish_at: string | null
 }
 
 function slugifyTitle(title: string) {
@@ -75,7 +76,7 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
     // 수정
     const { data: existingPost, error: existingError } = await supabase
       .from('posts')
-      .select('published_at, is_published')
+      .select('published_at, is_published, scheduled_publish_at')
       .eq('id', data.id)
       .single()
 
@@ -84,9 +85,13 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
       return { error: '글 정보를 불러오는 중 오류가 발생했습니다.' }
     }
 
-    const nextPublishedAt = !data.is_published
+    const nextScheduledAt = data.scheduled_publish_at
+    const nextPublishedAt = nextScheduledAt
       ? null
-      : (data.published_at ?? (existingPost.is_published ? existingPost.published_at : now))
+      : !data.is_published
+        ? null
+        : (data.published_at ?? (existingPost.is_published ? existingPost.published_at : now))
+    const nextIsPublished = nextScheduledAt ? false : data.is_published
 
     const { data: updated, error } = await supabase
       .from('posts')
@@ -101,8 +106,9 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
         target_year: data.target_year,
         tags: data.tags ?? [],
         is_featured: data.is_featured,
-        is_published: data.is_published,
+        is_published: nextIsPublished,
         published_at: nextPublishedAt,
+        scheduled_publish_at: nextScheduledAt,
         updated_at: now,
       })
       .eq('id', data.id)
@@ -122,6 +128,14 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
     // 신규 — slug nanoid 7자리 자동 생성
     const slug = `${slugifyTitle(data.title)}-${nanoid(6)}`
 
+    const nextScheduledAt = data.scheduled_publish_at
+    const nextPublishedAt = nextScheduledAt
+      ? null
+      : data.is_published
+        ? (data.published_at ?? now)
+        : null
+    const nextIsPublished = nextScheduledAt ? false : data.is_published
+
     const { error } = await supabase
       .from('posts')
       .insert({
@@ -136,8 +150,9 @@ export async function savePost(data: PostFormData): Promise<{ error?: string; re
         target_year: data.target_year,
         tags: data.tags ?? [],
         is_featured: data.is_featured,
-        is_published: data.is_published,
-        published_at: data.is_published ? (data.published_at ?? now) : null,
+        is_published: nextIsPublished,
+        published_at: nextPublishedAt,
+        scheduled_publish_at: nextScheduledAt,
         created_by: user.id,
       })
 

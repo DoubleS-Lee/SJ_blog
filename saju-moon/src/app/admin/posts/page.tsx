@@ -33,7 +33,7 @@ export default async function AdminPostsPage({ searchParams }: Props) {
   let countQuery = supabase.from('posts').select('*', { count: 'exact', head: true })
   let postsQuery = supabase
     .from('posts')
-    .select('id, slug, title, category, is_published, is_featured, published_at, target_year, created_at')
+    .select('id, slug, title, category, is_published, is_featured, published_at, scheduled_publish_at, target_year, created_at')
     .order('created_at', { ascending: false })
 
   if (searchKeyword) {
@@ -145,7 +145,7 @@ export default async function AdminPostsPage({ searchParams }: Props) {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{post.category}</td>
                   <td className="px-4 py-3">
-                    {post.is_published && post.published_at && new Date(post.published_at) > new Date() ? (
+                    {post.scheduled_publish_at && new Date(post.scheduled_publish_at) > new Date() ? (
                       <span className="text-xs font-medium text-blue-500">예약 발행</span>
                     ) : post.is_published ? (
                       <span className="text-xs font-medium text-green-600">발행됨</span>
@@ -154,7 +154,9 @@ export default async function AdminPostsPage({ searchParams }: Props) {
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{post.target_year ?? '-'}</td>
-                  <td className="px-4 py-3 text-gray-500">{formatDate(post.published_at)}</td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {formatDate(post.published_at ?? post.scheduled_publish_at)}
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/admin/posts/${post.id}`} className="text-xs text-gray-500 transition-colors hover:text-black">
                       수정

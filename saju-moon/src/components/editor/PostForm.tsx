@@ -31,6 +31,7 @@ interface Props {
     is_featured: boolean
     is_published: boolean
     published_at: string | null
+    scheduled_publish_at?: string | null
     tags?: string[] | null
   }
 }
@@ -101,11 +102,9 @@ export default function PostForm({ initialData }: Props) {
   const [isFeatured, setIsFeatured] = useState(initialData?.is_featured ?? false)
   const [isPublished] = useState(initialData?.is_published ?? false)
 
-  // 예약 발행: published_at이 미래인 초안은 예약 상태
   const initScheduled = (() => {
-    if (!initialData?.published_at) return ''
-    const pub = new Date(initialData.published_at)
-    return pub > new Date() ? isoToLocal(initialData.published_at) : ''
+    if (!initialData?.scheduled_publish_at) return ''
+    return isoToLocal(initialData.scheduled_publish_at)
   })()
   const [scheduledAt, setScheduledAt] = useState(initScheduled)
   const [showSchedule, setShowSchedule] = useState(!!initScheduled)
@@ -198,13 +197,17 @@ export default function PostForm({ initialData }: Props) {
       published_at: overridePublishedAt !== undefined
         ? overridePublishedAt
         : (initialData?.published_at ?? null),
+      scheduled_publish_at: showSchedule && scheduledAt ? localToISO(scheduledAt) : null,
     }
   }
 
   function handleDraft() {
     setError(null)
     startTransition(async () => {
-      const result = await savePost(buildPayload(false, null))
+      const result = await savePost({
+        ...buildPayload(false, null),
+        scheduled_publish_at: null,
+      })
       if (result?.error) {
         setError(result.error)
         return
@@ -216,8 +219,10 @@ export default function PostForm({ initialData }: Props) {
   function handlePublish() {
     setError(null)
     startTransition(async () => {
-      // published_at = null → server uses now
-      const result = await savePost(buildPayload(true, null))
+      const result = await savePost({
+        ...buildPayload(true, null),
+        scheduled_publish_at: null,
+      })
       if (result?.error) {
         setError(result.error)
         return
@@ -232,7 +237,10 @@ export default function PostForm({ initialData }: Props) {
     if (new Date(iso) <= new Date()) { setError('예약 시간은 현재보다 미래여야 합니다.'); return }
     setError(null)
     startTransition(async () => {
-      const result = await savePost(buildPayload(true, iso))
+      const result = await savePost({
+        ...buildPayload(false, null),
+        scheduled_publish_at: iso,
+      })
       if (result?.error) {
         setError(result.error)
         return
