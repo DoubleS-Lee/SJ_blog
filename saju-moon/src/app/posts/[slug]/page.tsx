@@ -238,7 +238,7 @@ export default async function PostDetailPage({ params }: Props) {
   } = await supabase.auth.getUser()
   const isLoggedIn = !!user
 
-  const [settingsRes, profileRes] = await Promise.all([
+  const [settingsRes, profileRes, sajuStatusRes] = await Promise.all([
     supabase
       .from('site_settings')
       .select('grade_separation_enabled, ilgan_avatar_urls')
@@ -247,11 +247,15 @@ export default async function PostDetailPage({ params }: Props) {
     isLoggedIn
       ? supabase.from('users').select('role, nickname, is_admin').eq('id', user!.id).maybeSingle()
       : Promise.resolve({ data: null }),
+    isLoggedIn
+      ? supabase.from('user_saju').select('user_id').eq('user_id', user!.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
 
   const gradeSeparationEnabled = settingsRes.data?.grade_separation_enabled ?? false
   const ilganAvatarMap = sanitizeIlganAvatarMap(settingsRes.data?.ilgan_avatar_urls)
   const role = profileRes.data?.role ?? 'free'
+  const hasSavedSaju = Boolean(sajuStatusRes.data)
   const displayName = profileRes.data?.nickname?.trim() || '회원'
   const displayNameWithHonorific = displayName.endsWith('님') ? displayName : `${displayName}님`
 
@@ -264,7 +268,6 @@ export default async function PostDetailPage({ params }: Props) {
     }
   }
 
-  let hasSaju = false
   let hasJudgmentTarget = false
   let matchedDetailContent: JSONContent | null = null
   let matchedTargetNames: string[] = []
@@ -294,7 +297,6 @@ export default async function PostDetailPage({ params }: Props) {
     ])
 
     if (sajuRes.data && ohangRes.data && sipsungRes.data) {
-      hasSaju = true
       hasJudgmentTarget = true
 
       const userData: JudgmentUserData = {
@@ -355,8 +357,10 @@ export default async function PostDetailPage({ params }: Props) {
     }
   }
   const showTopJudgmentNotice = hasJudgmentTarget && matchedTargetNames.length > 0
-  const showBottomJudgmentDetail = showTopJudgmentNotice && !!matchedDetailContent
-  const inlineGuestSplit = !isLoggedIn ? splitContentForInlineGuestCta(post.content as JSONContent) : null
+  const showInlineJudgmentDetail = showTopJudgmentNotice && !!matchedDetailContent
+  const showBottomJudgmentDetail = false
+  const ctaMode = !isLoggedIn ? 'login' : !hasSavedSaju ? 'saju' : null
+  const inlineGuestSplit = ctaMode ? splitContentForInlineGuestCta(post.content as JSONContent) : null
   const postDescription = buildSeoDescription(
     post.summary,
     `${post.title}에 대한 사주 해석과 블로그 글입니다.`,
@@ -453,9 +457,9 @@ export default async function PostDetailPage({ params }: Props) {
             </span>
           </div>
 
-          {!isLoggedIn ? (
+          {ctaMode ? (
             <div className="mb-8">
-              <GuestCTA />
+              <GuestCTA mode={ctaMode} />
             </div>
           ) : null}
 
@@ -480,6 +484,13 @@ export default async function PostDetailPage({ params }: Props) {
                   ))}
                 </div>
               )}
+              {showInlineJudgmentDetail && (
+                <div className="mt-5 border-t border-sky-200/80 pt-5 text-left">
+                  <div className="prose prose-sm prose-gray mx-auto max-w-none prose-headings:text-sky-950 prose-p:text-sky-950">
+                    <TiptapRenderer content={matchedDetailContent} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -490,7 +501,7 @@ export default async function PostDetailPage({ params }: Props) {
               </div>
 
               <div className="my-10">
-                <GuestCTA variant="inline" />
+                <GuestCTA variant="inline" mode={ctaMode ?? 'login'} />
               </div>
 
               <div className="prose prose-gray max-w-none">
