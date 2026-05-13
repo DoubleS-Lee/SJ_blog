@@ -4,9 +4,9 @@ import { buildAbsoluteUrl } from '@/lib/seo/site'
 
 const CATEGORY_PATHS = [
   '연애·궁합',
-  '커리어·이직',
-  '재물·투자',
-  '건강·체질',
+  '커리어·직업',
+  '부자·재물',
+  '건강·생활',
   '육아·자녀교육',
   '기타',
 ]

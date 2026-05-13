@@ -13,9 +13,9 @@ import {
 
 const VALID_CATEGORIES = [
   '연애·궁합',
-  '커리어·이직',
-  '재물·투자',
-  '건강·체질',
+  '커리어·직업',
+  '부자·재물',
+  '건강·생활',
   '육아·자녀교육',
   '기타',
 ] as const
@@ -24,9 +24,9 @@ type Category = (typeof VALID_CATEGORIES)[number]
 
 const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   '연애·궁합': '연애 흐름, 궁합, 관계 해석처럼 감정과 인연에 관한 사주 콘텐츠를 모아봅니다.',
-  '커리어·이직': '직장, 이직, 커리어의 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
-  '재물·투자': '재물 감각, 투자 흐름, 돈의 방향과 연결되는 사주 콘텐츠를 모아둔 카테고리입니다.',
-  '건강·체질': '건강과 체질, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인해보세요.',
+  '커리어·직업': '직장, 이직, 커리어의 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
+  '부자·재물': '부자 감각, 재물 흐름, 돈의 방향과 연결되는 사주 콘텐츠를 모아본 카테고리입니다.',
+  '건강·생활': '건강과 생활, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인해 보세요.',
   '육아·자녀교육': '자녀 성향, 교육 방향, 육아 고민과 연결되는 사주 콘텐츠를 모아봅니다.',
   기타: '일상 속 다양한 사주 이야기와 해석 콘텐츠를 폭넓게 살펴볼 수 있습니다.',
 }
@@ -56,7 +56,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     ? `'${queryText}' 검색 결과를 모아봅니다. 사주 해석과 궁합, 재물, 건강 관련 글을 빠르게 찾아보세요.`
     : validCategory
       ? CATEGORY_DESCRIPTIONS[validCategory]
-      : '사주 해석과 궁합, 재물, 건강 등 다양한 주제를 블로그 글로 전합니다.'
+      : '사주 해석과 궁합, 재물, 건강 등 다양한 주제를 블로그 글로 큐레이션합니다.'
 
   const query = new URLSearchParams()
   if (validCategory) query.set('category', validCategory)
@@ -131,7 +131,7 @@ export default async function BlogListPage({ searchParams }: Props) {
       ) : (
         <div className="py-20 text-center text-sm text-gray-400">
           {queryText
-            ? `'${queryText}'와 관련된 글이 아직 없습니다.`
+            ? `'${queryText}'와 관련한 글이 아직 없습니다.`
             : validCategory
               ? `'${validCategory}' 카테고리의 글이 아직 없습니다.`
               : '아직 발행된 글이 없습니다.'}
