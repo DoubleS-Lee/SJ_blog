@@ -76,11 +76,13 @@ export default async function AdminPostsPage({ searchParams }: Props) {
   // 카운트 쿼리
   let countQuery = supabase.from('posts').select('*', { count: 'exact', head: true })
 
-  // 데이터 쿼리 — 초안(미발행) 먼저, 그 다음 최신순
+  // 데이터 쿼리 — 초안(미발행) 먼저, 그 다음 발행일 최신순
+  // nullsFirst: false → published_at 없는 초안은 created_at 기준으로 폴백
   let postsQuery = supabase
     .from('posts')
     .select('id, slug, title, category, is_published, is_featured, published_at, scheduled_publish_at, target_year, created_at')
     .order('is_published', { ascending: true })
+    .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
   // 검색어
