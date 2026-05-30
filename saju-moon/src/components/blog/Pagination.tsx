@@ -6,9 +6,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 interface PaginationProps {
   currentPage: number
   hasNextPage: boolean
+  totalPages: number
 }
 
-export default function Pagination({ currentPage, hasNextPage }: PaginationProps) {
+export default function Pagination({ currentPage, hasNextPage, totalPages }: PaginationProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -39,8 +40,8 @@ export default function Pagination({ currentPage, hasNextPage }: PaginationProps
         <span>이전</span>
       </button>
 
-      <span className="min-w-16 text-center text-sm font-medium text-gray-500">
-        {currentPage} 페이지
+      <span className="min-w-20 text-center text-sm font-medium text-gray-500">
+        {currentPage} / {totalPages} 페이지
       </span>
 
       <button

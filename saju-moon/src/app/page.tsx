@@ -13,9 +13,9 @@ import {
 
 const VALID_CATEGORIES = [
   '연애·궁합',
-  '커리어·직업',
-  '부자·재물',
-  '건강·생활',
+  '커리어·이직',
+  '재물·투자',
+  '건강·체질',
   '육아·자녀교육',
   '기타',
 ] as const
@@ -24,9 +24,9 @@ type Category = (typeof VALID_CATEGORIES)[number]
 
 const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   '연애·궁합': '연애 흐름, 궁합, 관계 해석처럼 감정과 인연에 관한 사주 콘텐츠를 모아봅니다.',
-  '커리어·직업': '직장, 이직, 커리어의 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
-  '부자·재물': '부자 감각, 재물 흐름, 돈의 방향과 연결되는 사주 콘텐츠를 모아본 카테고리입니다.',
-  '건강·생활': '건강과 생활, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인해 보세요.',
+  '커리어·이직': '직장, 이직, 커리어의 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
+  '재물·투자': '재물 흐름, 투자 타이밍, 돈의 방향과 연결되는 사주 콘텐츠를 모아봅니다.',
+  '건강·체질': '체질과 건강, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인해 보세요.',
   '육아·자녀교육': '자녀 성향, 교육 방향, 육아 고민과 연결되는 사주 콘텐츠를 모아봅니다.',
   기타: '일상 속 다양한 사주 이야기와 해석 콘텐츠를 폭넓게 살펴볼 수 있습니다.',
 }
@@ -92,7 +92,7 @@ export default async function BlogListPage({ searchParams }: Props) {
   const nowIso = getPublicPostsVisibilityIso()
 
   const validCategory = VALID_CATEGORIES.includes(category as Category) ? (category as Category) : undefined
-  const [featured, { posts: visiblePosts, hasNextPage }] = await Promise.all([
+  const [featured, { posts: visiblePosts, hasNextPage, totalPages }] = await Promise.all([
     !validCategory && currentPage === 1 && !queryText ? getCachedFeaturedPost(nowIso) : Promise.resolve(null),
     getCachedPublicPostsPage(validCategory, searchKeyword, currentPage, nowIso),
   ])
@@ -140,7 +140,7 @@ export default async function BlogListPage({ searchParams }: Props) {
 
       {currentPage > 1 || hasNextPage ? (
         <div className="mt-12">
-          <Pagination currentPage={currentPage} hasNextPage={hasNextPage} />
+          <Pagination currentPage={currentPage} hasNextPage={hasNextPage} totalPages={totalPages} />
         </div>
       ) : null}
     </div>

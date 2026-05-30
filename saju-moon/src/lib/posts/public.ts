@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
-export const PUBLIC_POST_PAGE_SIZE = 10
+export const PUBLIC_POST_PAGE_SIZE = 12
 const PUBLIC_POST_LIST_SELECT =
   'slug, title, summary, thumbnail_url, category, published_at, target_year, view_count, like_count'
 
@@ -36,7 +36,7 @@ const getPublicPostsPageCached = unstable_cache(
   async (category: string | null, searchKeyword: string, currentPage: number, nowIso: string) => {
     let query = supabaseAdmin
       .from('posts')
-      .select(PUBLIC_POST_LIST_SELECT)
+      .select(PUBLIC_POST_LIST_SELECT, { count: 'exact' })
       .eq('is_published', true)
       .or(`published_at.is.null,published_at.lte.${nowIso}`)
 
@@ -49,15 +49,18 @@ const getPublicPostsPageCached = unstable_cache(
     }
 
     const from = (currentPage - 1) * PUBLIC_POST_PAGE_SIZE
-    const { data } = await query
+    const { data, count } = await query
       .order('published_at', { ascending: false })
       .range(from, from + PUBLIC_POST_PAGE_SIZE)
 
     const posts = data ?? []
+    const totalCount = count ?? 0
+    const totalPages = Math.max(1, Math.ceil(totalCount / PUBLIC_POST_PAGE_SIZE))
 
     return {
       posts: posts.slice(0, PUBLIC_POST_PAGE_SIZE),
       hasNextPage: posts.length > PUBLIC_POST_PAGE_SIZE,
+      totalPages,
     }
   },
   ['public-posts-page'],
