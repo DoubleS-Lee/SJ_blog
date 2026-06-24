@@ -106,13 +106,16 @@ function getDaYunList(fullSajuData: Record<string, unknown>): DaYunEntry[] {
   return raw as DaYunEntry[]
 }
 
-/** 대상 연도의 세운(유년) 간지 반환 — 없으면 null */
-function getSeWoonGanzi(fullSajuData: Record<string, unknown>, year: number): string | null {
-  for (const dy of getDaYunList(fullSajuData)) {
-    const ln = dy.liuNian.find((l) => l.year === year)
-    if (ln) return ln.ganzi
-  }
-  return null
+/**
+ * 세운(流年) 간지 — 60갑자 사이클로 직접 계산
+ * 세운은 개인 사주와 무관하게 연도마다 고정값이므로 full_saju_data 불필요
+ */
+function getSeWoonGanzi(year: number): string {
+  const STEMS: Cheongan[] = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계']
+  const BRANCHES: Jiji[] = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해']
+  const stemIdx = ((year - 4) % 10 + 10) % 10
+  const branchIdx = ((year - 4) % 12 + 12) % 12
+  return STEMS[stemIdx] + BRANCHES[branchIdx]
 }
 
 /** 대상 연도의 대운 간지 반환 — 없으면 null */
@@ -209,8 +212,8 @@ const SIPSUNG_SCORE: Record<Sipsung, keyof JudgmentUserData> = {
 function judgeCondition(
   cond: JudgmentCondition,
   user: JudgmentUserData,
-  seWoonGanzi: string | null,
-  daeWoonGanzi: string | null,
+  seWoonGanzi: string,         // 60갑자 직접 계산이므로 항상 값 있음
+  daeWoonGanzi: string | null, // 대운은 개인별 full_saju_data 필요 — 없을 수 있음
 ): boolean | null {
   if (!cond.enabled) return null
 
@@ -257,15 +260,13 @@ function judgeCondition(
       }
     }
     case 'sewoon_cheongan': {
-      if (!seWoonGanzi) return null
-      const parsed = parseGanzi(seWoonGanzi)
+      const parsed = parseGanzi(seWoonGanzi!)
       if (!parsed) return null
       const sipsung = getCheonganSipsung(user.ilgan, parsed[0])
       return cond.values.includes(sipsung)
     }
     case 'sewoon_jiji': {
-      if (!seWoonGanzi) return null
-      const parsed = parseGanzi(seWoonGanzi)
+      const parsed = parseGanzi(seWoonGanzi!)
       if (!parsed) return null
       const sipsung = getJijiSipsung(user.ilgan, parsed[1])
       return cond.values.includes(sipsung)
@@ -300,7 +301,7 @@ function judgeCondition(
 function judgeGroup(
   group: { conditions: JudgmentCondition[] },
   user: JudgmentUserData,
-  seWoonGanzi: string | null,
+  seWoonGanzi: string,
   daeWoonGanzi: string | null,
 ): boolean | null {
   let activeCount = 0
@@ -327,7 +328,7 @@ export function judgePost(
   if (!rules.groups.length) return null
 
   const year = targetYear ?? new Date().getFullYear()
-  const seWoon = getSeWoonGanzi(user.full_saju_data, year)
+  const seWoon = getSeWoonGanzi(year)
   const daeWoon = getDaeWoonGanzi(user.full_saju_data, year)
 
   let hasActiveGroup = false
@@ -350,7 +351,7 @@ export function evaluateJudgment(
   }
 
   const year = targetYear ?? new Date().getFullYear()
-  const seWoon = getSeWoonGanzi(user.full_saju_data, year)
+  const seWoon = getSeWoonGanzi(year)
   const daeWoon = getDaeWoonGanzi(user.full_saju_data, year)
 
   let hasActiveGroup = false
