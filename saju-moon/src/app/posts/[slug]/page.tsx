@@ -110,6 +110,12 @@ function buildCommentTree(
   return roots
 }
 
+type MatchedResult = {
+  name: string
+  groupIndex: number
+  detail: JSONContent | null
+}
+
 function buildJudgmentUserDataFromCalculated(result: SajuResult): JudgmentUserData {
   const oh = result.ohang_data.scores
   const ss = result.sipsung_data.scores
@@ -269,10 +275,10 @@ export default async function PostDetailPage({ params }: Props) {
   }
 
   let hasJudgmentTarget = false
-  let matchedDetailContent: JSONContent | null = null
-  let matchedTargetNames: string[] = []
+  const matchedResults: MatchedResult[] = []
 
   if (canSeeJudgment && post.judgment_rules) {
+    const rules = post.judgment_rules as unknown as JudgmentRules
     const [sajuRes, ohangRes, sipsungRes, compatibilitySajuRes] = await Promise.all([
       supabase
         .from('user_saju')
@@ -306,17 +312,16 @@ export default async function PostDetailPage({ params }: Props) {
         full_saju_data: sajuRes.data.full_saju_data as Record<string, unknown>,
       } as unknown as JudgmentUserData
 
-      const evaluation = evaluateJudgment(
-        post.judgment_rules as unknown as JudgmentRules,
-        userData,
-        post.target_year,
-      )
+      const evaluation = evaluateJudgment(rules, userData, post.target_year)
 
-      if (evaluation.result) {
-        matchedTargetNames.push(displayNameWithHonorific)
-        matchedDetailContent =
-          (evaluation.matchedGroup?.detail as JSONContent | null | undefined) ??
-          (post.judgment_detail as JSONContent | null)
+      if (evaluation.result && evaluation.matchedGroup) {
+        matchedResults.push({
+          name: displayNameWithHonorific,
+          groupIndex: rules.groups.findIndex((g) => g === evaluation.matchedGroup),
+          detail:
+            (evaluation.matchedGroup.detail as JSONContent | null | undefined) ??
+            (post.judgment_detail as JSONContent | null),
+        })
       }
     }
 
@@ -335,18 +340,21 @@ export default async function PostDetailPage({ params }: Props) {
         })
 
         const evaluation = evaluateJudgment(
-          post.judgment_rules as unknown as JudgmentRules,
+          rules,
           buildJudgmentUserDataFromCalculated(result),
           post.target_year,
         )
 
-        if (evaluation.result) {
+        if (evaluation.result && evaluation.matchedGroup) {
           const name = entry.nickname?.trim() || '저장된 만세력'
           const nameWithHonorific = name.endsWith('님') ? name : `${name}님`
-          matchedTargetNames.push(nameWithHonorific)
-          matchedDetailContent ??=
-            (evaluation.matchedGroup?.detail as JSONContent | null | undefined) ??
-            (post.judgment_detail as JSONContent | null)
+          matchedResults.push({
+            name: nameWithHonorific,
+            groupIndex: rules.groups.findIndex((g) => g === evaluation.matchedGroup),
+            detail:
+              (evaluation.matchedGroup.detail as JSONContent | null | undefined) ??
+              (post.judgment_detail as JSONContent | null),
+          })
         }
       } catch (error) {
         console.error('[PostDetailPage][compatibility judgment calculation]', {
@@ -356,9 +364,19 @@ export default async function PostDetailPage({ params }: Props) {
       }
     }
   }
-  const showTopJudgmentNotice = hasJudgmentTarget && matchedTargetNames.length > 0
-  const showInlineJudgmentDetail = showTopJudgmentNotice && !!matchedDetailContent
-  const showBottomJudgmentDetail = false
+
+  // 판정 그룹별로 묶어서 표시 (다른 그룹 해당자는 별도 블록)
+  const groupedMatches = new Map<number, { names: string[]; detail: JSONContent | null }>()
+  for (const match of matchedResults) {
+    const existing = groupedMatches.get(match.groupIndex)
+    if (existing) {
+      existing.names.push(match.name)
+    } else {
+      groupedMatches.set(match.groupIndex, { names: [match.name], detail: match.detail })
+    }
+  }
+
+  const showTopJudgmentNotice = hasJudgmentTarget && matchedResults.length > 0
   const ctaMode = !isLoggedIn ? 'login' : !hasSavedSaju ? 'saju' : null
   const inlineGuestSplit = ctaMode ? splitContentForInlineGuestCta(post.content as JSONContent) : null
   const postDescription = buildSeoDescription(
@@ -464,33 +482,37 @@ export default async function PostDetailPage({ params }: Props) {
           ) : null}
 
           {showTopJudgmentNotice && (
-            <div className="mb-8 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-center">
-              <p className="text-sm font-semibold leading-6 text-sky-900">
-                {matchedTargetNames.length === 1
-                  ? `${matchedTargetNames[0]}은 이 글에 해당하는 사주를 갖고 계십니다.`
-                  : '내 만세력/저장된 만세력 중 이 글에 해당하는 사람이 있습니다.'}
-                <br />
-                자세히 읽어보세요!
-              </p>
-              {matchedTargetNames.length > 1 && (
-                <div className="mt-3 flex flex-wrap justify-center gap-2">
-                  {matchedTargetNames.map((name, index) => (
-                    <span
-                      key={`matched-judgment-target-${name}-${index}`}
-                      className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100"
-                    >
-                      {name}
-                    </span>
-                  ))}
+            <div className="mb-8 flex flex-col gap-3">
+              {Array.from(groupedMatches.entries()).map(([groupIndex, { names, detail }]) => (
+                <div key={groupIndex} className="rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-center">
+                  <p className="text-sm font-semibold leading-6 text-sky-900">
+                    {names.length === 1
+                      ? `${names[0]}은 이 글에 해당하는 사주를 갖고 계십니다.`
+                      : '내 만세력/저장된 만세력 중 이 글에 해당하는 사람이 있습니다.'}
+                    <br />
+                    자세히 읽어보세요!
+                  </p>
+                  {names.length > 1 && (
+                    <div className="mt-3 flex flex-wrap justify-center gap-2">
+                      {names.map((name, index) => (
+                        <span
+                          key={`matched-${groupIndex}-${name}-${index}`}
+                          className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {detail && (
+                    <div className="mt-4 border-t border-sky-200/70 pt-4">
+                      <div className="prose prose-sm mx-auto max-w-2xl text-center prose-p:my-0 prose-p:text-[15px] prose-p:leading-7 prose-p:text-sky-900 prose-strong:text-sky-950 prose-underline:text-sky-950 prose-headings:text-sky-950 prose-a:text-sky-700">
+                        <TiptapRenderer content={detail} />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {showInlineJudgmentDetail && (
-                <div className="mt-4 border-t border-sky-200/70 pt-4">
-                  <div className="prose prose-sm mx-auto max-w-2xl text-center prose-p:my-0 prose-p:text-[15px] prose-p:leading-7 prose-p:text-sky-900 prose-strong:text-sky-950 prose-underline:text-sky-950 prose-headings:text-sky-950 prose-a:text-sky-700">
-                    <TiptapRenderer content={matchedDetailContent} />
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           )}
 
@@ -514,23 +536,6 @@ export default async function PostDetailPage({ params }: Props) {
             </div>
           )}
 
-          {showBottomJudgmentDetail && (
-            <section className="mt-10 rounded-3xl border border-sky-100 bg-sky-50/80 px-6 py-6">
-              <div className="mb-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-500">
-                  Matching Note
-                </p>
-                <h2 className="mt-2 text-xl font-bold tracking-tight text-sky-950">
-                  {matchedTargetNames.length === 1
-                    ? `${matchedTargetNames[0]}께 더 와닿는 해설`
-                    : '해당 만세력에 더 와닿는 해설'}
-                </h2>
-              </div>
-              <div className="prose prose-gray max-w-none prose-headings:text-sky-950">
-                <TiptapRenderer content={matchedDetailContent} />
-              </div>
-            </section>
-          )}
         </article>
 
         <aside className="w-full shrink-0 lg:w-[40%] lg:max-w-sm">

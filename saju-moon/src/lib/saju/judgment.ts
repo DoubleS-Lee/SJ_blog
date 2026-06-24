@@ -118,10 +118,16 @@ function getSeWoonGanzi(year: number): string {
   return STEMS[stemIdx] + BRANCHES[branchIdx]
 }
 
-/** 대상 연도의 대운 간지 반환 — 없으면 null */
+/**
+ * 대상 연도의 대운 간지 반환 — 없으면 null
+ * liuNian 첫 항목 연도를 구간 시작으로, +10년 범위로 판단
+ * (저장된 liuNian 개수와 무관하게 동작)
+ */
 function getDaeWoonGanzi(fullSajuData: Record<string, unknown>, year: number): string | null {
   for (const dy of getDaYunList(fullSajuData)) {
-    if (dy.liuNian.some((l) => l.year === year)) return dy.ganzi
+    if (!dy.liuNian.length) continue
+    const start = dy.liuNian[0].year
+    if (year >= start && year < start + 10) return dy.ganzi
   }
   return null
 }
