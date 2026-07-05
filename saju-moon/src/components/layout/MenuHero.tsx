@@ -66,13 +66,13 @@ export default function MenuHero({
                 href={action.href}
                 scroll={false}
                 className={cn(
-                  'inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition',
+                  'inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition hover:opacity-80',
                   action.className,
                 )}
                 style={
-                  !action.className
-                    ? { background: '#1E2D4D', color: '#F6EFE3' }
-                    : undefined
+                  action.variant === 'ghost'
+                    ? { border: '1px solid rgba(30,45,77,0.22)', color: '#4a5673' }
+                    : { background: '#1E2D4D', color: '#F6EFE3' }
                 }
               >
                 {action.label}
