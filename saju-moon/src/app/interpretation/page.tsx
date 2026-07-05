@@ -215,30 +215,52 @@ export default async function InterpretationPage() {
         }
       />
 
-      <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">총운 요약</h2>
+      <section
+        className="mt-8 rounded-2xl border p-6"
+        style={{ borderColor: 'rgba(30,45,77,0.09)', background: '#FBF7EE' }}
+      >
+        <h2
+          className="text-lg font-semibold"
+          style={{ color: '#1E2D4D', fontFamily: 'var(--font-nanum-myeongjo), serif' }}
+        >
+          총운 요약
+        </h2>
         {reportText ? (
-          <TextCopyGuard className="mt-4 space-y-4 rounded-2xl border border-violet-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#fcfaff_100%)] p-5">
-            {renderReportMarkdownLike(reportText)}
-          </TextCopyGuard>
+          <div className="mt-4 rounded-xl border p-5" style={{ borderColor: 'rgba(196,162,78,0.25)', background: '#F6EFE3' }}>
+            <TextCopyGuard className="space-y-4">
+              {renderReportMarkdownLike(reportText)}
+            </TextCopyGuard>
+          </div>
         ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm leading-7 text-gray-600">
+          <div
+            className="mt-4 rounded-xl border border-dashed p-4 text-sm leading-7"
+            style={{ borderColor: 'rgba(30,45,77,0.15)', color: '#4a5673' }}
+          >
             로그인 후 만세력과 오행/십성 데이터가 준비되면 총운 요약 리포트를 자동 생성해 보여드립니다.
           </div>
         )}
       </section>
 
       {isAdmin ? (
-        <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">해석 카테고리</h2>
+        <section
+          className="mt-8 rounded-2xl border p-6"
+          style={{ borderColor: 'rgba(30,45,77,0.09)', background: '#FBF7EE' }}
+        >
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: '#1E2D4D', fontFamily: 'var(--font-nanum-myeongjo), serif' }}
+          >
+            해석 카테고리
+          </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {CATEGORIES.map((category) => (
               <article
                 key={category}
-                className="rounded-2xl border border-gray-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#fbfdff_100%)] p-4"
+                className="rounded-xl border p-4"
+                style={{ borderColor: 'rgba(30,45,77,0.09)', background: '#F6EFE3' }}
               >
-                <p className="text-sm font-semibold text-gray-900">{category}</p>
-                <p className="mt-2 text-xs leading-6 text-gray-500">문구/로직 연결 준비됨</p>
+                <p className="text-sm font-semibold" style={{ color: '#1E2D4D' }}>{category}</p>
+                <p className="mt-2 text-xs leading-6" style={{ color: '#9a8e7a' }}>문구/로직 연결 준비됨</p>
               </article>
             ))}
           </div>

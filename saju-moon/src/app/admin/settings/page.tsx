@@ -31,9 +31,9 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <h1 className="mb-8 text-xl font-bold">사이트 설정</h1>
+      <h1 className="mb-8 text-xl font-bold" style={{ color: '#1E2D4D' }}>사이트 설정</h1>
 
-      <section className="mb-6 rounded-lg border border-gray-100 bg-white p-6">
+      <section className="mb-6 rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
         <h2 className="mb-1 text-base font-semibold">등급 분리</h2>
         <p className="mb-6 text-sm text-gray-500">
           켜면 등급별로 사주 판정 글 열람 권한을 제한합니다. 끄면 로그인한 모든 회원이 판정 결과와 상세

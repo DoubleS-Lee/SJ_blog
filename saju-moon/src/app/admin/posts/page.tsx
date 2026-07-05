@@ -145,7 +145,7 @@ export default async function AdminPostsPage({ searchParams }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">글 관리</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#1E2D4D' }}>글 관리</h1>
           <div className="flex items-center gap-2">
             <Link href="/admin/posts/import" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
               네이버 글 가져오기
@@ -187,14 +187,14 @@ export default async function AdminPostsPage({ searchParams }: Props) {
       </div>
 
       {!posts || posts.length === 0 ? (
-        <div className="rounded-lg border border-gray-100 bg-white p-12 text-center text-sm text-gray-400">
+        <div className="rounded-2xl border p-12 text-center text-sm" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)', color: '#9a8e7a' }}>
           {activeFilters.length > 0 ? '조건에 맞는 글이 없습니다.' : '작성된 글이 없습니다.'}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-100 bg-white">
+        <div className="overflow-hidden rounded-2xl border" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-wider text-gray-400">
+              <tr className="border-b text-left text-xs uppercase tracking-wider" style={{ borderColor: 'rgba(30,45,77,0.09)', background: 'rgba(30,45,77,0.05)', color: '#9a8e7a' }}>
                 <th className="px-4 py-3 font-medium">제목</th>
                 <th className="px-4 py-3 font-medium">카테고리</th>
                 <th className="px-4 py-3 font-medium">상태</th>
@@ -205,15 +205,15 @@ export default async function AdminPostsPage({ searchParams }: Props) {
             </thead>
             <tbody>
               {posts.map(post => (
-                <tr key={post.id} className="border-b border-gray-50 transition-colors hover:bg-gray-50">
+                <tr key={post.id} className="border-b transition-colors" style={{ borderColor: 'rgba(30,45,77,0.06)' }}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {post.is_featured ? (
-                        <span className="rounded bg-black px-1.5 py-0.5 text-xs text-white">추천</span>
+                        <span className="rounded-full px-1.5 py-0.5 text-xs text-white" style={{ background: '#1E2D4D' }}>추천</span>
                       ) : null}
                       <div className="min-w-0">
-                        <span className="line-clamp-1 font-medium">{post.title}</span>
-                        <p className="mt-1 text-xs text-gray-400">{post.slug}</p>
+                        <span className="line-clamp-1 font-medium" style={{ color: '#1E2D4D' }}>{post.title}</span>
+                        <p className="mt-1 text-xs" style={{ color: '#9a8e7a' }}>{post.slug}</p>
                       </div>
                     </div>
                   </td>
@@ -234,7 +234,7 @@ export default async function AdminPostsPage({ searchParams }: Props) {
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/posts/${post.id}`}
-                      className="text-xs text-gray-500 transition-colors hover:text-black"
+                      className="text-xs transition-opacity hover:opacity-60" style={{ color: '#4a5673' }}
                     >
                       수정
                     </Link>
@@ -291,19 +291,20 @@ function PaginationLinks({
   }
 
   return (
-    <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+    <div className="mt-6 flex items-center justify-between text-sm" style={{ color: '#4a5673' }}>
       <Link
         href={buildHref(Math.max(1, currentPage - 1))}
         aria-disabled={currentPage <= 1}
         scroll={false}
         className={[
-          'rounded-full border border-gray-200 px-4 py-2 transition hover:border-black hover:text-black',
+          'rounded-full border px-4 py-2 transition hover:opacity-70',
           currentPage <= 1 ? 'pointer-events-none opacity-40' : '',
         ].join(' ')}
+        style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }}
       >
         이전
       </Link>
-      <span className="font-medium text-gray-700">
+      <span className="font-medium" style={{ color: '#1E2D4D' }}>
         {currentPage} / {totalPages}
       </span>
       <Link
@@ -311,9 +312,10 @@ function PaginationLinks({
         aria-disabled={currentPage >= totalPages}
         scroll={false}
         className={[
-          'rounded-full border border-gray-200 px-4 py-2 transition hover:border-black hover:text-black',
+          'rounded-full border px-4 py-2 transition hover:opacity-70',
           currentPage >= totalPages ? 'pointer-events-none opacity-40' : '',
         ].join(' ')}
+        style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }}
       >
         다음
       </Link>

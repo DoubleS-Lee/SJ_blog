@@ -33,21 +33,23 @@ export default function Pagination({ currentPage, hasNextPage, totalPages }: Pag
       <button
         onClick={() => goTo(currentPage - 1)}
         disabled={currentPage <= 1}
-        className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-500 transition hover:border-gray-400 hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+        className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-sm transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-30"
+        style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }}
         aria-label="이전 페이지"
       >
         <ChevronLeft size={16} />
         <span>이전</span>
       </button>
 
-      <span className="min-w-20 text-center text-sm font-medium text-gray-500">
+      <span className="min-w-20 text-center text-sm font-medium" style={{ color: '#1E2D4D' }}>
         {currentPage} / {totalPages} 페이지
       </span>
 
       <button
         onClick={() => goTo(currentPage + 1)}
         disabled={!hasNextPage}
-        className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-500 transition hover:border-gray-400 hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+        className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-sm transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-30"
+        style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }}
         aria-label="다음 페이지"
       >
         <span>다음</span>

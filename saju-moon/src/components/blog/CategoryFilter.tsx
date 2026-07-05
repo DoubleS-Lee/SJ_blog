@@ -26,11 +26,12 @@ export default function CategoryFilter() {
         <button
           key={cat}
           onClick={() => handleSelect(cat)}
-          className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+          className="rounded-full border-[3px] px-3 py-1.5 text-xs transition-all"
+          style={
             current === cat
-              ? 'border-black bg-black text-white'
-              : 'border-gray-200 text-gray-500 hover:border-gray-400'
-          }`}
+              ? { borderColor: '#1E2D4D', background: '#1E2D4D', color: '#F6EFE3' }
+              : { borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }
+          }
         >
           {cat}
         </button>

@@ -9,6 +9,7 @@ import {
   Gaegu,
   Sunflower,
   Gothic_A1,
+  Cormorant_Garamond,
 } from 'next/font/google'
 import './globals.css'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
@@ -37,8 +38,14 @@ const nanumGothic = Nanum_Gothic({
 
 const nanumMyeongjo = Nanum_Myeongjo({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '700', '800'],
   variable: '--font-nanum-myeongjo',
+})
+
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-cormorant-garamond',
 })
 
 const jua = Jua({
@@ -93,12 +100,18 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const supabase = await createClient()
   let user = null
+  let isAdmin = false
 
   try {
     const {
       data: { user: currentUser },
     } = await supabase.auth.getUser()
     user = currentUser
+
+    if (user) {
+      const { data } = await supabase.from('users').select('is_admin').eq('id', user.id).maybeSingle()
+      isAdmin = Boolean(data?.is_admin)
+    }
   } catch (error) {
     const authCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : null
     if (authCode !== 'refresh_token_not_found') {
@@ -109,26 +122,42 @@ export default async function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}
+      className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${cormorantGaramond.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-(--font-noto-sans-kr)">
         <AnalyticsTracker />
-        <Header user={user} />
+        <Header user={user} isAdmin={isAdmin} />
         <main className="flex-1">{children}</main>
-        <footer className="mt-12 border-t border-gray-100 py-8">
-          <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6">
-            <SocialChannelsFooter />
-            <div className="flex flex-col items-center justify-between gap-4 text-xs text-gray-400 sm:flex-row">
-              <span className="text-center sm:text-left">
-                Copyright 2026 {SITE_NAME}. All rights reserved. {' | '}
-                이메일 3aroundv@gmail.com
-              </span>
-              <nav className="flex items-center gap-4">
-                <a href="/privacy" className="transition-colors hover:text-black">
-                  개인정보처리방침
-                </a>
-              </nav>
+        <footer
+          className="mt-16 border-t"
+          style={{ borderColor: 'rgba(30,45,77,0.08)', background: '#F6EFE3' }}
+        >
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12 text-center">
+            {/* 별 구분선 */}
+            <div className="flex items-center justify-center gap-4 mb-5">
+              <div style={{ width: 56, height: 1, background: '#D9C48A' }} />
+              <div style={{ width: 11, height: 11, background: '#C4A24E', clipPath: 'polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)' }} />
+              <div style={{ width: 56, height: 1, background: '#D9C48A' }} />
             </div>
+            {/* FOLLOW */}
+            <p
+              className="mb-3 tracking-[5px]"
+              style={{ fontFamily: 'var(--font-cormorant-garamond), serif', fontSize: 14, fontWeight: 600, color: '#B78D3C' }}
+            >
+              FOLLOW SAJU ROA
+            </p>
+            {/* 소셜 링크 */}
+            <div className="flex justify-center gap-5 mb-5" style={{ fontSize: 13, color: '#4a5673' }}>
+              <a href="https://www.youtube.com/@saju_roa" target="_blank" rel="noreferrer" className="transition-opacity hover:opacity-60">YouTube</a>
+              <a href="https://www.instagram.com/saju.roa/" target="_blank" rel="noreferrer" className="transition-opacity hover:opacity-60">Instagram</a>
+              <a href="https://www.threads.com/@saju.roa" target="_blank" rel="noreferrer" className="transition-opacity hover:opacity-60">Threads</a>
+            </div>
+            {/* 저작권 */}
+            <p style={{ fontSize: 12, color: '#a39c8c' }}>
+              Copyright 2026 {SITE_NAME}. All rights reserved.
+              {' | '}
+              <a href="/privacy" className="transition-opacity hover:opacity-60" style={{ color: '#a39c8c' }}>개인정보처리방침</a>
+            </p>
           </div>
         </footer>
       </body>

@@ -60,29 +60,31 @@ export default async function AdminUsersPage({
       <div className="mb-5 flex flex-col gap-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold">회원 관리</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-xl font-bold" style={{ color: '#1E2D4D' }}>회원 관리</h1>
+            <p className="mt-1 text-sm" style={{ color: '#4a5673' }}>
               회원을 빠르게 찾아보고 등급과 관리자 여부를 바로 조정할 수 있습니다.
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-500 shadow-sm">
-            전체 회원 <span className="font-semibold text-gray-900">{filteredCount.toLocaleString('ko-KR')}</span>명
-            <span className="mx-2 text-gray-300">|</span>
-            관리자 <span className="font-semibold text-gray-900">{(adminCount ?? 0).toLocaleString('ko-KR')}</span>명
+          <div className="rounded-2xl border px-4 py-3 text-sm" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)', color: '#4a5673' }}>
+            전체 회원 <span className="font-semibold" style={{ color: '#1E2D4D' }}>{filteredCount.toLocaleString('ko-KR')}</span>명
+            <span className="mx-2" style={{ color: 'rgba(30,45,77,0.25)' }}>|</span>
+            관리자 <span className="font-semibold" style={{ color: '#1E2D4D' }}>{(adminCount ?? 0).toLocaleString('ko-KR')}</span>명
           </div>
         </div>
 
         <form
           action="/admin/users"
           method="get"
-          className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
+          className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center"
+          style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}
         >
           <input
             type="text"
             name="q"
             defaultValue={queryText}
             placeholder="이메일 또는 닉네임으로 검색"
-            className="h-11 flex-1 rounded-2xl border border-gray-200 px-4 text-sm text-gray-900 outline-none transition focus:border-black"
+            className="h-11 flex-1 rounded-full border px-4 text-sm outline-none transition"
+            style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#1E2D4D', background: '#F6EFE3' }}
           />
           <div className="flex gap-2">
             <button type="submit" className={buttonVariants()}>
@@ -117,11 +119,11 @@ export default async function AdminUsersPage({
       </div>
 
       {!users || users.length === 0 ? (
-        <div className="rounded-lg border border-gray-100 bg-white p-12 text-center text-sm text-gray-400">
+        <div className="rounded-2xl border p-12 text-center text-sm" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)', color: '#9a8e7a' }}>
           {queryText ? '검색된 회원이 없습니다.' : '가입한 회원이 없습니다.'}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <table className="w-full table-fixed">
             <colgroup>
               <col className="w-[52%]" />
@@ -129,8 +131,8 @@ export default async function AdminUsersPage({
               <col className="w-[28%]" />
               <col className="w-[8%]" />
             </colgroup>
-            <thead className="bg-gray-50">
-              <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+            <thead style={{ background: 'rgba(30,45,77,0.05)' }}>
+              <tr className="border-b text-left text-xs font-medium uppercase tracking-wide" style={{ borderColor: 'rgba(30,45,77,0.09)', color: '#9a8e7a' }}>
                 <th className="px-4 py-3">회원</th>
                 <th className="px-4 py-3">사주</th>
                 <th className="px-4 py-3">관리</th>
@@ -171,27 +173,29 @@ function PaginationLinks({
   }
 
   return (
-    <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+    <div className="mt-6 flex items-center justify-between text-sm" style={{ color: '#4a5673' }}>
       <a
         href={buildHref(Math.max(1, currentPage - 1))}
         aria-disabled={currentPage <= 1}
         className={[
-          'rounded-full border border-gray-200 px-4 py-2 transition hover:border-black hover:text-black',
+          'rounded-full border px-4 py-2 transition hover:opacity-70',
           currentPage <= 1 ? 'pointer-events-none opacity-40' : '',
         ].join(' ')}
+        style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }}
       >
         이전
       </a>
-      <span className="font-medium text-gray-700">
+      <span className="font-medium" style={{ color: '#1E2D4D' }}>
         {currentPage} / {totalPages}
       </span>
       <a
         href={buildHref(Math.min(totalPages, currentPage + 1))}
         aria-disabled={currentPage >= totalPages}
         className={[
-          'rounded-full border border-gray-200 px-4 py-2 transition hover:border-black hover:text-black',
+          'rounded-full border px-4 py-2 transition hover:opacity-70',
           currentPage >= totalPages ? 'pointer-events-none opacity-40' : '',
         ].join(' ')}
+        style={{ borderColor: 'rgba(30,45,77,0.2)', color: '#4a5673' }}
       >
         다음
       </a>

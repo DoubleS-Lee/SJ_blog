@@ -98,14 +98,22 @@ export default async function BlogListPage({ searchParams }: Props) {
   ])
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-3 flex flex-col gap-3 sm:mb-8 sm:gap-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">블로그</h1>
-          <CategoryFilter />
+    <div className="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6">
+      <div className="mb-3 flex flex-col gap-3 sm:mb-8 sm:gap-4">
+        <h1
+          className="text-3xl font-bold tracking-tight"
+          style={{ color: '#1E2D4D', fontFamily: 'var(--font-nanum-myeongjo), serif' }}
+        >
+          블로그
+        </h1>
+
+        <div className="flex justify-end">
+          <div className="w-5/9 max-w-md">
+            <BlogSearchForm category={validCategory} defaultQuery={queryText} />
+          </div>
         </div>
 
-        <BlogSearchForm category={validCategory} defaultQuery={queryText} />
+        <CategoryFilter />
 
         {queryText ? (
           <p className="text-sm text-gray-500">
@@ -129,7 +137,7 @@ export default async function BlogListPage({ searchParams }: Props) {
           </div>
         </section>
       ) : (
-        <div className="py-20 text-center text-sm text-gray-400">
+        <div className="py-20 text-center text-sm" style={{ color: '#9a8e7a' }}>
           {queryText
             ? `'${queryText}'와 관련한 글이 아직 없습니다.`
             : validCategory

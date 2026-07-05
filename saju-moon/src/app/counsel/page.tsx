@@ -33,21 +33,20 @@ export default async function CounselPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <MenuHero
-        eyebrow="Private Counsel"
-        title="익명 고민 상담"
-        description={`사주 전문가 사주로아가 직접 선정한 사연에 한해 무료로 고민 상담을 진행합니다.
-작성한 사연은 사주로아와 작성자 본인만 볼 수 있고, 상담은 댓글 형태로 이어집니다.
-선정된 사연은 식별 정보를 제거한 뒤 외부 콘텐츠 소재로 활용될 수 있습니다.`}
+        eyebrow="1:1 Private Counsel"
+        title="1:1 프라이빗 사주 상담"
+        description={`사주 전문가 로아가 당신만을 위한 깊이 있는 맞춤형 1:1 리딩을 제공합니다.
+오직 상담 작성자 본인만 확인할 수 있는 철저한 비밀 상담 공간이며, 답변은 전문적인 텍스트(또는 댓글) 형태로 상세히 제공됩니다.
+현실적인 문제로 답답했던 순간, 명쾌한 사주 분석으로 나아갈 길을 찾아보세요.`}
         palette={HERO_PALETTE}
         titleActions={
           user
             ? [
                 {
                   href: '/counsel/new',
-                  label: '익명 상담 등록하기',
+                  label: '1:1 맞춤 상담 신청하기',
                   size: 'lg',
-                  className:
-                    'h-12 rounded-2xl border-violet-600 bg-violet-600 px-6 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:bg-violet-500',
+                  className: 'h-12 rounded-full px-6 text-base font-semibold',
                 },
               ]
             : undefined
@@ -55,18 +54,24 @@ export default async function CounselPage() {
         actions={
           user
             ? [{ href: '/mypage/counsel', label: '내 상담글 보기' }]
-            : [{ href: '/login', label: '로그인하고 상담 남기기' }]
+            : [{ href: '/login', label: '1:1 맞춤 상담 신청하기' }]
         }
       >
         <div className="mt-5 flex justify-end">
-          <p className="rounded-full border border-violet-100 bg-white/70 px-4 py-2 text-xs text-violet-500 shadow-sm">
-            지금까지 <span className="font-semibold text-violet-700">{socialProofCount.toLocaleString('ko-KR')}명</span>이 익명 상담을 남겼어요
+          <p
+            className="rounded-full border px-4 py-2 text-xs"
+            style={{ borderColor: 'rgba(196,162,78,0.3)', color: '#8a6d28', background: 'rgba(246,239,227,0.7)' }}
+          >
+            지금까지 수많은 분들이 <span className="font-semibold" style={{ color: '#B78D3C' }}>사주로아의 명쾌한 해답</span>을 경험하셨습니다.
           </p>
         </div>
-        <div className="mt-6 rounded-2xl bg-gray-50 p-5 text-sm text-gray-500 leading-7">
-          <p>1. 실명, 연락처, 학교명, 회사명, 주소 등 식별 가능한 정보는 적지 않는 것을 권장합니다.</p>
-          <p>2. 현재 처한 상황과 배경을 최대한 구체적으로 적어주실수록 상담으로 선정될 확률이 높아집니다.</p>
-          <p>3. 콘텐츠 활용 동의에 체크해야 상담 글을 등록할 수 있습니다.</p>
+        <div
+          className="mt-6 rounded-xl border p-5 text-sm leading-7"
+          style={{ borderColor: 'rgba(30,45,77,0.09)', background: 'rgba(30,45,77,0.03)', color: '#4a5673' }}
+        >
+          <p>1. 정확한 사주 분석을 위해 <strong style={{ color: '#1E2D4D' }}>생년월일시(양력/음력 필수)</strong>를 반드시 기입해 주세요.</p>
+          <p>2. 고민이 있으신 현재 상황과 구체적인 질문을 자세히 적어주실수록 더욱 명확하고 깊이 있는 상담이 가능합니다.</p>
+          <p>3. 본 상담은 유료로 진행되며, 결제 완료 후 순차적으로 답변이 등록됩니다. (답변 완료 시 알림 발송)</p>
         </div>
       </MenuHero>
     </div>

@@ -95,11 +95,19 @@ export default async function CompatibilityPage({ searchParams }: Props) {
       />
 
       {previewCards.length > 0 && (
-        <section className="mt-8 rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm">
+        <section
+          className="mt-8 rounded-2xl border p-6"
+          style={{ borderColor: 'rgba(30,45,77,0.09)', background: '#FBF7EE' }}
+        >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">궁합 결과</h2>
-              <p className="mt-2 text-sm leading-6 text-gray-500">
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: '#1E2D4D', fontFamily: 'var(--font-nanum-myeongjo), serif' }}
+              >
+                궁합 결과
+              </h2>
+              <p className="mt-2 text-sm leading-6" style={{ color: '#4a5673' }}>
                 선택한 두 사람의 사주를 기준으로 항목별 궁합 해설을 보여줍니다.
               </p>
             </div>
@@ -124,14 +132,18 @@ export default async function CompatibilityPage({ searchParams }: Props) {
                 return (
                   <article
                     key={card.section}
-                    className="rounded-[1.25rem] border border-gray-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#fbfdff_100%)] p-5 shadow-sm"
+                    className="rounded-xl border p-5"
+                    style={{ borderColor: 'rgba(30,45,77,0.09)', background: '#F6EFE3' }}
                   >
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3
+                      className="text-base font-semibold"
+                      style={{ color: '#1E2D4D', fontFamily: 'var(--font-nanum-myeongjo), serif' }}
+                    >
                       {getCompatibilityMetricLabel(card.section)}
                     </h3>
                     <TextCopyGuard className="mt-3">
-                      <p className="text-sm font-semibold leading-6 text-gray-700">{summary}</p>
-                      <div className="mt-3 space-y-3 text-sm leading-7 text-gray-500">
+                      <p className="text-sm font-semibold leading-6" style={{ color: '#1E2D4D' }}>{summary}</p>
+                      <div className="mt-3 space-y-3 text-sm leading-7" style={{ color: '#4a5673' }}>
                         {splitDetailIntoParagraphs(detail).map((paragraph, index) => (
                           <p key={`${card.section}-${index}`}>{paragraph}</p>
                         ))}

@@ -683,11 +683,11 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">분석 대시보드</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#1E2D4D' }}>분석 대시보드</h1>
+          <p className="text-sm" style={{ color: '#4a5673' }}>
             방문자 수만 세는 대신, 어떤 유입이 어떤 글을 읽게 만들었는지 중심으로 봅니다.
           </p>
-          <p className="text-xs text-gray-400">현재 기준: {rangeLabel}</p>
+          <p className="text-xs" style={{ color: '#9a8e7a' }}>현재 기준: {rangeLabel}</p>
         </div>
 
         <AnalyticsDateFilter
@@ -733,7 +733,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
         />
       </section>
 
-      <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
         <h2 className="text-lg font-semibold tracking-tight">카테고리별 관심도</h2>
         <p className="mt-1 text-xs text-gray-400">
           카테고리별 조회 수, 좋아요 수, 평균 체류시간을 함께 보면 실제로 반응이 이어지는 주제를 빠르게 파악할 수 있습니다.
@@ -750,9 +750,9 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
           카테고리를 클릭하면 바로 아래 인기 글 랭킹이 해당 카테고리 기준으로 연동됩니다.
           {selectedCategory !== 'all' ? ` 현재 선택: ${selectedCategory}` : ' 현재 선택: 전체'}
         </p>
-        <div className="mt-6 overflow-hidden rounded-2xl border border-gray-100">
+        <div className="mt-6 overflow-hidden rounded-2xl border" style={{ borderColor: 'rgba(30,45,77,0.09)' }}>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-400">
+            <thead className="text-left text-xs uppercase tracking-wider" style={{ background: 'rgba(30,45,77,0.05)', color: '#9a8e7a' }}>
               <tr>
                 <th className="px-4 py-3 font-medium">카테고리</th>
                 <th className="px-4 py-3 font-medium">조회 수</th>
@@ -800,7 +800,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_1fr]">
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <h2 className="text-lg font-semibold tracking-tight">날짜별 방문자 추정</h2>
           <div className="mt-6 space-y-4">
             {dailyVisitors.map((item) => (
@@ -818,7 +818,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <h2 className="text-lg font-semibold tracking-tight">유입 채널</h2>
           <p className="mt-1 text-xs text-gray-400">
             채널별 방문자 추정치와 참여 세션을 함께 보면 어떤 유입이 실제 반응으로 이어지는지 읽기 쉽습니다.
@@ -853,7 +853,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <h2 className="text-lg font-semibold tracking-tight">상위 메뉴 클릭</h2>
           <div className="mt-6 space-y-4">
             {topMenuRows.length > 0 ? (
@@ -874,12 +874,12 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <h2 className="text-lg font-semibold tracking-tight">메뉴별 체류시간</h2>
           <p className="mt-1 text-xs text-gray-400">어떤 메뉴가 실제로 오래 머물게 하는지 보는 지표입니다.</p>
-          <div className="mt-6 overflow-hidden rounded-2xl border border-gray-100">
+          <div className="mt-6 overflow-hidden rounded-2xl border" style={{ borderColor: 'rgba(30,45,77,0.09)' }}>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-400">
+              <thead className="text-left text-xs uppercase tracking-wider" style={{ background: 'rgba(30,45,77,0.05)', color: '#9a8e7a' }}>
                 <tr>
                   <th className="px-4 py-3 font-medium">메뉴</th>
                   <th className="px-4 py-3 font-medium">방문 수</th>
@@ -889,7 +889,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
               <tbody>
                 {pageTypeRows.length > 0 ? (
                   pageTypeRows.map((row) => (
-                    <tr key={row.pageType} className="border-t border-gray-100">
+                    <tr key={row.pageType} className="border-t" style={{ borderColor: 'rgba(30,45,77,0.08)' }}>
                       <td className="px-4 py-3 font-medium text-gray-800">{row.label}</td>
                       <td className="px-4 py-3 text-gray-500">{row.views.toLocaleString('ko-KR')}</td>
                       <td className="px-4 py-3 text-gray-500">{formatDuration(row.averageEngagementMs)}</td>
@@ -907,7 +907,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border p-6" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -1006,20 +1006,19 @@ function MetricCard({ label, value, hint }: { label: string; value: string; hint
   const isNumericValue = /^[\d,]+$/.test(value)
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-      <p className="text-sm text-gray-500">{label}</p>
+    <div className="rounded-2xl border p-5" style={{ background: '#FBF7EE', borderColor: 'rgba(30,45,77,0.09)' }}>
+      <p className="text-sm" style={{ color: '#4a5673' }}>{label}</p>
       <p
-        className={`mt-3 font-bold tracking-tight text-gray-900 ${
-          isNumericValue ? 'text-3xl' : 'text-xl leading-snug'
-        }`}
+        className={`mt-3 font-bold tracking-tight ${isNumericValue ? 'text-3xl' : 'text-xl leading-snug'}`}
+        style={{ color: '#1E2D4D' }}
       >
         {value}
       </p>
-      <p className="mt-2 text-xs text-gray-400">{hint}</p>
+      <p className="mt-2 text-xs" style={{ color: '#9a8e7a' }}>{hint}</p>
     </div>
   )
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="text-sm text-gray-400">{text}</p>
+  return <p className="text-sm" style={{ color: '#9a8e7a' }}>{text}</p>
 }
