@@ -56,10 +56,6 @@ export async function createConsultation(input: {
   if (!body) return { error: '사연 내용을 입력해 주세요.' }
   if (title.length > MAX_TITLE_LENGTH) return { error: `제목은 ${MAX_TITLE_LENGTH}자 이하로 입력해 주세요.` }
   if (body.length > MAX_BODY_LENGTH) return { error: `사연은 ${MAX_BODY_LENGTH}자 이하로 입력해 주세요.` }
-  if (!input.contentUsageAgreed) {
-    return { error: '필수 동의에 체크해야 상담 게시판을 이용할 수 있습니다.' }
-  }
-
   const rateLimitResult = await enforceRateLimit(supabase, 'consultation_create', user.id)
   if (rateLimitResult.error) return rateLimitResult
 
