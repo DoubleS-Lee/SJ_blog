@@ -353,6 +353,11 @@ const DI_SHI_CONFIG: Record<string, { startBranch: typeof BRANCH_ORDER[number]; 
 
 const FAVORABLE_DI_SHI = new Set(['长生', '冠带', '临官', '帝旺'])
 const UNFAVORABLE_DI_SHI = new Set(['衰', '病', '死', '墓', '绝'])
+const DI_SHI_CN_TO_KR: Record<string, string> = {
+  '长生': '장생', '沐浴': '목욕', '冠带': '관대', '临官': '건록',
+  '帝旺': '제왕', '衰': '쇠', '病': '병', '死': '사',
+  '墓': '묘', '绝': '절', '胎': '태', '养': '양',
+}
 const HYEONG_GROUPS = [
   ['寅', '巳', '申'],
   ['丑', '戌', '未'],
@@ -421,10 +426,10 @@ function renderTaekilTemplate(template: string, variables: Record<string, string
   )
 }
 function buildDiShiReason(stage: string, copy: TaekilUiCopyBundle) {
-  return renderTaekilTemplate(copy.templates.diShiReason, { stage })
+  return renderTaekilTemplate(copy.templates.diShiReason, { stage: DI_SHI_CN_TO_KR[stage] ?? stage })
 }
 function buildDiShiCaution(stage: string, copy: TaekilUiCopyBundle) {
-  return renderTaekilTemplate(copy.templates.diShiCaution, { stage })
+  return renderTaekilTemplate(copy.templates.diShiCaution, { stage: DI_SHI_CN_TO_KR[stage] ?? stage })
 }
 
 function parseXunKongBranches(value: string | null | undefined) {
