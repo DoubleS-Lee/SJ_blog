@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { ANALYTICS_EVENT_NAMES, type AnalyticsTrackPayload } from '@/lib/analytics/schema'
-import { getSiteUrl } from '@/lib/seo/site'
 
 const ALLOWED_EVENT_NAMES = new Set<string>(ANALYTICS_EVENT_NAMES)
 const BOT_USER_AGENT_PATTERN =
@@ -35,13 +34,31 @@ function sanitizeProperties(input: unknown) {
   )
 }
 
+/**
+ * 요청 자체의 Host 헤더를 기준으로 판단 — NEXT_PUBLIC_SITE_URL 같은 환경변수 설정에
+ * 의존하면 커스텀 도메인과 실제 배포 도메인이 어긋날 때 정상 요청까지 막힐 수 있다.
+ */
 function isSameOriginRequest(request: Request) {
-  const siteOrigin = new URL(getSiteUrl()).origin
+  const host = request.headers.get('host')
+  if (!host) return false
+
   const origin = request.headers.get('origin')
-  if (origin) return origin === siteOrigin
+  if (origin) {
+    try {
+      return new URL(origin).host === host
+    } catch {
+      return false
+    }
+  }
 
   const referer = request.headers.get('referer')
-  return !!referer && referer.startsWith(siteOrigin)
+  if (!referer) return false
+
+  try {
+    return new URL(referer).host === host
+  } catch {
+    return false
+  }
 }
 
 function isIgnoredAnalyticsRequest(request: Request) {
