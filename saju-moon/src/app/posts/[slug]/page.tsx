@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import GuestCTA from '@/components/blog/GuestCTA'
 import GradeCTA from '@/components/blog/GradeCTA'
 import CommentsSection from '@/components/blog/CommentsSection'
@@ -168,20 +170,32 @@ function buildJudgmentUserDataFromCalculated(result: SajuResult): JudgmentUserDa
   }
 }
 
+/**
+ * 글의 "누가 봐도 똑같은" 필드만 조회 — 로그인 여부와 무관하므로 캐시 가능.
+ * service-role 클라이언트를 써서 쿠키(요청별 동적 값)에 의존하지 않게 하고,
+ * 공개 노출 조건(is_published + 발행시각)은 쿼리에서 그대로 명시적으로 재현한다.
+ */
+async function getPublicPost(slug: string) {
+  'use cache'
+
+  const nowIso = new Date().toISOString()
+  const { data: post } = await applyPublishedVisibilityFilter(
+    supabaseAdmin
+      .from('posts')
+      .select('id, slug, title, summary, content, thumbnail_url, category, published_at, updated_at, target_year, judgment_rules, judgment_detail, view_count, like_count, tags')
+      .eq('slug', slug)
+      .eq('is_published', true)
+      .single(),
+    nowIso,
+  )
+
+  return post
+}
+
 export async function generateMetadata({ params }: Props) {
   const { slug: rawSlug } = await params
   const slug = decodeSlug(rawSlug)
-  const supabase = await createClient()
-  const nowIso = new Date().toISOString()
-  const { data } = await applyPublishedVisibilityFilter(
-    supabase
-    .from('posts')
-    .select('slug, title, summary, tags, thumbnail_url, category, published_at, updated_at')
-    .eq('slug', slug)
-    .eq('is_published', true)
-    .single(),
-    nowIso,
-  )
+  const data = await getPublicPost(slug)
 
   if (!data) return {}
 
@@ -219,23 +233,14 @@ export async function generateMetadata({ params }: Props) {
   }
 }
 
-export default async function PostDetailPage({ params }: Props) {
-  const { slug: rawSlug } = await params
-  const slug = decodeSlug(rawSlug)
+type PublicPost = NonNullable<Awaited<ReturnType<typeof getPublicPost>>>
+
+/**
+ * 로그인 여부·회원 등급·판정 결과·좋아요·댓글처럼 사람마다 달라지는 부분을 전부 묶은 동적 블록.
+ * 기존 페이지 컴포넌트에 있던 로직/실행 순서를 그대로 유지 — 조회수 증가도 여기서 매 요청 실행된다.
+ */
+async function PostPersonalizedSection({ post }: { post: PublicPost }) {
   const supabase = await createClient()
-  const nowIso = new Date().toISOString()
-
-  const { data: post } = await applyPublishedVisibilityFilter(
-    supabase
-    .from('posts')
-    .select('id, slug, title, summary, content, thumbnail_url, category, published_at, updated_at, target_year, judgment_rules, judgment_detail, view_count, like_count, tags')
-    .eq('slug', slug)
-    .eq('is_published', true)
-    .single(),
-    nowIso,
-  )
-
-  if (!post) notFound()
 
   await supabase.rpc('increment_post_view_count', { p_post_id: post.id })
 
@@ -379,30 +384,6 @@ export default async function PostDetailPage({ params }: Props) {
   const showTopJudgmentNotice = hasJudgmentTarget && matchedResults.length > 0
   const ctaMode = !isLoggedIn ? 'login' : !hasSavedSaju ? 'saju' : null
   const inlineGuestSplit = ctaMode ? splitContentForInlineGuestCta(post.content as JSONContent) : null
-  const postDescription = buildSeoDescription(
-    post.summary,
-    `${post.title}에 대한 사주 해석과 블로그 글입니다.`,
-  )
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    description: postDescription,
-    image: post.thumbnail_url ? [post.thumbnail_url] : undefined,
-    datePublished: post.published_at ?? undefined,
-    dateModified: post.updated_at ?? post.published_at ?? undefined,
-    mainEntityOfPage: buildAbsoluteUrl(`/posts/${post.slug}`),
-    author: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-    },
-    articleSection: post.category,
-    keywords: post.tags?.join(', ') || undefined,
-  }
 
   const { data: commentRows } = await supabase
     .from('post_comments')
@@ -443,38 +424,9 @@ export default async function PostDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
+    <>
       <div className="flex flex-col gap-12 lg:flex-row">
         <article className="w-full lg:w-[60%]">
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
-              {post.category}
-            </span>
-            {post.target_year && (
-              <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                {post.target_year}년 기준
-              </span>
-            )}
-          </div>
-
-          <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
-            {post.title}
-          </h1>
-
-          <div className="mb-10 flex items-center gap-3 border-b border-gray-100 pb-6">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
-              문
-            </div>
-            <span className="text-sm text-gray-500">
-              사주로아의 사주이야기
-              {post.published_at && ` · ${formatDate(post.published_at)}`}
-            </span>
-          </div>
-
           {ctaMode ? (
             <div className="mb-8">
               <GuestCTA mode={ctaMode} />
@@ -564,6 +516,89 @@ export default async function PostDetailPage({ params }: Props) {
         isLoggedIn={isLoggedIn}
         ilganAvatarMap={ilganAvatarMap}
       />
+    </>
+  )
+}
+
+function PostPersonalizedFallback({ post }: { post: PublicPost }) {
+  return (
+    <div className="flex flex-col gap-12 lg:flex-row">
+      <article className="w-full animate-pulse lg:w-[60%]">
+        <div className="prose prose-gray max-w-none">
+          <TiptapRenderer content={post.content as JSONContent} />
+        </div>
+      </article>
+      <aside className="w-full shrink-0 lg:w-[40%] lg:max-w-sm" />
+    </div>
+  )
+}
+
+export default async function PostDetailPage({ params }: Props) {
+  const { slug: rawSlug } = await params
+  const slug = decodeSlug(rawSlug)
+  const post = await getPublicPost(slug)
+
+  if (!post) notFound()
+
+  const postDescription = buildSeoDescription(
+    post.summary,
+    `${post.title}에 대한 사주 해석과 블로그 글입니다.`,
+  )
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: postDescription,
+    image: post.thumbnail_url ? [post.thumbnail_url] : undefined,
+    datePublished: post.published_at ?? undefined,
+    dateModified: post.updated_at ?? post.published_at ?? undefined,
+    mainEntityOfPage: buildAbsoluteUrl(`/posts/${post.slug}`),
+    author: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+    },
+    articleSection: post.category,
+    keywords: post.tags?.join(', ') || undefined,
+  }
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          {post.category}
+        </span>
+        {post.target_year && (
+          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+            {post.target_year}년 기준
+          </span>
+        )}
+      </div>
+
+      <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+        {post.title}
+      </h1>
+
+      <div className="mb-10 flex items-center gap-3 border-b border-gray-100 pb-6">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
+          문
+        </div>
+        <span className="text-sm text-gray-500">
+          사주로아의 사주이야기
+          {post.published_at && ` · ${formatDate(post.published_at)}`}
+        </span>
+      </div>
+
+      <Suspense fallback={<PostPersonalizedFallback post={post} />}>
+        <PostPersonalizedSection post={post} />
+      </Suspense>
     </div>
   )
 }

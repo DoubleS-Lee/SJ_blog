@@ -1,0 +1,433 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { loadKakaoSdk } from '@/lib/kakao/sdk'
+import Link from 'next/link'
+
+function detectEmbeddedBrowser(userAgent: string, referrer: string) {
+  const metaInAppPattern = /Instagram|Threads|FBAN|FBAV|MetaIAB/i
+  const youtubeInAppPattern = /YouTube/i
+  const androidWebViewPattern = /\bwv\b|Version\/4\.0/i
+  const inAppReferrerPattern =
+    /instagram\.com|threads\.net|l\.instagram\.com|lm\.facebook\.com|youtube\.com|m\.youtube\.com|youtu\.be/i
+  const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
+  const isKnownIOSBrowser =
+    /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(userAgent) ||
+    /Version\/[\d.]+.*Safari\//i.test(userAgent)
+  const looksLikeUnknownIOSWebView = isIOS && !isKnownIOSBrowser
+
+  return (
+    metaInAppPattern.test(userAgent) ||
+    youtubeInAppPattern.test(userAgent) ||
+    (/\bAndroid\b/i.test(userAgent) && androidWebViewPattern.test(userAgent)) ||
+    inAppReferrerPattern.test(referrer) ||
+    looksLikeUnknownIOSWebView
+  )
+}
+
+const KAKAO_LOGIN_STATE_COOKIE = 'kakao_login_state'
+const KAKAO_LOGIN_NEXT_COOKIE = 'kakao_login_next'
+
+function createLoginState() {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID()
+  }
+
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const bytes = new Uint8Array(16)
+    window.crypto.getRandomValues(bytes)
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+export default function LoginPageClient() {
+  const searchParams = useSearchParams()
+  const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isKakaoReady, setIsKakaoReady] = useState(false)
+  const [isEmbeddedBrowser, setIsEmbeddedBrowser] = useState(false)
+  const [isAndroid, setIsAndroid] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
+  const [showExternalBrowserOptions, setShowExternalBrowserOptions] = useState(false)
+  const [copyMessage, setCopyMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent ?? ''
+    const referrer = document.referrer ?? ''
+
+    setIsEmbeddedBrowser(detectEmbeddedBrowser(userAgent, referrer))
+    setIsAndroid(/Android/i.test(userAgent))
+    setIsIOS(/iPhone|iPad|iPod/i.test(userAgent))
+  }, [])
+
+  useEffect(() => {
+    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY
+    if (!kakaoKey) return
+
+    void loadKakaoSdk(kakaoKey).catch(() => {
+      // Ignore preload failure here. The actual login click path handles the user-facing error.
+      setIsKakaoReady(false)
+      return
+    })
+      .then(() => {
+        setIsKakaoReady(true)
+      })
+  }, [])
+
+  useEffect(() => {
+    const errorCode = searchParams.get('error')
+    if (!errorCode) return
+
+    const errorMessageMap: Record<string, string> = {
+      missing_code: '로그인 인가 코드가 없어 다시 로그인해 주세요.',
+      invalid_state: '로그인 요청이 만료되었거나 유효하지 않습니다. 다시 시도해 주세요.',
+      kakao_auth_failed: '카카오 로그인 요청이 취소되었거나 실패했습니다.',
+      kakao_config_missing: '카카오 로그인 설정이 아직 완료되지 않았습니다.',
+      kakao_token_failed: '카카오 토큰 발급에 실패했습니다. 콘솔 설정을 다시 확인해 주세요.',
+      auth_failed: '로그인 처리에 실패했습니다. 다시 시도해 주세요.',
+    }
+
+    setError(errorMessageMap[errorCode] ?? '로그인에 실패했습니다. 다시 시도해 주세요.')
+  }, [searchParams])
+
+  function getLoginUrl() {
+    return `${window.location.origin}/login`
+  }
+
+  function getNextPath() {
+    const next = new URLSearchParams(window.location.search).get('next')
+    return next?.startsWith('/') ? next : '/'
+  }
+
+  function setLoginCookie(name: string, value: string) {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=600; SameSite=Lax`
+  }
+
+  function startKakaoWebFallback(next: string) {
+    window.location.href = `/auth/kakao/start?next=${encodeURIComponent(next)}`
+  }
+
+  function buildAndroidIntentUrl(packageName: string) {
+    const loginUrl = new URL(getLoginUrl())
+    const hostAndPath = `${loginUrl.host}${loginUrl.pathname}${loginUrl.search}${loginUrl.hash}`
+
+    return `intent://${hostAndPath}#Intent;scheme=${loginUrl.protocol.replace(':', '')};package=${packageName};S.browser_fallback_url=${encodeURIComponent(loginUrl.toString())};end`
+  }
+
+  function openAndroidBrowser(packageName: string) {
+    window.location.href = buildAndroidIntentUrl(packageName)
+  }
+
+  async function copyLoginLink() {
+    try {
+      await navigator.clipboard.writeText(getLoginUrl())
+      setCopyMessage('로그인 링크를 복사했어요. 외부 브라우저 주소창에 붙여 넣어 주세요.')
+    } catch {
+      setCopyMessage('링크 복사에 실패했습니다. 우측 메뉴에서 브라우저로 열어 주세요.')
+    }
+  }
+
+  async function signInWith(provider: 'google' | 'kakao') {
+    setLoading(provider)
+    setError(null)
+    setCopyMessage(null)
+
+    if (provider === 'kakao') {
+      const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY
+      if (!kakaoKey) {
+        setError('카카오 로그인 설정이 아직 완료되지 않았습니다.')
+        setLoading(null)
+        return
+      }
+
+      try {
+        const next = getNextPath()
+
+        if (isIOS) {
+          startKakaoWebFallback(next)
+          return
+        }
+
+        const state = createLoginState()
+        const kakaoAuth = window.Kakao?.Auth
+
+        if (!isKakaoReady || !kakaoAuth?.authorize) {
+          throw new Error('Kakao Auth SDK is not available.')
+        }
+
+        setLoginCookie(KAKAO_LOGIN_STATE_COOKIE, state)
+        setLoginCookie(KAKAO_LOGIN_NEXT_COOKIE, next)
+
+        const currentHref = window.location.href
+        let fallbackTriggered = false
+        let pageWasHidden = false
+
+        const cleanupFallbackListeners = () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+
+        const fallbackToWebLogin = () => {
+          if (fallbackTriggered) return
+          fallbackTriggered = true
+          cleanupFallbackListeners()
+          startKakaoWebFallback(next)
+        }
+
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'hidden') {
+            pageWasHidden = true
+            return
+          }
+
+          if (pageWasHidden && window.location.href === currentHref) {
+            fallbackToWebLogin()
+          }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        window.setTimeout(() => {
+          if (!fallbackTriggered && document.visibilityState === 'visible' && window.location.href === currentHref) {
+            fallbackToWebLogin()
+          }
+        }, 1200)
+
+        kakaoAuth.authorize({
+          redirectUri: `${window.location.origin}/auth/kakao/callback`,
+          state,
+          scope: 'openid',
+        })
+        return
+      } catch (sdkError) {
+        console.error('[login][kakao]', sdkError)
+        setError('카카오 로그인을 시작하지 못했습니다. 다시 시도해 주세요.')
+        setLoading(null)
+        return
+      }
+    }
+
+    if (provider === 'google' && isEmbeddedBrowser) {
+      setShowExternalBrowserOptions(true)
+      setLoading(null)
+      return
+    }
+
+    setShowExternalBrowserOptions(false)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      setError('로그인에 실패했습니다. 다시 시도해 주세요.')
+      setLoading(null)
+    }
+    // 성공 시 Supabase가 소셜 로그인 페이지로 리다이렉트 — 여기서 끝
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm flex flex-col gap-8">
+        {/* 헤더 */}
+        <div className="text-center">
+          <Link href="/" className="text-2xl font-bold tracking-tight">
+            사주로아의 사주이야기
+          </Link>
+          <p className="mt-2 text-sm text-gray-500">
+            소셜 계정으로 간편하게 시작하세요
+          </p>
+        </div>
+
+        {isEmbeddedBrowser && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p>인앱브라우저에서는 Google 로그인이 차단될 수 있습니다.</p>
+            <p>Chrome, 삼성인터넷 같은 외부 브라우저에서 로그인하는 것이 가장 안전합니다.</p>
+          </div>
+        )}
+
+        {/* 소셜 로그인 버튼 */}
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => signInWith('kakao')}
+            disabled={loading !== null}
+            className="order-2 flex items-center justify-center gap-3 w-full h-11 rounded-md font-medium text-sm transition-opacity disabled:opacity-60"
+            style={{ backgroundColor: '#FEE500', color: '#000000' }}
+          >
+            {loading === 'kakao' ? (
+              <span className="animate-pulse">연결 중...</span>
+            ) : (
+              <>
+                <KakaoIcon />
+                카카오로 계속하기
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => signInWith('google')}
+            disabled={loading !== null}
+            className="order-1 flex items-center justify-center gap-3 w-full h-11 rounded-md border border-slate-800 bg-slate-800 font-medium text-sm text-white hover:bg-slate-700 transition-colors disabled:opacity-60"
+          >
+            {loading === 'google' ? (
+              <span className="animate-pulse">연결 중...</span>
+            ) : (
+              <>
+                <GoogleIcon />
+                Google로 계속하기
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <p className="text-center text-sm text-red-500">{error}</p>
+        )}
+
+        {/* 약관 안내 */}
+        <p className="text-center text-xs text-gray-400 leading-relaxed">
+          계속하면 사주로아의 사주이야기의{' '}
+          <Link href="/terms" className="underline underline-offset-2">
+            이용약관
+          </Link>{' '}
+          및{' '}
+          <Link href="/privacy" className="underline underline-offset-2">
+            개인정보 처리방침
+          </Link>
+          에 동의하는 것으로 간주됩니다.
+        </p>
+
+        {/* 뒤로 */}
+        <div className="text-center">
+          <Link href="/" className="text-sm text-gray-500 hover:text-black transition-colors">
+            ← 홈으로 돌아가기
+          </Link>
+        </div>
+      </div>
+
+      {showExternalBrowserOptions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-base font-semibold text-gray-900">
+                  외부 브라우저에서 로그인해 주세요
+                </p>
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  Threads, 인스타 같은 인앱브라우저에서는 Google 로그인이 차단될 수 있어요.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExternalBrowserOptions(false)}
+                className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                aria-label="닫기"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.5 4.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M13.5 4.5L4.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {isAndroid && (
+              <div className="mt-5 flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => openAndroidBrowser('com.android.chrome')}
+                  className="flex h-12 items-center justify-center rounded-xl border border-gray-900 bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+                >
+                  Chrome에서 로그인 화면 열기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAndroidBrowser('com.sec.android.app.sbrowser')}
+                  className="flex h-12 items-center justify-center rounded-xl border border-gray-900 bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+                >
+                  삼성인터넷에서 로그인 화면 열기
+                </button>
+              </div>
+            )}
+
+            {isIOS && (
+              <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 text-sm leading-6 text-gray-600">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M12 15V4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M8 8L12 4L16 8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M5 14.5V18C5 18.5523 5.44772 19 6 19H18C18.5523 19 19 18.5523 19 18V14.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p>
+                    하단의 같은 모양 버튼을 누른 뒤 <span className="font-medium text-gray-900">'외부 브라우저에서 열기'</span>를 눌러주세요.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <p className="mt-4 text-center text-[11px] font-medium tracking-[0.18em] text-gray-400">
+              또는
+            </p>
+
+            <button
+              type="button"
+              onClick={copyLoginLink}
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl border border-gray-900 bg-gray-900 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+            >
+              로그인 링크 복사
+            </button>
+
+            {copyMessage && (
+              <p className="mt-3 text-center text-xs leading-5 text-gray-500">{copyMessage}</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function KakaoIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9 1.5C4.858 1.5 1.5 4.134 1.5 7.38c0 2.073 1.32 3.894 3.318 4.962l-.846 3.15a.187.187 0 0 0 .288.2L8.1 13.38A9.16 9.16 0 0 0 9 13.26c4.142 0 7.5-2.634 7.5-5.88S13.142 1.5 9 1.5Z"
+        fill="#000000"
+      />
+    </svg>
+  )
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
+        fill="#34A853"
+      />
+      <path
+        d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z"
+        fill="#EA4335"
+      />
+    </svg>
+  )
+}

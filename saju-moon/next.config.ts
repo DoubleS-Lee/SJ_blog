@@ -17,6 +17,7 @@ const csp = [
 ].join('; ')
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   allowedDevOrigins: ['192.168.219.110'],
   images: {
     remotePatterns: [

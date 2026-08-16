@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { requireAdmin } from '@/lib/auth/admin'
 
@@ -20,9 +21,12 @@ const NAV_ITEMS = [
   { href: '/admin/settings', label: '설정' },
 ]
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+async function AdminGuard({ children }: { children: React.ReactNode }) {
   await requireAdmin()
+  return <>{children}</>
+}
 
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header style={{ background: '#F6EFE3', borderBottom: '1px solid rgba(30,45,77,0.10)' }}>
@@ -89,7 +93,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </header>
 
-      <main className="flex-1" style={{ background: '#F6EFE3' }}>{children}</main>
+      <main className="flex-1" style={{ background: '#F6EFE3' }}>
+        <Suspense fallback={null}>
+          <AdminGuard>{children}</AdminGuard>
+        </Suspense>
+      </main>
     </div>
   )
 }

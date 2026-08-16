@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { ANALYTICS_EVENT_NAMES, type AnalyticsTrackPayload } from '@/lib/analytics/schema'
+import { getSiteUrl } from '@/lib/seo/site'
 
 const ALLOWED_EVENT_NAMES = new Set<string>(ANALYTICS_EVENT_NAMES)
 const BOT_USER_AGENT_PATTERN =
@@ -34,6 +35,15 @@ function sanitizeProperties(input: unknown) {
   )
 }
 
+function isSameOriginRequest(request: Request) {
+  const siteOrigin = new URL(getSiteUrl()).origin
+  const origin = request.headers.get('origin')
+  if (origin) return origin === siteOrigin
+
+  const referer = request.headers.get('referer')
+  return !!referer && referer.startsWith(siteOrigin)
+}
+
 function isIgnoredAnalyticsRequest(request: Request) {
   const userAgent = request.headers.get('user-agent') ?? ''
   const purpose = request.headers.get('purpose') ?? request.headers.get('sec-purpose') ?? ''
@@ -52,6 +62,10 @@ function isIgnoredAnalyticsRequest(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: 'forbidden_origin' }, { status: 403 })
+  }
+
   let payload: AnalyticsTrackPayload
 
   try {

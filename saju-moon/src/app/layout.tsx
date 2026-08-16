@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import {
   Noto_Sans_KR,
   Nanum_Gothic,
@@ -11,12 +12,14 @@ import {
   Gothic_A1,
   Cormorant_Garamond,
 } from 'next/font/google'
+import { cookies } from 'next/headers'
 import './globals.css'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import Header from '@/components/layout/Header'
 import SocialChannelsFooter from '@/components/layout/SocialChannelsFooter'
 import { getSiteUrlObject, SITE_NAME } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase/server'
+import { hasSupabaseSessionCookie } from '@/lib/supabase/session-cookie'
 
 const notoSansKR = Noto_Sans_KR({
   subsets: ['latin'],
@@ -95,39 +98,61 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const supabase = await createClient()
+function HeaderFallback() {
+  return (
+    <header
+      className="sticky top-0 z-40 h-16.5"
+      style={{ background: '#F6EFE3', borderBottom: '1px solid rgba(30,45,77,0.08)' }}
+    />
+  )
+}
+
+async function HeaderAuthGate() {
   let user = null
   let isAdmin = false
 
-  try {
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser()
-    user = currentUser
+  if (hasSupabaseSessionCookie((await cookies()).getAll())) {
+    const supabase = await createClient()
 
-    if (user) {
-      const { data } = await supabase.from('users').select('is_admin').eq('id', user.id).maybeSingle()
-      isAdmin = Boolean(data?.is_admin)
-    }
-  } catch (error) {
-    const authCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : null
-    if (authCode !== 'refresh_token_not_found') {
-      throw error
+    try {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser()
+      user = currentUser
+
+      if (user) {
+        const { data } = await supabase.from('users').select('is_admin').eq('id', user.id).maybeSingle()
+        isAdmin = Boolean(data?.is_admin)
+      }
+    } catch (error) {
+      const authCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : null
+      if (authCode !== 'refresh_token_not_found') {
+        throw error
+      }
     }
   }
 
+  return <Header user={user} isAdmin={isAdmin} />
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="ko"
       className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${cormorantGaramond.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-(--font-noto-sans-kr)">
-        <AnalyticsTracker />
-        <Header user={user} isAdmin={isAdmin} />
-        <main className="flex-1">{children}</main>
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
+        <Suspense fallback={<HeaderFallback />}>
+          <HeaderAuthGate />
+        </Suspense>
+        <main className="flex-1">
+          <Suspense fallback={null}>{children}</Suspense>
+        </main>
         <footer
           className="mt-16 border-t"
           style={{ borderColor: 'rgba(30,45,77,0.08)', background: '#F6EFE3' }}

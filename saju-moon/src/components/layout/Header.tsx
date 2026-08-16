@@ -67,7 +67,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
         <div className="mx-auto flex h-16.5 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
           {/* 로고 */}
-          <Link href="/" className="flex items-center gap-2.5" style={{ color: '#1E2D4D' }}>
+          <Link href="/" prefetch={false} className="flex items-center gap-2.5" style={{ color: '#1E2D4D' }}>
             <LogoMark size={30} />
             <span
               className="text-[20px] font-bold tracking-[1px]"
@@ -83,6 +83,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={false}
                 className="text-[15px] transition-colors"
                 style={{ color: isActive(link.href) ? '#1E2D4D' : '#4a5673', fontWeight: isActive(link.href) ? 500 : 400 }}
                 onClick={() => trackMenuClick(link.label, link.href)}
@@ -98,6 +99,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
               <>
                 <Link
                   href="/mypage"
+                  prefetch={false}
                   className="text-[14px] transition-opacity hover:opacity-60"
                   style={{ color: '#4a5673' }}
                 >
@@ -117,6 +119,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
                 <Link
                   href="/login"
                   scroll={false}
+                  prefetch={false}
                   className="rounded-full px-4.5 py-2 text-[14px] transition-opacity hover:opacity-70"
                   style={{ border: '1px solid rgba(74,86,115,0.45)', color: '#4a5673' }}
                 >
@@ -125,6 +128,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
                 <Link
                   href="/login"
                   scroll={false}
+                  prefetch={false}
                   className="rounded-full px-4.5 py-2 text-[14px] transition-opacity hover:opacity-80"
                   style={{ border: '1px solid #C4A24E', color: '#8a6d28' }}
                 >
@@ -137,7 +141,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
           {/* 모바일 오른쪽: 로그인 + 햄버거 */}
           <div className="flex items-center gap-3 md:hidden">
             {!user && (
-              <Link href="/login" className="text-[13px]" style={{ color: '#4a5673' }}>
+              <Link href="/login" prefetch={false} className="text-[13px]" style={{ color: '#4a5673' }}>
                 로그인
               </Link>
             )}
@@ -185,6 +189,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
           >
             <Link
               href="/"
+              prefetch={false}
               className="flex items-center gap-2"
               style={{ color: '#D9C48A' }}
               onClick={() => setMenuOpen(false)}
@@ -217,6 +222,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={false}
                   className="flex items-center gap-3 py-4.5 text-[28px] font-bold transition-opacity hover:opacity-70"
                   style={{
                     fontFamily: 'var(--font-nanum-myeongjo), serif',
@@ -232,6 +238,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
             {user && (
               <Link
                 href="/mypage"
+                prefetch={false}
                 className="py-4.5 text-[28px] font-bold transition-opacity hover:opacity-70"
                 style={{
                   fontFamily: 'var(--font-nanum-myeongjo), serif',
@@ -251,6 +258,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
               <div className="flex gap-3">
                 <Link
                   href="/mypage"
+                  prefetch={false}
                   className="flex-1 rounded-full py-3.25 text-center text-[15px] transition-opacity hover:opacity-80"
                   style={{ border: '1px solid rgba(217,196,138,0.5)', color: '#F6EFE3' }}
                   onClick={() => setMenuOpen(false)}
@@ -271,6 +279,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
                 <Link
                   href="/login"
                   scroll={false}
+                  prefetch={false}
                   className="flex-1 rounded-full py-3.25 text-center text-[15px] transition-opacity hover:opacity-80"
                   style={{ border: '1px solid rgba(217,196,138,0.5)', color: '#F6EFE3' }}
                   onClick={() => setMenuOpen(false)}
@@ -280,6 +289,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
                 <Link
                   href="/login"
                   scroll={false}
+                  prefetch={false}
                   className="flex-1 rounded-full py-3.25 text-center text-[15px] font-bold transition-opacity hover:opacity-80"
                   style={{ background: '#C4A24E', color: '#182543' }}
                   onClick={() => setMenuOpen(false)}
