@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   allowedDevOrigins: ['192.168.219.110'],
   images: {
+    // 썸네일은 PostCard/FeaturedCard에서 max-w-6xl(1152px) 컨테이너 안 33~42% 폭으로만
+    // 렌더링됨 — 기본 deviceSizes(최대 3840px)를 그대로 두면 절대 안 쓰일 4K 변형까지
+    // Image Optimization Transformation 후보에 매번 포함돼 무료 한도를 낭비하게 된다.
+    deviceSizes: [400, 500, 800, 1000],
+    imageSizes: [96, 192, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',
