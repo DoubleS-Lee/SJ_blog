@@ -85,6 +85,12 @@ type AnalyticsSessionStartRow = {
   landing_page: string | null
 }
 
+type AnalyticsFirstSeenRow = {
+  created_at: string
+  user_id: string | null
+  visitor_id: string
+}
+
 type SearchParams = Promise<{
   startDate?: string
   endDate?: string
@@ -334,6 +340,14 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     .eq('event_name', 'session_start')
     .order('created_at', { ascending: true })
 
+  // 신규/재방문 판별용 — 선택 기간과 무관하게 "이 사람을 언제 처음 봤는지"를 알아야 하므로
+  // 하한 없이 종료일까지 전부 조회한다. rangeSessionRows(기간 내 표시용)와는 별도 쿼리로 분리.
+  let firstSeenQuery = supabaseAdmin
+    .from('analytics_events')
+    .select('created_at, user_id, visitor_id')
+    .eq('event_name', 'session_start')
+    .order('created_at', { ascending: true })
+
   if (!allPeriod) {
     overviewQuery = overviewQuery.gte('metric_date', startDate).lte('metric_date', endDate)
     pageTypeQuery = pageTypeQuery.gte('metric_date', startDate).lte('metric_date', endDate)
@@ -341,7 +355,8 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     menuQuery = menuQuery.gte('metric_date', startDate).lte('metric_date', endDate)
     channelQuery = channelQuery.gte('metric_date', startDate).lte('metric_date', endDate)
     postQuery = postQuery.gte('metric_date', startDate).lte('metric_date', endDate)
-    sessionHistoryQuery = sessionHistoryQuery.lte('created_at', endIso)
+    sessionHistoryQuery = sessionHistoryQuery.gte('created_at', startIso).lte('created_at', endIso)
+    firstSeenQuery = firstSeenQuery.lte('created_at', endIso)
   }
 
   const [
@@ -352,6 +367,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     { data: channelRowsData },
     { data: postRowsData },
     { data: sessionHistoryRowsData },
+    { data: firstSeenRowsData },
   ] = await Promise.all([
     overviewQuery,
     pageTypeQuery,
@@ -360,6 +376,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     channelQuery,
     postQuery,
     sessionHistoryQuery,
+    firstSeenQuery,
   ])
 
   const overviewRows = (overviewRowsData ?? []) as AnalyticsDailyOverviewRow[]
@@ -369,6 +386,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
   const channelDailyRows = (channelRowsData ?? []) as AnalyticsDailyChannelRow[]
   const postDailyRows = (postRowsData ?? []) as AnalyticsDailyPostRow[]
   const sessionHistoryRows = (sessionHistoryRowsData ?? []) as AnalyticsSessionStartRow[]
+  const firstSeenRows = (firstSeenRowsData ?? []) as AnalyticsFirstSeenRow[]
 
   const rangeSessionRows = allPeriod
     ? sessionHistoryRows
@@ -378,7 +396,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       })
 
   const firstSeenByPerson = new Map<string, string>()
-  for (const row of sessionHistoryRows) {
+  for (const row of firstSeenRows) {
     const personKey = getAnalyticsPersonKey(row)
     if (!firstSeenByPerson.has(personKey)) {
       firstSeenByPerson.set(personKey, row.created_at)
