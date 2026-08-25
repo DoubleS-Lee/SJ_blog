@@ -1,15 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { buildAbsoluteUrl } from '@/lib/seo/site'
-
-const CATEGORY_PATHS = [
-  '연애·궁합',
-  '커리어·직업',
-  '부자·재물',
-  '건강·생활',
-  '육아·자녀교육',
-  '기타',
-]
+import { POST_CATEGORIES } from '@/lib/posts/categories'
 
 function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
   return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
@@ -80,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
-    ...CATEGORY_PATHS.map((category) => ({
+    ...POST_CATEGORIES.map((category) => ({
       url: buildAbsoluteUrl(`/?category=${encodeURIComponent(category)}`),
       lastModified: now,
       changeFrequency: 'daily' as const,
@@ -88,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]
 
-  const { data: posts } = await applyPublishedVisibilityFilter(
+  const { data: posts, error } = await applyPublishedVisibilityFilter(
     supabase
       .from('posts')
       .select('slug, published_at, updated_at')
@@ -96,6 +88,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .order('published_at', { ascending: false }),
     now.toISOString(),
   )
+
+  // 조회 실패를 삼키면 정적 경로만 담긴 200 사이트맵이 나가고, 크롤러는 그것을
+  // "글이 전부 사라졌다"는 신호로 읽는다. 차라리 실패시켜 이전 사이트맵을 유지하게 한다.
+  if (error) {
+    throw new Error(`[sitemap] failed to load posts: ${error.message}`)
+  }
 
   const postRoutes: MetadataRoute.Sitemap =
     posts?.map((post) => ({

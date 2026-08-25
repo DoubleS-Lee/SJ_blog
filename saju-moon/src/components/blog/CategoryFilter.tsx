@@ -1,17 +1,18 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ALL_CATEGORIES_LABEL, POST_CATEGORIES } from '@/lib/posts/categories'
 
-const CATEGORIES = ['전체', '연애·궁합', '커리어·이직', '재물·투자', '건강·체질', '육아·자녀교육', '기타']
+const CATEGORIES = [ALL_CATEGORIES_LABEL, ...POST_CATEGORIES]
 
 export default function CategoryFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const current = searchParams.get('category') ?? '전체'
+  const current = searchParams.get('category') ?? ALL_CATEGORIES_LABEL
 
   function handleSelect(category: string) {
     const params = new URLSearchParams(searchParams.toString())
-    if (category === '전체') {
+    if (category === ALL_CATEGORIES_LABEL) {
       params.delete('category')
     } else {
       params.set('category', category)

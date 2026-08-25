@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { savePost, deletePost, type PostFormData } from '@/actions/savePost'
+import { POST_CATEGORIES } from '@/lib/posts/categories'
 import { buttonVariants } from '@/components/ui/button'
 import RichEditor from './RichEditor'
 import JudgmentEditor from './JudgmentEditor'
@@ -15,8 +16,6 @@ const MAX_POST_TAGS = 30
 function toJsonString(val: unknown): string {
   return JSON.stringify(val)
 }
-
-const CATEGORIES = ['연애·궁합', '커리어·이직', '재물·투자', '건강·체질', '육아·자녀교육', '기타'] as const
 
 interface Props {
   initialData?: {
@@ -355,7 +354,7 @@ export default function PostForm({ initialData }: Props) {
             onChange={(e) => setCategory(e.target.value as PostFormData['category'])}
             className={inputCls}
           >
-            {CATEGORIES.map((c) => (
+            {POST_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>

@@ -5,31 +5,12 @@ import CategoryFilter from '@/components/blog/CategoryFilter'
 import Pagination from '@/components/blog/Pagination'
 import BlogSearchForm from '@/components/blog/BlogSearchForm'
 import { buildAbsoluteUrl, SITE_NAME } from '@/lib/seo/site'
+import { isPostCategory, POST_CATEGORY_DESCRIPTIONS } from '@/lib/posts/categories'
 import {
   getCachedFeaturedPost,
   getCachedPublicPostsPage,
   getPublicPostsVisibilityIso,
 } from '@/lib/posts/public'
-
-const VALID_CATEGORIES = [
-  '연애·궁합',
-  '커리어·이직',
-  '재물·투자',
-  '건강·체질',
-  '육아·자녀교육',
-  '기타',
-] as const
-
-type Category = (typeof VALID_CATEGORIES)[number]
-
-const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
-  '연애·궁합': '연애 흐름, 궁합, 관계 해석처럼 감정과 인연에 관한 사주 콘텐츠를 모아봅니다.',
-  '커리어·이직': '직장, 이직, 커리어의 방향과 관련한 사주 해석 콘텐츠를 한눈에 살펴볼 수 있습니다.',
-  '재물·투자': '재물 흐름, 투자 타이밍, 돈의 방향과 연결되는 사주 콘텐츠를 모아봅니다.',
-  '건강·체질': '체질과 건강, 컨디션 관리에 도움이 되는 사주 콘텐츠를 확인해 보세요.',
-  '육아·자녀교육': '자녀 성향, 교육 방향, 육아 고민과 연결되는 사주 콘텐츠를 모아봅니다.',
-  기타: '일상 속 다양한 사주 이야기와 해석 콘텐츠를 폭넓게 살펴볼 수 있습니다.',
-}
 
 interface Props {
   searchParams: Promise<{ category?: string; page?: string; q?: string }>
@@ -46,7 +27,7 @@ function sanitizeLikeQuery(value: string) {
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { category, page, q } = await searchParams
   const currentPage = Math.max(1, parseInt(page ?? '1'))
-  const validCategory = VALID_CATEGORIES.includes(category as Category) ? (category as Category) : undefined
+  const validCategory = isPostCategory(category) ? category : undefined
   const queryText = normalizeSearchQuery(q)
 
   const titleBase = validCategory ? `${validCategory} 블로그` : '블로그'
@@ -55,7 +36,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const description = queryText
     ? `'${queryText}' 검색 결과를 모아봅니다. 사주 해석과 궁합, 재물, 건강 관련 글을 빠르게 찾아보세요.`
     : validCategory
-      ? CATEGORY_DESCRIPTIONS[validCategory]
+      ? POST_CATEGORY_DESCRIPTIONS[validCategory]
       : '사주 해석과 궁합, 재물, 건강 등 다양한 주제를 블로그 글로 큐레이션합니다.'
 
   const query = new URLSearchParams()
@@ -91,7 +72,7 @@ export default async function BlogListPage({ searchParams }: Props) {
   const searchKeyword = sanitizeLikeQuery(queryText)
   const nowIso = getPublicPostsVisibilityIso()
 
-  const validCategory = VALID_CATEGORIES.includes(category as Category) ? (category as Category) : undefined
+  const validCategory = isPostCategory(category) ? category : undefined
   const [featured, { posts: visiblePosts, hasNextPage, totalPages }] = await Promise.all([
     !validCategory && currentPage === 1 && !queryText ? getCachedFeaturedPost(nowIso) : Promise.resolve(null),
     getCachedPublicPostsPage(validCategory, searchKeyword, currentPage, nowIso),

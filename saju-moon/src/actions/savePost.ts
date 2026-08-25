@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Json } from '@/types/supabase'
+import type { PostCategory } from '@/lib/posts/categories'
 import type { JudgmentRules } from '@/types/judgment'
 import { nanoid } from 'nanoid'
 
@@ -11,7 +12,7 @@ export interface PostFormData {
   title: string
   summary: string
   thumbnail_url: string | null
-  category: '연애·궁합' | '커리어·이직' | '재물·투자' | '건강·체질' | '육아·자녀교육' | '기타'
+  category: PostCategory
   // Next.js Server Action이 깊은 중첩 객체의 attrs를 드롭하는 문제를 피하기 위해 JSON 문자열로 전달
   content: string
   judgment_rules: JudgmentRules | null
