@@ -28,6 +28,20 @@ export async function saveSaju(input: SaveSajuInput): Promise<{ error?: string }
     return { error: '사주 계산 중 오류가 발생했습니다. 입력값을 확인해 주세요.' }
   }
 
+  // 댓글에 비정규화해 둔 author_ilgan을 나중에 갱신할지 판단하려면 덮어쓰기 전 값이 필요하다.
+  // 조회에 실패하면 null로 두고 아래에서 그냥 갱신을 실행한다 — 갱신은 멱등이라 손해가 없다.
+  const { data: previousSaju, error: previousSajuErr } = await supabase
+    .from('user_saju')
+    .select('ilgan')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (previousSajuErr) {
+    console.error('[saveSaju] previous ilgan lookup error:', previousSajuErr)
+  }
+
+  const previousIlgan = previousSaju?.ilgan ?? null
+
   const now = new Date().toISOString()
 
   const { error: sajuErr } = await supabase
@@ -127,6 +141,37 @@ export async function saveSaju(input: SaveSajuInput): Promise<{ error?: string }
   if (sipsungErr) {
     console.error('[saveSaju] user_saju_sipsung upsert error:', sipsungErr)
     return { error: '십성 정보를 저장하지 못했습니다.' }
+  }
+
+  // author_name/author_avatar_url과 마찬가지로 author_ilgan도 "현재 값의 사본"이다
+  // (20260418000006 마이그레이션이 과거 댓글 전부에 당시의 현재 일간을 밀어넣었다 —
+  //  주석의 "스냅샷"이라는 표현과 달리 시점 기록이 아니다).
+  // 생일 정정은 곧 이전 입력이 틀렸다는 뜻이므로 옛 일간은 보존할 가치가 없다.
+  // 일간이 실제로 바뀐 경우에만 쓴다 — 생시만 고치거나 같은 값을 재저장하는 경우가 많다.
+  if (previousIlgan !== result.ilgan) {
+    // updated_at은 일부러 건드리지 않는다 — CommentsSection이 updated_at !== created_at으로
+    // "수정됨" 배지를 띄우므로, 표시용 아바타만 바꾸고 본문은 그대로인 댓글이
+    // 편집된 것처럼 보이게 된다.
+    const [postCommentResult, consultationCommentResult] = await Promise.all([
+      supabase
+        .from('post_comments')
+        .update({ author_ilgan: result.ilgan })
+        .eq('user_id', user.id),
+      supabase
+        .from('consultation_comments')
+        .update({ author_ilgan: result.ilgan })
+        .eq('user_id', user.id),
+    ])
+
+    // 만세력 본체는 이미 저장됐다. 표시용 사본 갱신 실패로 저장 전체를 되돌리지 않고
+    // 로그만 남긴다 — setProfileAvatar/updateNickname과 같은 방침.
+    if (postCommentResult.error) {
+      console.error('[saveSaju][post_comments]', postCommentResult.error)
+    }
+
+    if (consultationCommentResult.error) {
+      console.error('[saveSaju][consultation_comments]', consultationCommentResult.error)
+    }
   }
 
   redirect('/mypage')

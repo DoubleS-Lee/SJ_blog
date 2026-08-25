@@ -29,14 +29,16 @@ export async function setProfileAvatar(avatarUrl: string | null): Promise<{ erro
     return { error: '프로필 이미지를 저장하지 못했습니다.' }
   }
 
+  // updated_at은 건드리지 않는다 — CommentsSection이 updated_at !== created_at으로 "수정됨"
+  // 배지를 띄우므로, 아바타만 바뀐 댓글이 본문을 고친 것처럼 보이게 된다.
   const [postCommentResult, consultationCommentResult] = await Promise.all([
     supabase
       .from('post_comments')
-      .update({ author_avatar_url: normalizedAvatarUrl, updated_at: now })
+      .update({ author_avatar_url: normalizedAvatarUrl })
       .eq('user_id', user.id),
     supabase
       .from('consultation_comments')
-      .update({ author_avatar_url: normalizedAvatarUrl, updated_at: now })
+      .update({ author_avatar_url: normalizedAvatarUrl })
       .eq('user_id', user.id),
   ])
 
@@ -49,7 +51,6 @@ export async function setProfileAvatar(avatarUrl: string | null): Promise<{ erro
   }
 
   revalidatePath('/mypage')
-  revalidatePath('/posts', 'layout')
   revalidatePath('/counsel', 'layout')
 
   return {}
@@ -90,11 +91,11 @@ export async function updateNickname(nickname: string): Promise<{ error?: string
     return { error: '닉네임을 저장하지 못했습니다.' }
   }
 
+  // updated_at 제외 — 위 setProfileAvatar와 같은 이유("수정됨" 오표시 방지).
   const { error: postCommentsError } = await supabase
     .from('post_comments')
     .update({
       author_name: normalizedNickname,
-      updated_at: now,
     })
     .eq('user_id', user.id)
 
@@ -102,8 +103,10 @@ export async function updateNickname(nickname: string): Promise<{ error?: string
     console.error('[updateNickname][post_comments]', postCommentsError)
   }
 
+  // '/posts'는 일부러 제외한다 — 글 상세에서 캐시되는 건 getPublicPost의 공개 필드뿐이고,
+  // 닉네임/아바타가 쓰이는 개인화 영역은 쿠키를 읽는 동적 렌더라 무효화할 대상이 없다.
+  // 넣으면 프로필 저장 한 번에 전체 글 캐시가 날아가고 다음 방문자가 콜드 DB 읽기를 낸다.
   revalidatePath('/mypage')
-  revalidatePath('/posts', 'layout')
   revalidatePath('/counsel', 'layout')
   revalidatePath('/compatibility')
   revalidatePath('/admin/counsel')

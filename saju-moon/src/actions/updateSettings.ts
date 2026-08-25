@@ -24,9 +24,11 @@ async function requireAdmin() {
   return { supabase, isAdmin: !!profile?.is_admin }
 }
 
+// '/posts'는 일부러 제외한다 — site_settings 값(grade_separation_enabled, ilgan_avatar_urls 등)은
+// 전부 글 상세의 동적 영역에서 매 요청 읽히므로 캐시된 사본이 없다. 넣으면 설정 한 번 바꿀 때마다
+// 전체 글의 'use cache' 엔트리만 날아간다.
 function revalidateSettingTargets() {
   revalidatePath('/admin/settings')
-  revalidatePath('/posts', 'layout')
   revalidatePath('/counsel', 'layout')
   revalidatePath('/taekil', 'layout')
 }
@@ -79,7 +81,6 @@ export async function setGradeSeparation(enabled: boolean): Promise<{ error?: st
   }
 
   revalidatePath('/admin/settings')
-  revalidatePath('/posts', 'layout')
   return {}
 }
 
