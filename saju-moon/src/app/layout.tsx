@@ -21,6 +21,10 @@ import { getSiteUrlObject, SITE_NAME } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase/server'
 import { hasSupabaseSessionCookie } from '@/lib/supabase/session-cookie'
 
+// 본문 기본 폰트(Noto Sans KR)만 preload를 켜둔다.
+// next/font는 preload 기본값이 true인데, 10종 전부 <html>에 변수로 붙어 있어
+// 실제로 그 폰트를 쓰는 화면이 아니어도 매 페이지가 467개 파일(5.3MB)을 미리 받고 있었다.
+// 장식용 폰트는 해제 — 선언은 그대로 남고, 해당 폰트가 실제로 쓰이는 순간에만 받는다.
 const notoSansKR = Noto_Sans_KR({
   subsets: ['latin'],
   weight: ['400', '500', '700'],
@@ -31,14 +35,18 @@ const doHyeon = Do_Hyeon({
   subsets: ['latin'],
   weight: ['400'],
   variable: '--font-do-hyeon',
+  preload: false,
 })
 
 const nanumGothic = Nanum_Gothic({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-nanum-gothic',
+  preload: false,
 })
 
+// Nanum Myeongjo는 preload 유지 — 홈 상단 "블로그" 제목 등 접힘 위 요소에 쓰여
+// 지연 로딩하면 폰트 전환이 눈에 띈다. 코드 13곳으로 장식용 중 사용 빈도도 가장 높다.
 const nanumMyeongjo = Nanum_Myeongjo({
   subsets: ['latin'],
   weight: ['400', '700', '800'],
@@ -49,26 +57,31 @@ const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-cormorant-garamond',
+  preload: false,
 })
 
 const jua = Jua({
   subsets: ['latin'],
   weight: ['400'],
   variable: '--font-jua',
+  preload: false,
 })
 
 const blackHanSans = Black_Han_Sans({
   subsets: ['latin'],
   weight: ['400'],
   variable: '--font-black-han-sans',
+  preload: false,
 })
 
 const gaegu = Gaegu({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-gaegu',
+  preload: false,
 })
 
+// Sunflower는 subsets 옵션이 없는 폰트라 preload 설정 자체를 받지 않는다(원래도 preload 대상 아님).
 const sunflower = Sunflower({
   weight: ['300', '500', '700'],
   variable: '--font-sunflower',
@@ -78,6 +91,7 @@ const gothicA1 = Gothic_A1({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-gothic-a1',
+  preload: false,
 })
 
 export const metadata: Metadata = {
