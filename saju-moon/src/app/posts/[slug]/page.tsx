@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
+import { cacheTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import GuestCTA from '@/components/blog/GuestCTA'
@@ -177,17 +178,28 @@ function buildJudgmentUserDataFromCalculated(result: SajuResult): JudgmentUserDa
  */
 async function getPublicPost(slug: string) {
   'use cache'
+  // savePost/deletePost의 revalidateTag('posts')가 이 엔트리까지 무효화하도록 태깅.
+  // 태그가 없으면 글을 발행해도 상세 페이지 캐시가 그대로 남아, 발행 직전에 채워진
+  // "아직 없는 글" 결과(=404)가 계속 서빙된다.
+  cacheTag('posts')
 
   const nowIso = new Date().toISOString()
-  const { data: post } = await applyPublishedVisibilityFilter(
+  const { data: post, error } = await applyPublishedVisibilityFilter(
     supabaseAdmin
       .from('posts')
       .select('id, slug, title, summary, content, thumbnail_url, category, published_at, updated_at, target_year, judgment_rules, judgment_detail, view_count, like_count, tags')
       .eq('slug', slug)
       .eq('is_published', true)
-      .single(),
+      .maybeSingle(),
     nowIso,
   )
+
+  // 조회 자체가 실패한 것(네트워크·Supabase 장애)을 null로 흘려보내면 notFound()가 되고,
+  // 그 404가 'use cache' 엔트리로 굳어버린다(default 프로필: revalidate 15분 / expire 없음).
+  // 실패는 캐시하지 말고 던져서 다음 요청이 다시 시도하게 한다.
+  if (error) {
+    throw new Error(`[getPublicPost] failed to load post "${slug}": ${error.message}`)
+  }
 
   return post
 }

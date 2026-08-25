@@ -16,6 +16,11 @@ const csp = [
   "frame-src 'self' https://*.kakao.com https://*.kakaocdn.net",
 ].join('; ')
 
+// 배포 중 잠깐 뜬 404/에러 화면이 사용자 브라우저 디스크 캐시에 눌러앉으면
+// 하드 리로드(Ctrl+Shift+R) 전까지 계속 404가 보인다. Vercel이 프리렌더된 /404·/500을
+// 정적 자산으로 내보낼 때 붙는 `public, max-age=0, must-revalidate`를 덮어쓴다.
+const NO_STORE = 'no-store, must-revalidate'
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   allowedDevOrigins: ['192.168.219.110'],
@@ -35,6 +40,18 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        // 라우트에 매칭되지 않는 주소가 프리렌더된 /404 정적 자산으로 서빙되는 경로.
+        // notFound()가 /posts/[slug] 같은 실제 경로에서 던져지는 경우는 요청 경로가
+        // /404가 아니라 여기 매칭되지 않는다 — 그쪽은 app/not-found.tsx 렌더가
+        // 동적 홀을 가진 PPR 응답이라 Next가 `private, no-cache, no-store, ...`를 직접 붙인다.
+        source: '/404',
+        headers: [{ key: 'Cache-Control', value: NO_STORE }],
+      },
+      {
+        source: '/500',
+        headers: [{ key: 'Cache-Control', value: NO_STORE }],
+      },
       {
         source: '/(.*)',
         headers: [

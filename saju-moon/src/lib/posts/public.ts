@@ -13,7 +13,7 @@ export function getPublicPostsVisibilityIso() {
 
 const getFeaturedPostCached = unstable_cache(
   async (nowIso: string) => {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('posts')
       .select(PUBLIC_POST_LIST_SELECT)
       .eq('is_published', true)
@@ -22,6 +22,11 @@ const getFeaturedPostCached = unstable_cache(
       .order('published_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+
+    // 조회 실패를 null로 흘리면 "피처드 글 없음"이 60초간 캐시된다. 실패는 캐시하지 않는다.
+    if (error) {
+      throw new Error(`[getFeaturedPost] ${error.message}`)
+    }
 
     return data
   },
@@ -49,9 +54,14 @@ const getPublicPostsPageCached = unstable_cache(
     }
 
     const from = (currentPage - 1) * PUBLIC_POST_PAGE_SIZE
-    const { data, count } = await query
+    const { data, count, error } = await query
       .order('published_at', { ascending: false })
       .range(from, from + PUBLIC_POST_PAGE_SIZE)
+
+    // 실패를 빈 배열로 흘리면 "글이 없습니다" 화면이 60초간 캐시돼 목록 전체가 사라진다.
+    if (error) {
+      throw new Error(`[getPublicPostsPage] ${error.message}`)
+    }
 
     const posts = data ?? []
     const totalCount = count ?? 0
