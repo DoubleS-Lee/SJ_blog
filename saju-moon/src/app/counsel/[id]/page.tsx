@@ -33,7 +33,12 @@ export default async function ConsultationDetailPage({
 
   if (!user) redirect('/login')
 
-  const [{ data: consultation }, { data: profile }, { data: comments }, { data: settings }] = await Promise.all([
+  const [
+    { data: consultation, error: consultationError },
+    { data: profile, error: profileError },
+    { data: comments },
+    { data: settings },
+  ] = await Promise.all([
     supabase
       .from('consultations')
       .select('id, user_id, title, body, status, content_usage_agreed, content_usage_agreed_at, content_usage_version, admin_note, anonymized_content, is_external_use_ready, created_at, updated_at')
@@ -47,6 +52,14 @@ export default async function ConsultationDetailPage({
       .order('created_at', { ascending: true }),
     supabase.from('site_settings').select('ilgan_avatar_urls').eq('id', 1).maybeSingle(),
   ])
+
+  // 조회 실패와 "행이 없음"을 구분한다 — maybeSingle()은 둘 다 data: null로 돌려주므로
+  // error를 보지 않으면 DB 장애가 "페이지를 찾을 수 없습니다"로 표시된다.
+  if (consultationError || profileError) {
+    throw new Error(
+      `[CounselDetailPage] failed to load consultation "${id}": ${(consultationError ?? profileError)!.message}`,
+    )
+  }
 
   if (!consultation || !profile) notFound()
 

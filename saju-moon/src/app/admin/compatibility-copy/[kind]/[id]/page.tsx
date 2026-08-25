@@ -88,21 +88,28 @@ export default async function AdminCompatibilityCopyDetailPage({ params }: Props
     revalidatePath('/compatibility/year')
   }
 
-  const { data: fortuneRow } = fortuneKind
+  const { data: fortuneRow, error: fortuneError } = fortuneKind
     ? await supabase
         .from('compatibility_fortune_copy')
         .select('*')
         .eq('id', id)
         .maybeSingle()
-    : { data: null }
+    : { data: null, error: null }
 
-  const { data: totalRow } = !fortuneKind
+  const { data: totalRow, error: totalError } = !fortuneKind
     ? await supabase
         .from('compatibility_copy')
         .select('*')
         .eq('id', id)
         .maybeSingle()
-    : { data: null }
+    : { data: null, error: null }
+
+  // 조회 실패는 404가 아니라 에러로 드러내야 관리자가 원인을 안다.
+  if (fortuneError || totalError) {
+    throw new Error(
+      `[AdminCompatibilityCopyDetailPage] failed to load copy "${id}": ${(fortuneError ?? totalError)!.message}`,
+    )
+  }
 
   if (fortuneKind && !fortuneRow) {
     notFound()

@@ -17,11 +17,16 @@ export default async function EditPostPage({ params, searchParams }: Props) {
   const { importWarning, imported } = await searchParams
   const supabase = await createClient()
 
-  const { data: post } = await supabase
+  const { data: post, error } = await supabase
     .from('posts')
     .select('id, title, summary, thumbnail_url, category, content, judgment_rules, target_year, is_featured, is_published, published_at, scheduled_publish_at, tags')
     .eq('id', id)
-    .single()
+    .maybeSingle()
+
+  // 조회 실패를 notFound()로 흘리면 관리자에게 "글이 삭제됐다"로 보인다.
+  if (error) {
+    throw new Error(`[EditPostPage] failed to load post "${id}": ${error.message}`)
+  }
 
   if (!post) notFound()
 

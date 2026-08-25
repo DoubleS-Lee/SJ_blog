@@ -48,11 +48,15 @@ export default async function AdminTaekilCopyDetailPage({ params }: Props) {
     revalidatePath('/taekil')
   }
 
-  const { data: row } = await supabase
+  const { data: row, error: rowError } = await supabase
     .from('taekil_copy')
     .select('*')
     .eq('id', id)
     .maybeSingle()
+
+  if (rowError) {
+    throw new Error(`[AdminTaekilCopyDetailPage] failed to load copy "${id}": ${rowError.message}`)
+  }
 
   if (!row) {
     notFound()
