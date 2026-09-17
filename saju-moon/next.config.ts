@@ -11,7 +11,7 @@ const csp = [
   "img-src 'self' data: blob: https://*.supabase.co",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://t1.kakaocdn.net`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://t1.kakaocdn.net https://pagead2.googlesyndication.com`,
   `connect-src 'self' https://*.supabase.co https://t1.kakaocdn.net${isDev ? " ws: wss:" : ''}`,
   "frame-src 'self' https://*.kakao.com https://*.kakaocdn.net",
 ].join('; ')
