@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Suspense } from 'react'
 import {
   Noto_Sans_KR,
@@ -158,6 +159,13 @@ export default function RootLayout({
       className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${cormorantGaramond.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-(--font-noto-sans-kr)">
+        <Script
+          id="google-adsense"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5713452367621432"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <Suspense fallback={null}>
           <AnalyticsTracker />
         </Suspense>
