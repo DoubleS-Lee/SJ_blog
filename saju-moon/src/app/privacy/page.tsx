@@ -1,6 +1,7 @@
 export const metadata = {
   title: '개인정보처리방침',
   description: '사주로아의 사주이야기 개인정보처리방침입니다.',
+  alternates: { canonical: '/privacy' },
 }
 
 const EFFECTIVE_DATE = '2026년 4월 12일'
@@ -116,6 +117,29 @@ export default function PrivacyPage() {
             서비스는 로그인 상태 유지와 서비스 개선을 위해 쿠키를 사용할 수 있습니다. 브라우저
             설정에서 쿠키 저장을 거부할 수 있으나, 일부 기능 이용에 제한이 있을 수 있습니다.
           </p>
+          <p className="mt-3 text-gray-600">
+            서비스는 Google을 포함한 제3자 광고 파트너의 서비스를 이용할 수 있습니다. 이러한
+            제3자는 이용자의 관심사에 기반한 광고를 제공하기 위해 서비스 및 다른 웹사이트 방문
+            기록에 대한 쿠키(예: DoubleClick 쿠키)를 사용할 수 있습니다. 이용자는{' '}
+            <a
+              href="https://adssettings.google.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Google 광고 설정
+            </a>
+            에서 맞춤 광고를 비활성화할 수 있으며,{' '}
+            <a
+              href="https://www.aboutads.info/choices/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              aboutads.info
+            </a>
+            를 통해 다른 광고 제공업체의 맞춤 광고 설정도 관리할 수 있습니다.
+          </p>
         </section>
 
         <section>
@@ -125,8 +149,8 @@ export default function PrivacyPage() {
               <span className="font-medium">담당자:</span> 사주로아의 사주이야기 운영팀
             </p>
             <p className="mt-1">
-              <span className="font-medium">문의:</span> 서비스 내 문의 기능 또는 인스타그램
-              @saju.roa
+              <span className="font-medium">문의:</span>{' '}
+              <a href="/contact" className="underline">문의하기 안내</a> 또는 인스타그램 @saju.roa
             </p>
           </div>
         </section>

@@ -48,6 +48,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title,
     description,
+    robots: queryText ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: canonicalPath,
     },
@@ -88,6 +89,20 @@ export default async function BlogListPage({ searchParams }: Props) {
           블로그
         </h1>
 
+        {!validCategory && currentPage === 1 && !queryText ? (
+          <div className="max-w-3xl text-sm leading-7" style={{ color: '#4a5673' }}>
+            <p>
+              사주로아는 명리학의 개념을 일상 속 관계와 선택에 연결해 설명하는 사주 콘텐츠 공간입니다.
+              블로그 글은 로그인 없이 읽을 수 있고, 회원은 저장한 사주로 글의 해석 조건에 해당하는지 확인할 수 있습니다.
+            </p>
+            <p className="mt-2">
+              <a href="/about" className="underline underline-offset-4">사주로아 소개와 이용 안내</a>
+              {' · '}
+              <a href="/contact" className="underline underline-offset-4">콘텐츠 문의·오류 제보</a>
+            </p>
+          </div>
+        ) : null}
+
         <div className="flex justify-end">
           <div className="w-5/9 max-w-md">
             <BlogSearchForm category={validCategory} defaultQuery={queryText} />
@@ -98,7 +113,7 @@ export default async function BlogListPage({ searchParams }: Props) {
 
         {queryText ? (
           <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-900">'{queryText}'</span> 검색 결과입니다.
+            <span className="font-medium text-gray-900">&apos;{queryText}&apos;</span> 검색 결과입니다.
           </p>
         ) : null}
       </div>

@@ -1,9 +1,11 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
-import { cacheTag } from 'next/cache'
+import { unstable_cache } from 'next/cache'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import GuestCTA from '@/components/blog/GuestCTA'
+import BlogAd from '@/components/blog/BlogAd'
 import GradeCTA from '@/components/blog/GradeCTA'
 import CommentsSection from '@/components/blog/CommentsSection'
 import PostEngagementBar from '@/components/blog/PostEngagementBar'
@@ -36,29 +38,6 @@ function decodeSlug(slug: string) {
     return decodeURIComponent(slug)
   } catch {
     return slug
-  }
-}
-
-function splitContentForInlineGuestCta(content: JSONContent | null): {
-  before: JSONContent
-  after: JSONContent
-} | null {
-  if (!content || content.type !== 'doc' || !Array.isArray(content.content)) return null
-  if (content.content.length < 4) return null
-
-  const splitIndex = Math.min(
-    content.content.length - 2,
-    Math.max(2, Math.ceil(content.content.length * 0.35)),
-  )
-
-  const beforeContent = content.content.slice(0, splitIndex)
-  const afterContent = content.content.slice(splitIndex)
-
-  if (beforeContent.length === 0 || afterContent.length === 0) return null
-
-  return {
-    before: { ...content, content: beforeContent },
-    after: { ...content, content: afterContent },
   }
 }
 
@@ -176,13 +155,7 @@ function buildJudgmentUserDataFromCalculated(result: SajuResult): JudgmentUserDa
  * service-role 클라이언트를 써서 쿠키(요청별 동적 값)에 의존하지 않게 하고,
  * 공개 노출 조건(is_published + 발행시각)은 쿼리에서 그대로 명시적으로 재현한다.
  */
-async function getPublicPost(slug: string) {
-  'use cache'
-  // savePost/deletePost의 revalidateTag('posts')가 이 엔트리까지 무효화하도록 태깅.
-  // 태그가 없으면 글을 발행해도 상세 페이지 캐시가 그대로 남아, 발행 직전에 채워진
-  // "아직 없는 글" 결과(=404)가 계속 서빙된다.
-  cacheTag('posts')
-
+const getPublicPost = unstable_cache(async (slug: string) => {
   const nowIso = new Date().toISOString()
   const { data: post, error } = await applyPublishedVisibilityFilter(
     supabaseAdmin
@@ -195,14 +168,14 @@ async function getPublicPost(slug: string) {
   )
 
   // 조회 자체가 실패한 것(네트워크·Supabase 장애)을 null로 흘려보내면 notFound()가 되고,
-  // 그 404가 'use cache' 엔트리로 굳어버린다(default 프로필: revalidate 15분 / expire 없음).
+  // 그 404가 캐시에 굳어버릴 수 있다.
   // 실패는 캐시하지 말고 던져서 다음 요청이 다시 시도하게 한다.
   if (error) {
     throw new Error(`[getPublicPost] failed to load post "${slug}": ${error.message}`)
   }
 
   return post
-}
+}, ['public-post-detail'], { tags: ['posts'], revalidate: 60 })
 
 export async function generateMetadata({ params }: Props) {
   const { slug: rawSlug } = await params
@@ -395,7 +368,8 @@ async function PostPersonalizedSection({ post }: { post: PublicPost }) {
 
   const showTopJudgmentNotice = hasJudgmentTarget && matchedResults.length > 0
   const ctaMode = !isLoggedIn ? 'login' : !hasSavedSaju ? 'saju' : null
-  const inlineGuestSplit = ctaMode ? splitContentForInlineGuestCta(post.content as JSONContent) : null
+  const adSlot = process.env.ADSENSE_BLOG_SLOT?.trim() ?? ''
+  const adsEnabled = process.env.ADSENSE_ENABLED === 'true' && /^\d+$/.test(adSlot)
 
   const { data: commentRows } = await supabase
     .from('post_comments')
@@ -439,12 +413,6 @@ async function PostPersonalizedSection({ post }: { post: PublicPost }) {
     <>
       <div className="flex flex-col gap-12 lg:flex-row">
         <article className="w-full lg:w-[60%]">
-          {ctaMode ? (
-            <div className="mb-8">
-              <GuestCTA mode={ctaMode} />
-            </div>
-          ) : null}
-
           {showTopJudgmentNotice && (
             <div className="mb-8 flex flex-col gap-3">
               {Array.from(groupedMatches.entries()).map(([groupIndex, { names, detail }]) => (
@@ -480,25 +448,21 @@ async function PostPersonalizedSection({ post }: { post: PublicPost }) {
             </div>
           )}
 
-          {inlineGuestSplit ? (
-            <>
-              <div className="prose prose-gray max-w-none">
-                <TiptapRenderer content={inlineGuestSplit.before} />
-              </div>
+          <div className="prose prose-gray max-w-none">
+            <TiptapRenderer content={post.content as JSONContent} />
+          </div>
 
-              <div className="my-10">
-                <GuestCTA variant="inline" mode={ctaMode ?? 'login'} />
-              </div>
-
-              <div className="prose prose-gray max-w-none">
-                <TiptapRenderer content={inlineGuestSplit.after} />
-              </div>
-            </>
-          ) : (
-            <div className="prose prose-gray max-w-none">
-              <TiptapRenderer content={post.content as JSONContent} />
+          <p className="mt-8 border-t border-gray-100 pt-4 text-xs leading-6 text-gray-500">
+            이 글은 전통 명리학의 관점에서 작성한 해석입니다. 개인의 건강, 투자 성과나 미래를 확정하지 않으며 전문적인 진단과 자문을 대신하지 않습니다.
+            {' '}<a href="/about" className="underline">해석의 활용 범위</a>
+            {' · '}<a href="/contact" className="underline">내용 문의·오류 제보</a>
+          </p>
+          {adsEnabled ? <BlogAd key={post.id} slot={adSlot} /> : null}
+          {ctaMode ? (
+            <div className="mt-10">
+              <GuestCTA variant="inline" mode={ctaMode} />
             </div>
-          )}
+          ) : null}
 
         </article>
 
@@ -546,6 +510,7 @@ function PostPersonalizedFallback({ post }: { post: PublicPost }) {
 }
 
 export default async function PostDetailPage({ params }: Props) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   const { slug: rawSlug } = await params
   const slug = decodeSlug(rawSlug)
   const post = await getPublicPost(slug)
@@ -568,6 +533,7 @@ export default async function PostDetailPage({ params }: Props) {
     author: {
       '@type': 'Organization',
       name: SITE_NAME,
+      url: buildAbsoluteUrl('/about'),
     },
     publisher: {
       '@type': 'Organization',
@@ -581,7 +547,8 @@ export default async function PostDetailPage({ params }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema).replace(/</g, '\\u003c') }}
       />
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
@@ -600,10 +567,10 @@ export default async function PostDetailPage({ params }: Props) {
 
       <div className="mb-10 flex items-center gap-3 border-b border-gray-100 pb-6">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
-          문
+          로아
         </div>
         <span className="text-sm text-gray-500">
-          사주로아의 사주이야기
+          <a href="/about" className="underline underline-offset-4">사주로아 · 로아</a>
           {post.published_at && ` · ${formatDate(post.published_at)}`}
         </span>
       </div>

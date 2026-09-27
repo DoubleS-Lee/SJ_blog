@@ -12,11 +12,11 @@ import {
   Gothic_A1,
   Cormorant_Garamond,
 } from 'next/font/google'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import './globals.css'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import Header from '@/components/layout/Header'
-import SocialChannelsFooter from '@/components/layout/SocialChannelsFooter'
+import ScriptNonceProvider from '@/components/common/ScriptNonceProvider'
 import { getSiteUrlObject, SITE_NAME } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase/server'
 import { hasSupabaseSessionCookie } from '@/lib/supabase/session-cookie'
@@ -110,6 +110,9 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
   },
+  other: {
+    'google-adsense-account': 'ca-pub-5713452367621432',
+  },
 }
 
 function HeaderFallback() {
@@ -149,22 +152,17 @@ async function HeaderAuthGate() {
   return <Header user={user} isAdmin={isAdmin} />
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get('x-nonce') ?? ''
   return (
     <html
       lang="ko"
       className={`${notoSansKR.variable} ${doHyeon.variable} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${cormorantGaramond.variable} ${jua.variable} ${blackHanSans.variable} ${gaegu.variable} ${sunflower.variable} ${gothicA1.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5713452367621432"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body className="flex min-h-full flex-col font-(--font-noto-sans-kr)">
+        <ScriptNonceProvider nonce={nonce}>
         <Suspense fallback={null}>
           <AnalyticsTracker />
         </Suspense>
@@ -199,13 +197,18 @@ export default function RootLayout({
               <a href="https://www.threads.com/@saju.roa" target="_blank" rel="noreferrer" className="transition-opacity hover:opacity-60">Threads</a>
             </div>
             {/* 저작권 */}
+            <nav aria-label="사이트 안내" className="mb-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm" style={{ color: '#4a5673' }}>
+              <a href="/about">사주로아 소개</a>
+              <a href="/contact">문의하기</a>
+              <a href="/terms">이용약관</a>
+              <a href="/privacy">개인정보처리방침</a>
+            </nav>
             <p style={{ fontSize: 12, color: '#a39c8c' }}>
               Copyright 2026 {SITE_NAME}. All rights reserved.
-              {' | '}
-              <a href="/privacy" className="transition-opacity hover:opacity-60" style={{ color: '#a39c8c' }}>개인정보처리방침</a>
             </p>
           </div>
         </footer>
+        </ScriptNonceProvider>
       </body>
     </html>
   )

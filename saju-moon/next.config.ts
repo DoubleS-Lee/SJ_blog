@@ -1,28 +1,14 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV === 'development'
-
-const csp = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "form-action 'self'",
-  "img-src 'self' data: blob: https://*.supabase.co",
-  "font-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://t1.kakaocdn.net https://pagead2.googlesyndication.com`,
-  `connect-src 'self' https://*.supabase.co https://t1.kakaocdn.net${isDev ? " ws: wss:" : ''}`,
-  "frame-src 'self' https://*.kakao.com https://*.kakaocdn.net",
-].join('; ')
-
 // 배포 중 잠깐 뜬 404/에러 화면이 사용자 브라우저 디스크 캐시에 눌러앉으면
 // 하드 리로드(Ctrl+Shift+R) 전까지 계속 404가 보인다. Vercel이 프리렌더된 /404·/500을
 // 정적 자산으로 내보낼 때 붙는 `public, max-age=0, must-revalidate`를 덮어쓴다.
 const NO_STORE = 'no-store, must-revalidate'
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
+  // Per-response CSP nonces cannot be reused in a prerendered HTML shell.
+  // Public database reads remain cached with unstable_cache and the posts tag.
+  cacheComponents: false,
   allowedDevOrigins: ['192.168.219.110'],
   images: {
     // 썸네일은 PostCard/FeaturedCard에서 max-w-6xl(1152px) 컨테이너 안 33~42% 폭으로만
@@ -55,13 +41,20 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
-          { key: 'Content-Security-Policy', value: csp },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      ...[
+        '/reviews', '/admin/:path*', '/mypage/:path*', '/login', '/agree',
+        '/auth/:path*', '/counsel/:path+', '/compatibility/:path*',
+        '/taekil', '/interpretation', '/manseryeok', '/life-graph',
+      ].map((source) => ({
+        source,
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      })),
     ]
   },
 };

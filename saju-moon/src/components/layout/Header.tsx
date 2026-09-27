@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
-import { LogoMark, StarMark } from '@/components/ui/StarMark'
+import { LogoMark } from '@/components/ui/StarMark'
 import { getOrCreateAnalyticsSessionId, trackAnalyticsEvent } from '@/lib/analytics/client'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_LINKS = [
   { href: '/counsel', label: '익명상담' },
-  { href: '/reviews', label: '후기' },
+  { href: '/reviews', label: '후기', adminOnly: true },
   { href: '/interpretation', label: '사주해석', adminOnly: true },
   { href: '/compatibility', label: '궁합', adminOnly: true },
   { href: '/taekil', label: '택일', adminOnly: true },
@@ -215,8 +215,7 @@ export default function Header({ user, isAdmin }: HeaderProps) {
 
           {/* 네비게이션 링크 */}
           <nav className="flex flex-1 flex-col px-8 pt-14">
-            {visibleLinks.map((link, i) => {
-              const isLast = i === NAV_LINKS.length - 1
+            {visibleLinks.map((link) => {
               const active = isActive(link.href)
               return (
                 <Link

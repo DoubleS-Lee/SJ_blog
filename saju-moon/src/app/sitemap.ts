@@ -3,105 +3,41 @@ import { createClient } from '@/lib/supabase/server'
 import { buildAbsoluteUrl } from '@/lib/seo/site'
 import { POST_CATEGORIES } from '@/lib/posts/categories'
 
-function applyPublishedVisibilityFilter<T>(query: T, nowIso: string) {
-  return (query as { or: (filters: string) => T }).or(`published_at.is.null,published_at.lte.${nowIso}`)
-}
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
-  const now = new Date()
+  const nowIso = new Date().toISOString()
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select('slug, category, published_at, updated_at')
+    .eq('is_published', true)
+    .or(`published_at.is.null,published_at.lte.${nowIso}`)
+    .order('published_at', { ascending: false })
 
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: buildAbsoluteUrl('/'),
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: buildAbsoluteUrl('/compatibility'),
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: buildAbsoluteUrl('/compatibility/today'),
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: buildAbsoluteUrl('/compatibility/month'),
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: buildAbsoluteUrl('/compatibility/year'),
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: buildAbsoluteUrl('/taekil'),
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: buildAbsoluteUrl('/interpretation'),
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: buildAbsoluteUrl('/manseryeok'),
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: buildAbsoluteUrl('/counsel'),
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.6,
-    },
-    {
-      url: buildAbsoluteUrl('/privacy'),
-      lastModified: now,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    ...POST_CATEGORIES.map((category) => ({
-      url: buildAbsoluteUrl(`/?category=${encodeURIComponent(category)}`),
-      lastModified: now,
-      changeFrequency: 'daily' as const,
-      priority: 0.7,
+  // Do not cache an incomplete sitemap if the database is temporarily unavailable.
+  if (error) throw new Error(`[sitemap] failed to load posts: ${error.message}`)
+
+  const publicRoutes: MetadataRoute.Sitemap = [
+    { url: buildAbsoluteUrl('/'), changeFrequency: 'daily', priority: 1 },
+    ...['/about', '/contact', '/counsel', '/privacy', '/terms'].map((path) => ({
+      url: buildAbsoluteUrl(path),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
     })),
   ]
-
-  const { data: posts, error } = await applyPublishedVisibilityFilter(
-    supabase
-      .from('posts')
-      .select('slug, published_at, updated_at')
-      .eq('is_published', true)
-      .order('published_at', { ascending: false }),
-    now.toISOString(),
-  )
-
-  // 조회 실패를 삼키면 정적 경로만 담긴 200 사이트맵이 나가고, 크롤러는 그것을
-  // "글이 전부 사라졌다"는 신호로 읽는다. 차라리 실패시켜 이전 사이트맵을 유지하게 한다.
-  if (error) {
-    throw new Error(`[sitemap] failed to load posts: ${error.message}`)
-  }
-
-  const postRoutes: MetadataRoute.Sitemap =
-    posts?.map((post) => ({
-      url: buildAbsoluteUrl(`/posts/${post.slug}`),
-      lastModified: post.updated_at ?? post.published_at ?? now.toISOString(),
+  const populatedCategories = new Set(posts?.map((post) => post.category))
+  const categoryRoutes: MetadataRoute.Sitemap = POST_CATEGORIES
+    .filter((category) => populatedCategories.has(category))
+    .map((category) => ({
+      url: buildAbsoluteUrl(`/?category=${encodeURIComponent(category)}`),
       changeFrequency: 'weekly',
-      priority: 0.9,
-    })) ?? []
+      priority: 0.6,
+    }))
+  const postRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post) => ({
+    url: buildAbsoluteUrl(`/posts/${post.slug}`),
+    lastModified: post.updated_at ?? post.published_at ?? undefined,
+    changeFrequency: 'weekly',
+    priority: 0.9,
+  }))
 
-  return [...staticRoutes, ...postRoutes]
+  return [...publicRoutes, ...categoryRoutes, ...postRoutes]
 }
