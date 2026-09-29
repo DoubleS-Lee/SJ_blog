@@ -16,6 +16,7 @@ import { cookies, headers } from 'next/headers'
 import './globals.css'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import Header from '@/components/layout/Header'
+import BusinessInfo from '@/components/layout/BusinessInfo'
 import ScriptNonceProvider from '@/components/common/ScriptNonceProvider'
 import { getSiteUrlObject, SITE_NAME } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase/server'
@@ -203,6 +204,9 @@ export default async function RootLayout({
               <a href="/terms">이용약관</a>
               <a href="/privacy">개인정보처리방침</a>
             </nav>
+            <div className="mx-auto mb-6 max-w-3xl text-left" style={{ color: '#4a5673' }}>
+              <BusinessInfo />
+            </div>
             <p style={{ fontSize: 12, color: '#a39c8c' }}>
               Copyright 2026 {SITE_NAME}. All rights reserved.
             </p>

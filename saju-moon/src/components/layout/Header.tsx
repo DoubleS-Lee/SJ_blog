@@ -10,12 +10,13 @@ import { getOrCreateAnalyticsSessionId, trackAnalyticsEvent } from '@/lib/analyt
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_LINKS = [
+  { href: '/about', label: '소개' },
   { href: '/counsel', label: '익명상담' },
+  { href: '/', label: '블로그' },
   { href: '/reviews', label: '후기', adminOnly: true },
   { href: '/interpretation', label: '사주해석', adminOnly: true },
   { href: '/compatibility', label: '궁합', adminOnly: true },
   { href: '/taekil', label: '택일', adminOnly: true },
-  { href: '/', label: '블로그' },
 ]
 
 interface HeaderProps {

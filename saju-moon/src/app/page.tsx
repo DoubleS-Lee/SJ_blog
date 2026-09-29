@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { BUSINESS } from '@/lib/business'
 import FeaturedCard from '@/components/blog/FeaturedCard'
 import PostCard from '@/components/blog/PostCard'
 import CategoryFilter from '@/components/blog/CategoryFilter'
@@ -92,6 +93,7 @@ export default async function BlogListPage({ searchParams }: Props) {
         {!validCategory && currentPage === 1 && !queryText ? (
           <div className="max-w-3xl text-sm leading-7" style={{ color: '#4a5673' }}>
             <p>
+              {BUSINESS.description}{' '}
               사주로아는 명리학의 개념을 일상 속 관계와 선택에 연결해 설명하는 사주 콘텐츠 공간입니다.
               블로그 글은 로그인 없이 읽을 수 있고, 회원은 저장한 사주로 글의 해석 조건에 해당하는지 확인할 수 있습니다.
             </p>
